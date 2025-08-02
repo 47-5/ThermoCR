@@ -71,7 +71,6 @@ def U_ele(E_list, g_list, T, convert_unit=True):
         E_s *= au2eV
     E_s -= E_s[0]
 
-
     numerator = 0
     denominator = 0
 
@@ -134,8 +133,9 @@ def S_ele(E_list, g_list, T, convert_unit=True):
     return S
 
 
-def ZPE(vibfreqs, convert_unit=True):
+def ZPE(vibfreqs, convert_unit=True, scale_factor=1.0):
     v = np.copy(vibfreqs)
+    v *= scale_factor
     if convert_unit:
         v = v * wave2freq / Eh
     zpe = 0
@@ -162,8 +162,9 @@ def ZPE_one_mode(vibfreq, convert_unit=True):
     return zpe
 
 
-def U_vib_0_T(vibfreqs, T, convert_unit=True):
+def U_vib_0_T(vibfreqs, T, convert_unit=True, scale_factor=1.0):
     v = np.copy(vibfreqs)
+    v *= scale_factor
     if convert_unit:
         v = v * wave2freq
     U = 0
@@ -175,16 +176,19 @@ def U_vib_0_T(vibfreqs, T, convert_unit=True):
     return U
 
 
-def U_vib_T(vibfreqs, T, convert_unit=True, QRRHO=False):
+def U_vib_T(vibfreqs, T, convert_unit=True, QRRHO=False, scale_factor_zpe=1.0, scale_factor_U_0_T=1.0):
     v = np.copy(vibfreqs)
     if convert_unit:
         v = v * wave2freq
+
+    v_zpe = v * scale_factor_zpe
+    v_U_0_T = v * scale_factor_U_0_T
     U = 0
-    for vibfreq in v:
+    for vibfreq, vibfreq_u, vibfreq_zpe in zip(v, v_U_0_T, v_zpe):
         if vibfreq < 0:
             pass
         else:
-            U_RRHO = U_vib_0_T_RRHO(vibfreq=vibfreq, T=T) + ZPE_one_mode(vibfreq=vibfreq, convert_unit=convert_unit)
+            U_RRHO = U_vib_0_T_RRHO(vibfreq=vibfreq_u, T=T) + ZPE_one_mode(vibfreq=vibfreq_zpe, convert_unit=convert_unit)
             if QRRHO:
                 wei = w(v=vibfreq, convert_unit=convert_unit)
                 U += (wei * U_RRHO + (1 - wei) * U_vib_FR(T=T))
@@ -193,16 +197,18 @@ def U_vib_T(vibfreqs, T, convert_unit=True, QRRHO=False):
     return U
 
 
-def H_vib_0_T(vibfreqs, T, convert_unit=True):
-    return U_vib_0_T(vibfreqs=vibfreqs, T=T, convert_unit=convert_unit)
+def H_vib_0_T(vibfreqs, T, convert_unit=True, scale_factor=1.0):
+    return U_vib_0_T(vibfreqs=vibfreqs, T=T, convert_unit=convert_unit, scale_factor=scale_factor)
 
 
-def H_vib_T(vibfreqs, T, convert_unit=True, QRRHO=False):
-    return U_vib_T(vibfreqs=vibfreqs, T=T, convert_unit=convert_unit, QRRHO=QRRHO)
+def H_vib_T(vibfreqs, T, convert_unit=True, QRRHO=False, scale_factor_zpe=1.0, scale_factor_U_0_T=1.0):
+    return U_vib_T(vibfreqs=vibfreqs, T=T, convert_unit=convert_unit, QRRHO=QRRHO,
+                   scale_factor_zpe=scale_factor_zpe, scale_factor_U_0_T=scale_factor_U_0_T)
 
 
-def Cv_vib(vibfreqs, T, convert_unit=True):
+def Cv_vib(vibfreqs, T, convert_unit=True, scale_factor=1.0):
     v = np.copy(vibfreqs)
+    v *= scale_factor
     if convert_unit:
         v = v * wave2freq
     Cv = 0
@@ -214,24 +220,25 @@ def Cv_vib(vibfreqs, T, convert_unit=True):
     return Cv
 
 
-def Cp_vib(vibfreqs, T, convert_unit=True):
-    return Cv_vib(vibfreqs=vibfreqs, T=T, convert_unit=convert_unit)
+def Cp_vib(vibfreqs, T, convert_unit=True, scale_factor=1.0):
+    return Cv_vib(vibfreqs=vibfreqs, T=T, convert_unit=convert_unit, scale_factor=scale_factor)
 
 
-def S_vib(vibfreqs, T, convert_unit=True, QRRHO=True):
+def S_vib(vibfreqs, T, convert_unit=True, QRRHO=True, scale_factor=1.0):
     v = np.copy(vibfreqs)
     if convert_unit:
         v = v * wave2freq
+    v_s = v * scale_factor
     S = 0
-    for vibfreq in v:
+    for vibfreq, vibfreq_s in zip(v, v_s):
         if vibfreq < 0:
             pass
         else:
             if QRRHO:
                 wei = w(vibfreq, T, convert_unit=convert_unit)
-                S += (wei * S_vib_RRHO(vibfreq=vibfreq, T=T) + (1 - wei) * S_vib_FR(vibfreq=vibfreq, T=T))
+                S += (wei * S_vib_RRHO(vibfreq=vibfreq_s, T=T) + (1 - wei) * S_vib_FR(vibfreq=vibfreq_s, T=T))
             else:
-                S += S_vib_RRHO(vibfreq=vibfreq, T=T)
+                S += S_vib_RRHO(vibfreq=vibfreq_s, T=T)
     return S
 
 
