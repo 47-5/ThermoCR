@@ -14,6 +14,7 @@ wave2freq = 2.99792458e10 # cm^-1 to s^-1 (Hz)
 
 au2eV = Hartree
 au2kj_mol = 2625.5e0
+au2j_mol = au2kj_mol * 1000
 au2cm_1=219474.6363e0
 
 Eh = 4.3597447222071e-18  # 1 Hartree = ? J

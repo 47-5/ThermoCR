@@ -1,6 +1,6 @@
 import numpy as np
 
-from constant import k_b, h, R, amu2kg, convert_I, wave2freq, au2eV, au2cm_1, au2kj_mol
+from constant import k_b, h, R, amu2kg, convert_I, wave2freq, au2eV
 from utils import get_point_group, get_I, check_linear, get_rotational_symmetry_number
 
 
@@ -90,29 +90,29 @@ def q(q_t, q_r, q_v, q_e):
     return q_t * q_r * q_v * q_e
 
 
-if __name__ == '__main__':
-
-    from read_qm_out import read_qm_out, read_atom_coord, read_vib, read_ee
-
-    atom_numbers, atom_masses, coords = read_atom_coord(filepath='01_02_sp.out')
-    print(atom_numbers)
-    print(atom_masses)
-    print(coords)
-
-    vibfreqs = read_vib(filepath='01_02.out')
-    print(vibfreqs)
-
-    ee = read_ee(filepath='01_02_sp.out')
-
-    q_t = q_trans(M=132.093960, T=298.15, P=101325)
-    print(f'q_t: {q_t}')
-    q_r = q_rot(atom_numbers=atom_numbers, coords=coords, T=298.15)
-    print(f'q_r: {q_r}')
-    q_v_bot = q_vib_bot(vibfreqs, T=298.15)
-    q_v_0 = q_vib_V0(vibfreqs, T=298.15)
-    print(f'q_v_bot: {q_v_bot}')
-    print(f'q_v_0: {q_v_0}')
-
-    q_e = q_ele(E_list=[ee], g_list=[1], T=298.15, convert_unit=False)
-    print(f'q_e: {q_e}')
+# if __name__ == '__main__':
+#
+#     from read_qm_out import read_qm_out, read_atom_coord, read_vib, read_ee
+#
+#     atom_numbers, atom_masses, coords = read_atom_coord(filepath='01_02_sp.out')
+#     print(atom_numbers)
+#     print(atom_masses)
+#     print(coords)
+#
+#     vibfreqs = read_vib(filepath='01_02.out')
+#     print(vibfreqs)
+#
+#     ee = read_ee(filepath='01_02_sp.out')
+#
+#     q_t = q_trans(M=132.093960, T=298.15, P=101325)
+#     print(f'q_t: {q_t}')
+#     q_r = q_rot(atom_numbers=atom_numbers, coords=coords, T=298.15)
+#     print(f'q_r: {q_r}')
+#     q_v_bot = q_vib_bot(vibfreqs, T=298.15)
+#     q_v_0 = q_vib_V0(vibfreqs, T=298.15)
+#     print(f'q_v_bot: {q_v_bot}')
+#     print(f'q_v_0: {q_v_0}')
+#
+#     q_e = q_ele(E_list=[ee], g_list=[1], T=298.15, convert_unit=False)
+#     print(f'q_e: {q_e}')
 
