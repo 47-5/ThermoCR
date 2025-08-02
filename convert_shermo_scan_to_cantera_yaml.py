@@ -1,5 +1,3 @@
-from read_shermo_scan import read_shermo_scan
-
 au_to_kcal_per_mol = 627.51
 au_to_kJ_per_mol = 2625.5
 

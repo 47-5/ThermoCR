@@ -10,14 +10,10 @@ from sklearn.metrics import mean_squared_error, mean_absolute_error, mean_absolu
 from matplotlib import rcParams
 import matplotlib.pyplot as plt
 
-# from read_shermo_scan import read_shermo_scan
 from convert_shermo_scan_to_cantera_yaml import write_cantera_yaml_species_NASA7
 
 
 kj_to_j = 1000
-kcal_to_kj = 4.184
-cal_to_j = 4.184
-hartree_to_kj = 2625.5
 
 
 class NASA7:
@@ -200,8 +196,8 @@ def plot_fit(x, y, F, x_label='x', y_label='y', save=None, save_root_path='.'):
     if save:
         plt.savefig(join(save_root_path, save), dpi=1000)
         plt.close()
-        export_data(x_data=x, y_data=y, export_path=join(save_root_path, f'{save}_experiment_data_scatter.txt'))
-        export_data(x_data=x_plot, y_data=y_plot, export_path=join(save_root_path, f'{save}_fit_data_curve.txt'))
+        export_data(x_data=x, y_data=y, export_path=join(save_root_path, f'{save}_experiment_data_scatter.xlsx'))
+        export_data(x_data=x_plot, y_data=y_plot, export_path=join(save_root_path, f'{save}_fit_data_curve.xlsx'))
     else:
         plt.show()
         plt.close()
@@ -216,87 +212,29 @@ def export_data(x_data, y_data, export_path):
     return None
 
 
-def calculate_scan_formation_thermo(n_C, n_H, df_target, level='M062X_def2TZVP'):
-    # 读取H2和石墨的数据，用于计算生成焓
-    H2_df = load_qm_scan_data(SCq_path=f'data/H2_scan_SCq_{level}.txt', UHG_path=f'data/H2_scan_UHG_{level}.txt')
-    C_df = load_qm_scan_data(SCq_path=f'data/C_scan_SCq_{level}.txt', UHG_path=f'data/C_scan_UHG_{level}.txt')
-    H2_df = H2_df[['T(K)', 'H', 'S']].rename(columns={'H': 'H_H2', 'S': 'S_H2'})
-    C_df = C_df[['T(K)', 'H', 'S']].rename(columns={'H': 'H_C', 'S': 'S_C'})
-    df_data = pd.merge(H2_df, C_df, left_on='T(K)', right_on='T(K)')
-
-    df = pd.merge(df_data, df_target, left_on='T(K)', right_on='T(K)')
-
-    T = df['T(K)']
-    # target molecule
-    H_T = df['H']
-    S_T = df['S']
-
-    # H2
-    H2_H_T = df['H_H2']
-    H2_S_T = df['S_H2']
-
-    # 石墨
-    C_H_T = df['H_C']
-    C_S_T = df['S_C']
-
-    # 升华
-    H_sublimation = df['Hf°']
-    S_sublimation = df['Sf°']
-
-    H_formation = H_T - n_C * C_H_T - n_H / 2 * H2_H_T + n_C * H_sublimation
-    S_formation = S_T - n_C * C_S_T - n_H / 2 * H2_S_T + n_C * S_sublimation
-    return T, H_formation, S_formation
-
-
-def load_sublimation_data_of_graphite(data_path='data/C.xlsx'):
-    df = pd.read_excel(data_path)
-    df['Hf°'] *= kj_to_j
-    df['Gf°'] *= kj_to_j
-    return df
-
-def load_qm_scan_data(SCq_path, UHG_path):
-    SCq_df = read_shermo_scan(read_path=SCq_path, column_name_list=None, skip_first_row=3, write_path=None)
-    UHG_df = read_shermo_scan(read_path=UHG_path, column_name_list=None, skip_first_row=3, write_path=None)
-    qm_df = pd.merge(SCq_df, UHG_df, left_on='T(K)', right_on='T(K)')
-    qm_df['CP'] *= cal_to_j
-    qm_df['CV'] *= cal_to_j
-    qm_df['U'] *= (hartree_to_kj * kj_to_j)
-    qm_df['H'] *= (hartree_to_kj * kj_to_j)
-    qm_df['G'] *= (hartree_to_kj * kj_to_j)
-    qm_df['Ucorr'] *= (kcal_to_kj * kj_to_j)
-    qm_df['Hcorr'] *= (kcal_to_kj * kj_to_j)
-    qm_df['Gcorr'] *= (kcal_to_kj * kj_to_j)
-    qm_df['S'] *= cal_to_j
-    return qm_df
-
-
 if __name__ == "__main__":
 
     # load experiment data
     name = '43'
-    n_C = 20
-    n_H = 24
-    df_qm = load_qm_scan_data(SCq_path='scan_SCq.txt', UHG_path='scan_UHG.txt')
-    df_sublimation = load_sublimation_data_of_graphite(data_path='data/C.xlsx')
-    df = pd.merge(df_sublimation, df_qm, left_on='T(K)', right_on='T(K)')
+    n_C = 5
+    n_H = 6
+    df = pd.read_excel('QMThermoScan.xlsx')
 
-    Cp_T = df['CP']
-    T, H_T, S_T = calculate_scan_formation_thermo(n_C=n_C, n_H=n_H, df_target=df, level='wB97M(2)_def2TZVP')
+    Cp_T = df['Cp/(J/mol/K)']
+    T, H_T, S_T = df['T/K'], df['H/(J/mol)'], df['S/(J/mol/K)']
 
-    result = pd.DataFrame({'T': T, 'Cp': Cp_T, 'H': H_T, 'S': S_T})
-    result.to_csv('result.csv')
 
     # preprocess data
-    start = 2
-    end = 15
+    start = 0
+    end = 21
     T, H_T, S_T, Cp_T = T.to_numpy(), H_T.to_numpy(), S_T.to_numpy(), Cp_T.to_numpy()
     T, H_T, S_T, Cp_T = T[start:end], H_T[start:end], S_T[start:end], Cp_T[start:end]
     n_data = len(T)
 
     # 计算每个物理量的量级（绝对值均值）
     scale_cp = np.mean(np.abs(Cp_T))
-    scale_h = np.mean(np.abs(H_T)) / 2
-    scale_s = np.mean(np.abs(S_T)) / 10
+    scale_h = np.mean(np.abs(H_T))
+    scale_s = np.mean(np.abs(S_T))
     # 设置权重：与量级成反比（量级越小权重越大）
     weight_cp = 1.0 / scale_cp
     weight_h = 1.0 / scale_h

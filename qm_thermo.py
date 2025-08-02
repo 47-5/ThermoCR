@@ -112,8 +112,8 @@ def qm_thermo(atom_coord_path, vib_path=None, ee_path=None, T=298.15, P=101325,
         'T/K': T, 'P/Pa': P,
         'q_tot_v_0': q_tot_v_0, 'q_tot_bot': q_tot_bot,
         'Cv/(J/mol/K)': Cv_tot, 'Cp/(J/mol/K)': Cp_tot, 'S/(J/mol/K)': S_tot,
-        'zpe/J': zpe, 'U_corr/J': U_corr, 'H_corr/J': H_corr, 'G_corr/J': G_corr,
-        'ee/J': ee, 'U/J': U, 'H/J': H, 'G/J': G
+        'zpe/(J/mol)': zpe, 'U_corr/(J/mol)': U_corr, 'H_corr/(J/mol)': H_corr, 'G_corr/(J/mol)': G_corr,
+        'ee/(J/mol)': ee, 'U/(J/mol)': U, 'H/(J/mol)': H, 'G/(J/mol)': G
     }
 
 
@@ -218,12 +218,12 @@ def contribution_ele(E_list, g_list, T, convert_unit=True):
 
 if __name__ == '__main__':
 
-    qm_thermo(atom_coord_path='C.out', verbose=True, ee=-37.875459499328, g_list=[3])
+    qm_thermo(atom_coord_path='01.out', vib_path=None, verbose=True, ee=-194.283781614283, g_list=None)
 
-    qm_thermo_scan(atom_coord_path='C.out', vib_path=None, ee_path=None,
+    qm_thermo_scan(atom_coord_path='01.out', vib_path=None, ee_path=None,
                    T=list(range(100, 3050, 50)), P=[101325],
                    sclZPE=1.0, sclU=1.0, sclCv=1.0, sclS=1.0,
                    U_Minenkov=False, S_Grimme=True,
-                   ee=-37.875459499328,
-                   g_list=[3]
+                   ee=-194.283781614283,
+                   g_list=None
                    )
