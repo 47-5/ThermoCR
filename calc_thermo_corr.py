@@ -30,7 +30,7 @@ def U_rot_linear(T):
 
 
 def H_rot_linear(T):
-    return U_rot_linear(T) + R * T
+    return U_rot_linear(T)
 
 
 def Cv_rot_linear():
@@ -38,7 +38,7 @@ def Cv_rot_linear():
 
 
 def Cp_rot_linear():
-    return Cv_rot_linear() + R
+    return Cv_rot_linear()
 
 
 def S_rot_linear(q_r, T):

@@ -9,6 +9,7 @@ import pandas as pd
 
 
 def qm_thermo(atom_coord_path, vib_path=None, ee_path=None, T=298.15, P=101325,
+              ee=None,
               sclZPE=1.0, sclU=1.0, sclCv=1.0, sclS=1.0,
               U_Minenkov=False, S_Grimme=True, verbose=True,
               read_ee_index=-1,
@@ -18,11 +19,12 @@ def qm_thermo(atom_coord_path, vib_path=None, ee_path=None, T=298.15, P=101325,
         vib_path = atom_coord_path
     if ee_path is None:
         ee_path = atom_coord_path
-    atom_numbers, atom_masses, coords = read_atom_coord(atom_coord_path)
+    atom_numbers, coords = read_atom_coord(atom_coord_path)
     atom_masses = np.array([atom_data[i][3] for i in atom_numbers])
     M = np.sum(atom_masses)
     vibfreqs = read_vib(vib_path)
-    ee = read_ee(ee_path, ee_index=read_ee_index)
+    if ee is None:
+        ee = read_ee(ee_path, ee_index=read_ee_index)
     if E_list is None:
         E_list = [ee]
     if g_list is None:
@@ -117,6 +119,7 @@ def qm_thermo(atom_coord_path, vib_path=None, ee_path=None, T=298.15, P=101325,
 
 def qm_thermo_scan(
         atom_coord_path, vib_path=None, ee_path=None,
+        ee=None,
         T:List[int|float]=[298.15], P:List[int|float]=[101325],
         sclZPE=1.0, sclU=1.0, sclCv=1.0, sclS=1.0,
         U_Minenkov=False, S_Grimme=True,
@@ -130,6 +133,7 @@ def qm_thermo_scan(
         for p in P:
             print(f'p={p} Pa')
             result = qm_thermo(atom_coord_path=atom_coord_path, vib_path=vib_path, ee_path=ee_path,
+                               ee=ee,
                                T=t, P=p,
                                sclZPE=sclZPE, sclU=sclU, sclCv=sclCv, sclS=sclS,
                                U_Minenkov=U_Minenkov, S_Grimme=S_Grimme,
@@ -214,10 +218,12 @@ def contribution_ele(E_list, g_list, T, convert_unit=True):
 
 if __name__ == '__main__':
 
-    qm_thermo(atom_coord_path='01_02.out', verbose=True, read_ee_index=-3)
+    qm_thermo(atom_coord_path='C.out', verbose=True, ee=-37.875459499328, g_list=[3])
 
-    qm_thermo_scan(atom_coord_path='01_02.out', vib_path=None, ee_path='01_02_sp.out',
-                   T=[150, 200, 250, 298.15, 300], P=[101325, 150000, 300000],
+    qm_thermo_scan(atom_coord_path='C.out', vib_path=None, ee_path=None,
+                   T=list(range(100, 3050, 50)), P=[101325],
                    sclZPE=1.0, sclU=1.0, sclCv=1.0, sclS=1.0,
                    U_Minenkov=False, S_Grimme=True,
+                   ee=-37.875459499328,
+                   g_list=[3]
                    )
