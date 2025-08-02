@@ -4,7 +4,8 @@ from read_qm_out import read_qm_out, read_atom_coord, read_vib, read_ee
 from pointgroup.element_data import atom_data
 from utils import get_I, check_linear, get_rotational_symmetry_number, get_point_group
 from constant import convert_I, au2j_mol
-
+from typing import List
+import pandas as pd
 
 
 def qm_thermo(atom_coord_path, vib_path=None, ee_path=None, T=298.15, P=101325,
@@ -105,7 +106,41 @@ def qm_thermo(atom_coord_path, vib_path=None, ee_path=None, T=298.15, P=101325,
         print(f'Sum of electronic energy and thermal correction to U: {U}  J/mol {U/au2j_mol} a.u.')
         print(f'Sum of electronic energy and thermal correction to H: {H}  J/mol {H/au2j_mol} a.u.')
         print(f'Sum of electronic energy and thermal correction to G: {G}  J/mol {G/au2j_mol} a.u.')
-    return q_tot_v_0, q_tot_bot, Cv_tot, Cp_tot, S_tot, zpe, U_corr, H_corr, G_corr, ee, U, H, G
+    return {
+        'T/K': T, 'P/Pa': P,
+        'q_tot_v_0': q_tot_v_0, 'q_tot_bot': q_tot_bot,
+        'Cv/(J/mol/K)': Cv_tot, 'Cp/(J/mol/K)': Cp_tot, 'S/(J/mol/K)': S_tot,
+        'zpe/J': zpe, 'U_corr/J': U_corr, 'H_corr/J': H_corr, 'G_corr/J': G_corr,
+        'ee/J': ee, 'U/J': U, 'H/J': H, 'G/J': G
+    }
+
+
+def qm_thermo_scan(
+        atom_coord_path, vib_path=None, ee_path=None,
+        T:List[int|float]=[298.15], P:List[int|float]=[101325],
+        sclZPE=1.0, sclU=1.0, sclCv=1.0, sclS=1.0,
+        U_Minenkov=False, S_Grimme=True,
+        read_ee_index=-1,
+        E_list=None, g_list=None,
+        out_path='QMthermoScan.xlsx'
+        ):
+    results = []
+    for t in T:
+        print(f'T={t} K')
+        for p in P:
+            print(f'p={p} Pa')
+            result = qm_thermo(atom_coord_path=atom_coord_path, vib_path=vib_path, ee_path=ee_path,
+                               T=t, P=p,
+                               sclZPE=sclZPE, sclU=sclU, sclCv=sclCv, sclS=sclS,
+                               U_Minenkov=U_Minenkov, S_Grimme=S_Grimme,
+                               read_ee_index=read_ee_index, E_list=E_list, g_list=g_list,
+                               verbose=False
+                               )
+            results.append(result)
+    df = pd.DataFrame(results)
+    if out_path is not None:
+        df.to_excel(out_path, index=False)
+    return df
 
 
 def contribution_trans(M, T, P):
@@ -180,3 +215,9 @@ def contribution_ele(E_list, g_list, T, convert_unit=True):
 if __name__ == '__main__':
 
     qm_thermo(atom_coord_path='01_02.out', verbose=True, read_ee_index=-3)
+
+    qm_thermo_scan(atom_coord_path='01_02.out', vib_path=None, ee_path='01_02_sp.out',
+                   T=[150, 200, 250, 298.15, 300], P=[101325, 150000, 300000],
+                   sclZPE=1.0, sclU=1.0, sclCv=1.0, sclS=1.0,
+                   U_Minenkov=False, S_Grimme=True,
+                   )
