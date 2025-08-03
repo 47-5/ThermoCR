@@ -10,7 +10,7 @@ from sklearn.metrics import mean_squared_error, mean_absolute_error, mean_absolu
 from matplotlib import rcParams
 import matplotlib.pyplot as plt
 
-from convert_shermo_scan_to_cantera_yaml import write_cantera_yaml_species_NASA7
+from export_cantera_thermo_yaml import write_cantera_yaml_thermo_NASA7, write_cantera_yaml_thermo_NASA9, write_cantera_yaml_thermo_Shomate
 
 
 kj_to_j = 1000
@@ -212,75 +212,190 @@ def export_data(x_data, y_data, export_path):
     return None
 
 
+def fit_thermo_model(
+        data_path: str,
+        name: str,
+        model_type: str = "NASA7",
+        data_columns=None,
+        start_index: int = 0,
+        end_index: int = None,
+        weight_strategy: str = "inverse_mean_abs",
+        output_dir: str = ".",
+        save_plots: bool = True,
+        save_metrics: bool = True,
+        write_yaml: bool = True,
+        T_range: list = None,
+        guess: list = None,
+        bounds: tuple = None,
+        maxfev: int = 100000,
+):
+    """
+    根据热力学数据拟合NASA/Shomate模型参数
+
+    参数:
+    data_path -- 热力学数据文件路径 (Excel格式)
+    name -- 物种名称
+    model_type -- 模型类型: "NASA7", "NASA9" 或 "Shomate" (默认: "NASA7")
+    data_columns -- 数据列名映射字典 (默认: Shermo输出格式)
+    start_index -- 数据起始索引 (默认: 0)
+    end_index -- 数据结束索引 (默认: None表示到结尾)
+    weight_strategy -- 加权策略: "uniform" 或 "inverse_mean_abs" (默认)
+    output_dir -- 输出目录 (默认: 当前目录)
+    save_plots -- 是否保存拟合图表 (默认: True)
+    save_metrics -- 是否保存评估指标 (默认: True)
+    write_yaml -- 是否输出Cantera YAML文件 (默认: True)
+    T_range -- 温度范围 [T_min, T_max] (默认: 使用数据范围)
+    guess -- 初始参数猜测值 (默认: None)
+    bounds -- 参数边界 (默认: None表示无界)
+    maxfev -- 最大函数评估次数 (默认: 100000)
+
+    返回:
+    拟合参数和模型对象
+    """
+    # 确保输出目录存在
+    if data_columns is None:
+        data_columns = {
+            "T": "T/K",
+            "Cp": "Cp/(J/mol/K)",
+            "H": "H/(J/mol)",
+            "S": "S/(J/mol/K)",
+        }
+    os.makedirs(output_dir, exist_ok=True)
+
+    # 加载数据
+    df = pd.read_excel(data_path)
+
+    # 提取列数据
+    T = df[data_columns["T"]].to_numpy()[start_index:end_index]
+    T = np.array(T, dtype=float)
+    H_T = df[data_columns["H"]].to_numpy()[start_index:end_index]
+    S_T = df[data_columns["S"]].to_numpy()[start_index:end_index]
+    Cp_T = df[data_columns["Cp"]].to_numpy()[start_index:end_index]
+
+    # 确定温度范围
+    if T_range is None:
+        T_range = [float(T[0]), float(T[-1])]
+
+    n_data = len(T)
+    X = T
+    Y = np.hstack([Cp_T, H_T, S_T])
+
+    # 选择模型函数
+    model_info = {
+        "NASA7": {
+            "fit_func": nasa7_for_fit,
+            "model_class": NASA7,
+            "n_params": 7,
+            "yaml_writer": write_cantera_yaml_thermo_NASA7,
+        },
+        "NASA9": {
+            "fit_func": nasa9_for_fit,
+            "model_class": NASA9,
+            "n_params": 9,
+            "yaml_writer": write_cantera_yaml_thermo_NASA9,
+        },
+        "Shomate": {
+            "fit_func": shomate_for_fit,
+            "model_class": Shomate,
+            "n_params": 7,
+            "yaml_writer": write_cantera_yaml_thermo_Shomate,
+        },
+    }
+
+    if model_type not in model_info:
+        raise ValueError(f"不支持的模型类型: {model_type}")
+
+    model = model_info[model_type]
+    FUN = model["fit_func"]
+    FUN_CLASS = model["model_class"]
+    n_params = model["n_params"]
+
+    # 设置权重
+    if weight_strategy == "inverse_mean_abs":
+        scale_cp = np.mean(np.abs(Cp_T))
+        scale_h = np.mean(np.abs(H_T))
+        scale_s = np.mean(np.abs(S_T))
+        weight_cp = 1.0 / scale_cp
+        weight_h = 1.0 / scale_h
+        weight_s = 1.0 / scale_s
+        weights = np.concatenate([
+            np.full(n_data, weight_cp),
+            np.full(n_data, weight_h),
+            np.full(n_data, weight_s)
+        ])
+        SIGMA = 1 / weights
+    else:  # uniform weighting
+        SIGMA = None
+
+    # 设置默认边界
+    if bounds is None:
+        bounds = ([-np.inf] * n_params, [np.inf] * n_params)
+
+    # 拟合模型
+    popt, pcov = curve_fit(
+        f=FUN,
+        xdata=X,
+        ydata=Y,
+        sigma=SIGMA,
+        p0=guess,
+        bounds=bounds,
+        maxfev=maxfev
+    )
+
+    # 创建拟合模型对象
+    fitted_model = FUN_CLASS(*popt, return_mode="all")
+
+    # 计算预测值
+    Cp_T_pre, H_T_pre, S_T_pre = fitted_model(T)
+
+    # 评估模型
+    if save_metrics:
+        cal_metric(Cp_T, Cp_T_pre, "Cp_T", save=True, save_root_path=output_dir)
+        cal_metric(H_T, H_T_pre, "H_T", save=True, save_root_path=output_dir)
+        cal_metric(S_T, S_T_pre, "S_T", save=True, save_root_path=output_dir)
+
+    # 绘制图表
+    if save_plots:
+        plot_fit(
+            X, Cp_T, FUN_CLASS(*popt, return_mode="Cp_T"),
+            "T", "Cp_T", "Cp_T.png", output_dir
+        )
+        plot_fit(
+            X, H_T, FUN_CLASS(*popt, return_mode="H_T"),
+            "T", "H_T", "H_T.png", output_dir
+        )
+        plot_fit(
+            X, S_T, FUN_CLASS(*popt, return_mode="S_T"),
+            "T", "S_T", "S_T.png", output_dir
+        )
+
+    # 输出Cantera YAML
+    if write_yaml and model["yaml_writer"]:
+        if model_type == "NASA7":
+            model["yaml_writer"](
+                name, T_range, [float(p) for p in popt], root_path=output_dir
+            )
+        elif model_type == "NASA9":
+            model["yaml_writer"](
+                name, T_range, [float(p) for p in popt], root_path=output_dir
+            )
+        elif model_type == 'Shomate':
+            model["yaml_writer"](
+                name, T_range, [float(p) for p in popt], root_path=output_dir
+            )
+
+    return popt, fitted_model
+
+
 if __name__ == "__main__":
 
-    # load experiment data
-    name = '43'
-    n_C = 5
-    n_H = 6
-    df = pd.read_excel('QMThermoScan.xlsx')
 
-    Cp_T = df['Cp/(J/mol/K)']
-    T, H_T, S_T = df['T/K'], df['H/(J/mol)'], df['S/(J/mol/K)']
-
-
-    # preprocess data
-    start = 0
-    end = 21
-    T, H_T, S_T, Cp_T = T.to_numpy(), H_T.to_numpy(), S_T.to_numpy(), Cp_T.to_numpy()
-    T, H_T, S_T, Cp_T = T[start:end], H_T[start:end], S_T[start:end], Cp_T[start:end]
-    n_data = len(T)
-
-    # 计算每个物理量的量级（绝对值均值）
-    scale_cp = np.mean(np.abs(Cp_T))
-    scale_h = np.mean(np.abs(H_T))
-    scale_s = np.mean(np.abs(S_T))
-    # 设置权重：与量级成反比（量级越小权重越大）
-    weight_cp = 1.0 / scale_cp
-    weight_h = 1.0 / scale_h
-    weight_s = 1.0 / scale_s
-    print(f'weight: Cp:{weight_cp}, H:{weight_h}, S:{weight_s}')
-    # 构造权重向量（对每个数据点应用相应权重）
-    weights = np.concatenate([
-        np.full(n_data, weight_cp),  # Cp部分
-        np.full(n_data, weight_h),  # H部分
-        np.full(n_data, weight_s)  # S部分
-    ])
-
-    # preprocess data
-    X = np.array(T)
-    Y = np.hstack([Cp_T, H_T, S_T])
-    print(f'X data shape: {X.shape}')
-    print(f'Y data shape: {Y.shape}')
-
-    # settings
-    FUN = nasa7_for_fit
-    FUN_CLASS = NASA7
-    n_parm = 7
-
-    GUESS = None
-    SIGMA = 1 / weights  # todo 搞清楚这个SIGMA的原理
-    BOUNDS = ([-np.inf] * n_parm, [np.inf] * n_parm)
-    MAXFEV = 100000
-
-    # fit
-    popt, pcov = fit(fun=FUN, xdata=X, ydata=Y, sigma=SIGMA, p0=GUESS, bounds=BOUNDS, maxfev=MAXFEV)
-    fitted_model = FUN_CLASS(*popt, return_mode='all')
-
-    Cp_T_pre, H_T_pre, S_T_pre = fitted_model(T=T)
-
-    cal_metric(y_label=Cp_T, y_pred=Cp_T_pre, key='Cp_T', save=True, save_root_path='.')
-    cal_metric(y_label=H_T, y_pred=H_T_pre, key='H_T', save=True, save_root_path='.')
-    cal_metric(y_label=S_T, y_pred=S_T_pre, key='S_T', save=True, save_root_path='.')
-
-    plot_fit(x=X, y=Cp_T, F=FUN_CLASS(*popt, return_mode='Cp_T'), x_label='T', y_label='Cp_T',
-             save='Cp_T.png', save_root_path='.')
-    plot_fit(x=X, y=H_T, F=FUN_CLASS(*popt, return_mode='H_T'), x_label='T', y_label='H_T',
-             save='H_T.png', save_root_path='.')
-    plot_fit(x=X, y=S_T, F=FUN_CLASS(*popt, return_mode='S_T'), x_label='T', y_label='S_T',
-             save='S_T.png', save_root_path='.')
-
-
-    write_cantera_yaml_species_NASA7(specie_name=name, n_C=n_C, n_H=n_H,
-                                     T_range=[float(T[0]), float(T[-1])],
-                                     nasa7_parameters=[float(i) for i in popt])
+    fit_thermo_model(
+        data_path='QMthermoScan.xlsx',
+        name='S1',
+        model_type="NASA7",
+        start_index=0,
+        end_index=21,
+        output_dir="NASA7_results",
+        weight_strategy="inverse_mean_abs",
+    )
