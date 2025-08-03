@@ -1,3 +1,5 @@
+import numpy as np
+
 from calc_q import q_trans, q_rot_single_atom, q_rot_linear, q_rot_nonlinear, q_vib_V0, q_vib_bot, q_ele, q
 from calc_thermo_corr import *
 from read_qm_out import read_qm_out, read_atom_coord, read_vib, read_ee
@@ -173,6 +175,50 @@ def qm_thermo_scan(
     return df
 
 
+def qm_thermo_conformation_weighting(
+    U_list, H_list, G_list, S_list, Cv_list, Cp_list, T=298.15
+):
+    if isinstance(U_list, list):
+        U_list = np.array(U_list)
+    if isinstance(H_list, list):
+        H_list = np.array(H_list)
+    if isinstance(Cv_list, list):
+        Cv_list = np.array(Cv_list)
+    if isinstance(Cp_list, list):
+        Cp_list = np.array(Cp_list)
+    if isinstance(S_list, list):
+        S_list = np.array(S_list)
+    if isinstance(G_list, list):
+        G_list = np.array(G_list)
+
+    p = calculate_conformation_weighting(G_list=G_list, T=T)
+    U = np.sum(U_list * p)
+    H = np.sum(H_list * p)
+    Cv = np.sum(Cv_list * p)
+    Cp = np.sum(Cp_list * p)
+    G = np.sum(G_list * p)
+    S = np.sum(S_list * p) - R * np.sum(p * np.log(p))
+    result = {
+        'weight': p,
+        'U/(J/mol)': U,
+        'H/(J/mol)': H,
+        'G/(J/mol)': G,
+        'S/(J/mol)': S,
+        'Cv/(J/mol)': Cv,
+        'Cp/(J/mol)': Cp,
+        'T/K': T
+    }
+    return result
+
+
+def calculate_conformation_weighting(G_list, T=298.15):
+    if isinstance(G_list, list):
+        G_list = np.array(G_list)
+    delta_G = G_list - G_list.min()
+    p = np.exp(-delta_G / (R * T)) / np.sum(np.exp(-delta_G / (R * T)))
+    return p
+
+
 def contribution_trans(M, T, P):
     q_t = q_trans(M=M, T=T, P=P)
     U_t = U_trans(T=T)
@@ -242,14 +288,30 @@ def contribution_ele(E_list, g_list, T, convert_unit=True):
     return q_e, U_e, H_e, Cv_e, Cp_e, S_e
 
 
-if __name__ == '__main__':
-
-    qm_thermo(atom_coord_path='01.out', vib_path=None, verbose=True, ee=-194.283781614283, g_list=None, ignore_trans_and_rot=True)
-
-    qm_thermo_scan(atom_coord_path='01.out', vib_path=None, ee_path=None,
-                   T=list(range(100, 3050, 50)), P=[101325],
-                   sclZPE=1.0, sclU=1.0, sclCv=1.0, sclS=1.0,
-                   U_Minenkov=False, S_Grimme=True,
-                   ee=-194.283781614283,
-                   g_list=None
-                   )
+# if __name__ == '__main__':
+#
+#     # qm_thermo(atom_coord_path='01.out', vib_path=None, verbose=True, ee=-194.283781614283, g_list=None, ignore_trans_and_rot=True)
+#     #
+#     # qm_thermo_scan(atom_coord_path='01.out', vib_path=None, ee_path=None,
+#     #                T=list(range(100, 3050, 50)), P=[101325],
+#     #                sclZPE=1.0, sclU=1.0, sclCv=1.0, sclS=1.0,
+#     #                U_Minenkov=False, S_Grimme=True,
+#     #                ee=-194.283781614283,
+#     #                g_list=None
+#     #                )
+#     s2 = qm_thermo(atom_coord_path='02.out', verbose=True)
+#     s3 = qm_thermo(atom_coord_path='03.out', verbose=True)
+#
+#     # 'T/K': T, 'P/Pa': P,
+#     # 'q_tot_v_0': q_tot_v_0, 'q_tot_bot': q_tot_bot,
+#     # 'Cv/(J/mol/K)': Cv_tot, 'Cp/(J/mol/K)': Cp_tot, 'S/(J/mol/K)': S_tot,
+#     # 'zpe/(J/mol)': zpe, 'U_corr/(J/mol)': U_corr, 'H_corr/(J/mol)': H_corr, 'G_corr/(J/mol)': G_corr,
+#     # 'ee/(J/mol)': ee, 'U/(J/mol)': U, 'H/(J/mol)': H, 'G/(J/mol)': G
+#     U_list = [s2['U/(J/mol)'], s3['U/(J/mol)']]
+#     H_list = [s2['H/(J/mol)'], s3['H/(J/mol)']]
+#     G_list = [s2['G/(J/mol)'], s3['G/(J/mol)']]
+#     S_list = [s2['S/(J/mol/K)'], s3['S/(J/mol/K)']]
+#     Cp_list = [s2['Cp/(J/mol/K)'], s3['Cp/(J/mol/K)']]
+#     Cv_list = [s2['Cv/(J/mol/K)'], s3['Cv/(J/mol/K)']]
+#     conformation_weighting_result = qm_thermo_conformation_weighting(U_list, H_list, G_list, S_list, Cv_list, Cp_list, T=298.15)
+#     print(conformation_weighting_result)

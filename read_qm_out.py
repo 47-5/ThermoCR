@@ -31,10 +31,10 @@ def read_ee(filepath, ee_index=-1, return_Hartree=True):
 
 
 
-if __name__ == "__main__":
-
-    # print(data.scfenergies)
-
-    data = read_qm_out('01_02.out')
-
-    print(read_atom_coord('01_02_sp.out'))
+# if __name__ == "__main__":
+#
+#     # print(data.scfenergies)
+#
+#     data = read_qm_out('01_02.out')
+#
+#     print(read_atom_coord('01_02_sp.out'))

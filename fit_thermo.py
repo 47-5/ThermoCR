@@ -387,15 +387,15 @@ def fit_thermo_model(
     return popt, fitted_model
 
 
-if __name__ == "__main__":
-
-
-    fit_thermo_model(
-        data_path='QMthermoScan.xlsx',
-        name='S1',
-        model_type="NASA7",
-        start_index=0,
-        end_index=21,
-        output_dir="NASA7_results",
-        weight_strategy="inverse_mean_abs",
-    )
+# if __name__ == "__main__":
+#
+#
+#     fit_thermo_model(
+#         data_path='QMthermoScan.xlsx',
+#         name='S1',
+#         model_type="NASA7",
+#         start_index=0,
+#         end_index=21,
+#         output_dir="NASA7_results",
+#         weight_strategy="inverse_mean_abs",
+#     )
