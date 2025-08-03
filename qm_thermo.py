@@ -8,23 +8,36 @@ from typing import List
 import pandas as pd
 
 
-def qm_thermo(atom_coord_path, vib_path=None, ee_path=None, T=298.15, P=101325,
-              ee=None,
+def qm_thermo(atom_coord_path=None, atom_numbers=None, coords=None,
+              vib_path=None, vibfreqs=None,
+              ee_path=None, ee=None,
+              T=298.15, P=101325,
               sclZPE=1.0, sclU=1.0, sclCv=1.0, sclS=1.0,
               U_Minenkov=False, S_Grimme=True, verbose=True,
               read_ee_index=-1,
-              E_list=None, g_list=None):
+              E_list=None, g_list=None,
+              ignore_trans_and_rot=False):
     # load data
-    if vib_path is None:
-        vib_path = atom_coord_path
-    if ee_path is None:
-        ee_path = atom_coord_path
-    atom_numbers, coords = read_atom_coord(atom_coord_path)
+    # 如果提供了atom_numbers和coords，则不需要从atom_coord_path读取
+    if atom_numbers is None or coords is None:
+        if atom_coord_path is None:
+            raise ValueError("Either atom_coord_path or (atom_numbers and coords) must be provided.")
+        atom_numbers, coords = read_atom_coord(atom_coord_path)
     atom_masses = np.array([atom_data[i][3] for i in atom_numbers])
     M = np.sum(atom_masses)
-    vibfreqs = read_vib(vib_path)
+
+    # 处理振动频率输入
+    if vibfreqs is None:
+        if vib_path is None:  # 如果未提供振动频率列表且没有指定路径，则使用原子坐标路径
+            vib_path = atom_coord_path
+        vibfreqs = read_vib(vib_path)
+
+    # 处理电子能量输入
     if ee is None:
+        if ee_path is None:  # 如果未提供电子能量值且没有指定路径，则使用原子坐标路径
+            ee_path = atom_coord_path
         ee = read_ee(ee_path, ee_index=read_ee_index)
+
     if E_list is None:
         E_list = [ee]
     if g_list is None:
@@ -79,14 +92,24 @@ def qm_thermo(atom_coord_path, vib_path=None, ee_path=None, T=298.15, P=101325,
         print(f'S_e: {S_e}')
 
     # total
-    q_tot_v_0 = q(q_t=q_t, q_r=q_r, q_v=q_v_0, q_e=q_e)
-    q_tot_bot = q(q_t=q_t, q_r=q_r, q_v=q_v_bot, q_e=q_e)
-    Cv_tot = Cv_t + Cv_r + Cv_v + Cv_e
-    Cp_tot = Cp_t + Cp_r + Cp_v + Cp_e
-    S_tot = S_t + S_r + S_v + S_e
-    U_corr = U_t + U_r + U_v + U_e
-    H_corr = H_t + H_r + H_v + H_e
-    G_corr = H_corr - T * S_tot
+    if ignore_trans_and_rot:
+        q_tot_v_0 = q(q_t=q_t, q_r=q_r, q_v=q_v_0, q_e=q_e, ignore_trans_and_rot=ignore_trans_and_rot)
+        q_tot_bot = q(q_t=q_t, q_r=q_r, q_v=q_v_bot, q_e=q_e, ignore_trans_and_rot=ignore_trans_and_rot)
+        Cv_tot = Cv_v + Cv_e
+        Cp_tot = Cp_v + Cp_e
+        S_tot = S_v + S_e
+        U_corr = U_v + U_e
+        H_corr = H_v + H_e
+        G_corr = H_corr - T * S_tot
+    else:
+        q_tot_v_0 = q(q_t=q_t, q_r=q_r, q_v=q_v_0, q_e=q_e)
+        q_tot_bot = q(q_t=q_t, q_r=q_r, q_v=q_v_bot, q_e=q_e)
+        Cv_tot = Cv_t + Cv_r + Cv_v + Cv_e
+        Cp_tot = Cp_t + Cp_r + Cp_v + Cp_e
+        S_tot = S_t + S_r + S_v + S_e
+        U_corr = U_t + U_r + U_v + U_e
+        H_corr = H_t + H_r + H_v + H_e
+        G_corr = H_corr - T * S_tot
 
     zpe_plus_ee = ee * au2j_mol  + zpe
     U = ee * au2j_mol + U_corr
@@ -94,6 +117,7 @@ def qm_thermo(atom_coord_path, vib_path=None, ee_path=None, T=298.15, P=101325,
     G = ee * au2j_mol  + G_corr
     if verbose:
         print('========== Total ==========')
+        print(f'Ignore contribution of trans and rot? {ignore_trans_and_rot}')
         print(f'q(V=0): {q_tot_v_0}')
         print(f'q(bot): {q_tot_bot}')
         print(f'Cv_tot: {Cv_tot} J/mol/K')
@@ -118,8 +142,9 @@ def qm_thermo(atom_coord_path, vib_path=None, ee_path=None, T=298.15, P=101325,
 
 
 def qm_thermo_scan(
-        atom_coord_path, vib_path=None, ee_path=None,
-        ee=None,
+        atom_coord_path=None, atom_numbers=None, coords=None,
+        vib_path=None, vibfreqs=None,
+        ee_path=None, ee=None,
         T:List[int|float]=[298.15], P:List[int|float]=[101325],
         sclZPE=1.0, sclU=1.0, sclCv=1.0, sclS=1.0,
         U_Minenkov=False, S_Grimme=True,
@@ -132,8 +157,9 @@ def qm_thermo_scan(
         print(f'T={t} K')
         for p in P:
             print(f'p={p} Pa')
-            result = qm_thermo(atom_coord_path=atom_coord_path, vib_path=vib_path, ee_path=ee_path,
-                               ee=ee,
+            result = qm_thermo(atom_coord_path=atom_coord_path, atom_numbers=atom_numbers, coords=coords,
+                               vib_path=vib_path, vibfreqs=vibfreqs,
+                               ee_path=ee_path, ee=ee,
                                T=t, P=p,
                                sclZPE=sclZPE, sclU=sclU, sclCv=sclCv, sclS=sclS,
                                U_Minenkov=U_Minenkov, S_Grimme=S_Grimme,
@@ -218,7 +244,7 @@ def contribution_ele(E_list, g_list, T, convert_unit=True):
 
 if __name__ == '__main__':
 
-    qm_thermo(atom_coord_path='01.out', vib_path=None, verbose=True, ee=-194.283781614283, g_list=None)
+    qm_thermo(atom_coord_path='01.out', vib_path=None, verbose=True, ee=-194.283781614283, g_list=None, ignore_trans_and_rot=True)
 
     qm_thermo_scan(atom_coord_path='01.out', vib_path=None, ee_path=None,
                    T=list(range(100, 3050, 50)), P=[101325],

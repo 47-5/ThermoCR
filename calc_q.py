@@ -86,7 +86,9 @@ def q_ele(E_list, g_list, T, convert_unit=True):
     return q_e
 
 
-def q(q_t, q_r, q_v, q_e):
+def q(q_t, q_r, q_v, q_e, ignore_trans_and_rot=False):
+    if ignore_trans_and_rot:
+        return q_v * q_e
     return q_t * q_r * q_v * q_e
 
 
