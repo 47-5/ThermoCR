@@ -139,7 +139,7 @@ def qm_thermo(atom_coord_path=None, atom_numbers=None, coords=None,
         'q_tot_v_0': q_tot_v_0, 'q_tot_bot': q_tot_bot,
         'Cv/(J/mol/K)': Cv_tot, 'Cp/(J/mol/K)': Cp_tot, 'S/(J/mol/K)': S_tot,
         'zpe/(J/mol)': zpe, 'U_corr/(J/mol)': U_corr, 'H_corr/(J/mol)': H_corr, 'G_corr/(J/mol)': G_corr,
-        'ee/(J/mol)': ee, 'U/(J/mol)': U, 'H/(J/mol)': H, 'G/(J/mol)': G
+        'ee/(J/mol)': ee * au2j_mol, 'U/(J/mol)': U, 'H/(J/mol)': H, 'G/(J/mol)': G
     }
 
 
