@@ -1,6 +1,3 @@
-"""
-根据Shermo输出的扫描热力学数据，根据NASA等模型拟合公式，用于制作cantera的输入
-"""
 import os
 from os.path import isfile, join
 import numpy as np
@@ -194,10 +191,10 @@ def plot_fit(x, y, F, x_label='x', y_label='y', save=None, save_root_path='.'):
     ax.tick_params(axis='x', direction='in')
     ax.tick_params(axis='y', direction='in')
     if save:
-        plt.savefig(join(save_root_path, save), dpi=1000)
+        plt.savefig(join(save_root_path, f'{save}.png'), dpi=1000)
         plt.close()
-        export_data(x_data=x, y_data=y, export_path=join(save_root_path, f'{save}_experiment_data_scatter.xlsx'))
-        export_data(x_data=x_plot, y_data=y_plot, export_path=join(save_root_path, f'{save}_fit_data_curve.xlsx'))
+        export_data(x_data=x, y_data=y, export_path=join(save_root_path, f'{save}_experiment_data_scatter.txt'))
+        export_data(x_data=x_plot, y_data=y_plot, export_path=join(save_root_path, f'{save}_fit_data_curve.txt'))
     else:
         plt.show()
         plt.close()
@@ -358,15 +355,15 @@ def fit_thermo_model(
     if save_plots:
         plot_fit(
             X, Cp_T, FUN_CLASS(*popt, return_mode="Cp_T"),
-            "T", "Cp_T", "Cp_T.png", output_dir
+            "T", "Cp_T", "Cp_T", output_dir
         )
         plot_fit(
             X, H_T, FUN_CLASS(*popt, return_mode="H_T"),
-            "T", "H_T", "H_T.png", output_dir
+            "T", "H_T", "H_T", output_dir
         )
         plot_fit(
             X, S_T, FUN_CLASS(*popt, return_mode="S_T"),
-            "T", "S_T", "S_T.png", output_dir
+            "T", "S_T", "S_T", output_dir
         )
 
     # 输出Cantera YAML
