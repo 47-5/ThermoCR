@@ -90,11 +90,11 @@ def pE_exp(x, shiftE, C, A, D, T):
     return permeability * boltzmann
 
 
-if __name__ == '__main__':
-
-    chi = wigner_correction(438.7819, 500)
-    print(chi)
-
-    chi = eckart_correction(438.7819, 500, delta_H_barrier_f_0K=64180, delta_H_barrier_r_0K=160960, convert_unit=True)
-    print(chi)
+# if __name__ == '__main__':
+#
+#     chi = wigner_correction(438.7819, 500)
+#     print(chi)
+#
+#     chi = eckart_correction(438.7819, 500, delta_H_barrier_f_0K=64180, delta_H_barrier_r_0K=160960, convert_unit=True)
+#     print(chi)
 

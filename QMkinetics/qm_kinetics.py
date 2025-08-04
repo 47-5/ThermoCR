@@ -3,9 +3,10 @@ import pandas as pd
 from tools.constant import k_b, h, R
 from QMkinetics.tunnelling_effect import wigner_correction, eckart_correction
 from typing import List
+from os.path import basename
 
 
-__all__ = ['k_TST', 'k_VTST', 'k_TST_scan']
+__all__ = ['k_TST', 'k_VTST', 'k_TST_scan', 'k_VTST_scan']
 
 
 def k_TST(delta_G, delta_n, T=298.15, P0=100000, sigma=1, tunnelling_effect=None, imaginary_freq=None,
@@ -46,7 +47,7 @@ def k_TST(delta_G, delta_n, T=298.15, P0=100000, sigma=1, tunnelling_effect=None
 
 def k_TST_scan(thermo_ts_path, thermo_r1_path, thermo_r2_path=None, thermo_p_path=None,
                tunnelling_effect=None, imaginary_freq=None,
-               sigma=1):
+               sigma=1, out_path='QMkineticsScan.xlsx'):
     ts_thermo_df = pd.read_excel(thermo_ts_path)
     r1_thermo_df = pd.read_excel(thermo_r1_path)
     if thermo_r2_path is not None:
@@ -57,8 +58,6 @@ def k_TST_scan(thermo_ts_path, thermo_r1_path, thermo_r2_path=None, thermo_p_pat
         delta_n = 0
         delta_G = ts_thermo_df['G/(J/mol)'] - r1_thermo_df['G/(J/mol)']
     T = ts_thermo_df['T/K']
-
-
 
     if tunnelling_effect is not None:
         assert imaginary_freq is not None, 'imaginary_freq must set when considering tunnelling effect'
@@ -104,7 +103,10 @@ def k_TST_scan(thermo_ts_path, thermo_r1_path, thermo_r2_path=None, thermo_p_pat
             ]
         )
 
-    return k_scan
+    df = pd.DataFrame({'T/K': T, 'k': k_scan})
+    if out_path is not None:
+        df.to_excel(out_path, index=False)
+    return df
 
 
 def k_VTST(delta_G_list, delta_n, T=298.15, P0=100000, sigma=1, also_get_k_tst=False):
@@ -120,16 +122,30 @@ def k_VTST(delta_G_list, delta_n, T=298.15, P0=100000, sigma=1, also_get_k_tst=F
 def k_VTST_scan(thermo_irc_path_list: List[str],
                 thermo_r1_path, thermo_r2_path=None, thermo_p_path=None,
                 tunnelling_effect=None, imaginary_freq=None,
-                sigma=1, also_get_k_tst_scan=False):
+                sigma=1, also_get_k_tst_scan=False, out_path='QMkineticsScanVTST.xlsx',
+                out_TST_path='QMkineticsScanTST.xlsx'):
     k_tst_scan_list = [
         k_TST_scan(thermo_ts_path=i, thermo_r1_path=thermo_r1_path, thermo_r2_path=thermo_r2_path,
                    thermo_p_path=thermo_p_path, tunnelling_effect=tunnelling_effect, imaginary_freq=imaginary_freq,
                    sigma=sigma) for i in thermo_irc_path_list
     ]
 
+    T = pd.read_excel(thermo_r1_path)['T/K']
+
     k_vtst_scan = np.minimum.reduce(k_tst_scan_list)
+    df_vtst = pd.DataFrame({'T/K': T, 'k': k_vtst_scan})
+    if out_path is not None:
+        df_vtst.to_excel(out_path, index=False)
+
     if also_get_k_tst_scan:
-        return k_vtst_scan, k_tst_scan_list
+        df_tst = {basename(i): j for i, j in zip(thermo_irc_path_list, k_tst_scan_list)}
+        df_tst['T/K'] = T
+        df_tst = pd.DataFrame(df_tst)
+        if out_TST_path is not None:
+            df_tst.to_excel(out_TST_path, index=False)
+        return df_vtst, df_tst
+
+
     return k_vtst_scan
 
 
