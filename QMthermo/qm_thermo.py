@@ -1,11 +1,11 @@
 import numpy as np
 
-from calc_q import q_trans, q_rot_single_atom, q_rot_linear, q_rot_nonlinear, q_vib_V0, q_vib_bot, q_ele, q
-from calc_thermo_corr import *
-from read_qm_out import read_qm_out, read_atom_coord, read_vib, read_ee
+from QMthermo.calc_q import q_trans, q_rot_single_atom, q_rot_linear, q_rot_nonlinear, q_vib_V0, q_vib_bot, q_ele, q
+from QMthermo.calc_thermo_corr import *
+from tools.read_qm_out import read_qm_out, read_atom_coord, read_vib, read_ee
 from pointgroup.element_data import atom_data
-from utils import get_I, check_linear, get_rotational_symmetry_number, get_point_group
-from constant import convert_I, au2j_mol
+from tools.utils import get_I, check_linear, get_rotational_symmetry_number, get_point_group
+from tools.constant import convert_I, au2j_mol
 from typing import List
 import pandas as pd
 

@@ -1,7 +1,7 @@
 import numpy as np
 
-from constant import k_b, h, R, amu2kg, convert_I, wave2freq, au2eV
-from utils import get_point_group, get_I, check_linear, get_rotational_symmetry_number
+from tools.constant import k_b, h, R, amu2kg, convert_I, wave2freq, au2eV
+from tools.utils import get_point_group, get_I, check_linear, get_rotational_symmetry_number
 
 
 def q_trans(M, T, P, convert_unit=True):

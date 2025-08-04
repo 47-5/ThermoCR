@@ -3,7 +3,7 @@ import numpy as np
 
 from pointgroup import PointGroup
 from ase.units import Bohr
-from constant import amu2kg
+from tools.constant import amu2kg
 
 
 def get_point_group(coords, symbols=None, numbers=None):
