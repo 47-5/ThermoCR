@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 from tools.constant import k_b, h, R
 from QMkinetics.tunnelling_effect import wigner_correction, eckart_correction
+from typing import List
 
 
 __all__ = ['k_TST', 'k_VTST', 'k_TST_scan']
@@ -106,7 +107,6 @@ def k_TST_scan(thermo_ts_path, thermo_r1_path, thermo_r2_path=None, thermo_p_pat
     return k_scan
 
 
-
 def k_VTST(delta_G_list, delta_n, T=298.15, P0=100000, sigma=1, also_get_k_tst=False):
     if isinstance(delta_G_list, list):
         delta_G_list = np.array(delta_G_list)
@@ -117,10 +117,27 @@ def k_VTST(delta_G_list, delta_n, T=298.15, P0=100000, sigma=1, also_get_k_tst=F
     return k_vtst
 
 
-if __name__ == '__main__':
+def k_VTST_scan(thermo_irc_path_list: List[str],
+                thermo_r1_path, thermo_r2_path=None, thermo_p_path=None,
+                tunnelling_effect=None, imaginary_freq=None,
+                sigma=1, also_get_k_tst_scan=False):
+    k_tst_scan_list = [
+        k_TST_scan(thermo_ts_path=i, thermo_r1_path=thermo_r1_path, thermo_r2_path=thermo_r2_path,
+                   thermo_p_path=thermo_p_path, tunnelling_effect=tunnelling_effect, imaginary_freq=imaginary_freq,
+                   sigma=sigma) for i in thermo_irc_path_list
+    ]
 
-    k = k_TST(delta_G=23000, delta_n=0)
-    print(k)
+    k_vtst_scan = np.minimum.reduce(k_tst_scan_list)
+    if also_get_k_tst_scan:
+        return k_vtst_scan, k_tst_scan_list
+    return k_vtst_scan
 
-    k_vtst = k_VTST(delta_G_list=[23000, 24000], delta_n=0)
-    print(k_vtst)
+
+
+# if __name__ == '__main__':
+#
+#     k = k_TST(delta_G=23000, delta_n=0)
+#     print(k)
+#
+#     k_vtst = k_VTST(delta_G_list=[23000, 24000], delta_n=0)
+#     print(k_vtst)
