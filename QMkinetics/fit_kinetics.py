@@ -207,11 +207,11 @@ def fit_kinetics_model(
     return popt, fitted_model
 
 
-if __name__ == '__main__':
-
-    fit_kinetics_model(
-        data_path='../QMkineticsScan.xlsx',
-        r_name_list=['S01', 'S01'],
-        p_name_list=['S02'],
-        output_dir='../Arrhenius_result'
-    )
+# if __name__ == '__main__':
+#
+#     fit_kinetics_model(
+#         data_path='../QMkineticsScan.xlsx',
+#         r_name_list=['S01', 'S01'],
+#         p_name_list=['S02'],
+#         output_dir='../Arrhenius_result'
+#     )
