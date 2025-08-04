@@ -74,13 +74,13 @@ def get_rotational_symmetry_number(point_group):
     raise ValueError(f"未知的点群符号: {point_group}")
 
 
-# 示例使用
-if __name__ == "__main__":
-    # 测试用例
-    test_groups = [
-        'C1', 'Cs', 'Ci', 'C2', 'C3', 'C3v', 'C4h', 'S4',
-        'D2', 'D3', 'D3h', 'D5d', 'Td', 'Oh', 'Ih', 'Cinfv', 'Dinfh'
-    ]
-
-    for pg in test_groups:
-        print(f"点群 {pg} 的旋转对称数: {get_rotational_symmetry_number(pg)}")
+# # 示例使用
+# if __name__ == "__main__":
+#     # 测试用例
+#     test_groups = [
+#         'C1', 'Cs', 'Ci', 'C2', 'C3', 'C3v', 'C4h', 'S4',
+#         'D2', 'D3', 'D3h', 'D5d', 'Td', 'Oh', 'Ih', 'Cinfv', 'Dinfh'
+#     ]
+#
+#     for pg in test_groups:
+#         print(f"点群 {pg} 的旋转对称数: {get_rotational_symmetry_number(pg)}")
