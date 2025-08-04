@@ -156,9 +156,9 @@ def qm_thermo_scan(
         ):
     results = []
     for t in T:
-        print(f'T={t} K')
+        # print(f'T={t} K')
         for p in P:
-            print(f'p={p} Pa')
+            # print(f'p={p} Pa')
             result = qm_thermo(atom_coord_path=atom_coord_path, atom_numbers=atom_numbers, coords=coords,
                                vib_path=vib_path, vibfreqs=vibfreqs,
                                ee_path=ee_path, ee=ee,

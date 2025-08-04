@@ -1,5 +1,9 @@
 import numpy as np
+import pandas as pd
 from tools.constant import k_b, h, R
+
+
+__all__ = ['k_TST', 'k_VTST', 'k_TST_scan']
 
 
 def k_TST(delta_G, delta_n, T=298.15, P0=100000, sigma=1):
@@ -16,6 +20,24 @@ def k_TST(delta_G, delta_n, T=298.15, P0=100000, sigma=1):
 
     k = sigma * k_b * T / h * (k_b * T / P0) ** delta_n * np.exp(-delta_G / (R * T))
     return k
+
+
+def k_TST_scan(thermo_ts_path, thermo_r1_path, thermo_r2_path=None, sigma=1):
+    ts_thermo_df = pd.read_excel(thermo_ts_path)
+    r1_thermo_df = pd.read_excel(thermo_r1_path)
+    if thermo_r2_path is not None:
+        r2_thermo_df = pd.read_excel(thermo_r2_path)
+        delta_n = 1
+        delta_G = ts_thermo_df['G/(J/mol)'] - r1_thermo_df['G/(J/mol)'] - r2_thermo_df['G/(J/mol)']
+    else:
+        delta_n = 0
+        delta_G = ts_thermo_df['G/(J/mol)'] - r1_thermo_df['G/(J/mol)']
+
+    T = ts_thermo_df['T/K']
+
+    k = k_TST(delta_G=delta_G, delta_n=delta_n, T=T, sigma=sigma)
+    return k
+
 
 
 def k_VTST(delta_G_list, delta_n, T=298.15, P0=100000, sigma=1, also_get_k_tst=False):

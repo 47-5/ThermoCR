@@ -4,6 +4,9 @@ from tools.constant import h, k_b, R, cm_1_to_s_1, Na
 from numpy import sqrt, cosh, pi, exp
 
 
+__all__ = ['wigner_correction', 'eckart_correction']
+
+
 def wigner_correction(imaginary_freq, T, convert_unit=True):
     if convert_unit:
         chi = 1 + 1 / 24 * (h * imaginary_freq * cm_1_to_s_1/ (k_b * T)) ** 2
