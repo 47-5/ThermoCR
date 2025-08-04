@@ -18,3 +18,5 @@ au2j_mol = au2kj_mol * 1000
 au2cm_1=219474.6363e0
 
 Eh = 4.3597447222071e-18  # 1 Hartree = ? J
+
+cm_1_to_s_1 = 3e10  # cm^-1 -> s^-1
