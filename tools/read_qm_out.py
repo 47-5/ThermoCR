@@ -22,6 +22,31 @@ def read_vib(filepath):
     return vibfreqs
 
 
+def read_imaginary_vib(filepath, vibfreqs=None):
+    if vibfreqs is None:
+        vibfreqs = read_vib(filepath=filepath)
+
+    # 将所有元素转换为浮点数
+    vibfreqs_float = [float(freq) for freq in vibfreqs]
+
+    # 筛选出所有的负数频率
+    negative_freqs = [freq for freq in vibfreqs_float if freq < 0.0]
+
+    if len(negative_freqs) > 1:
+        # 当存在多个负数频率时，选取绝对值最大的那一个
+        selected_freq = min(negative_freqs)
+        print("警告：检测到多个虚频，已选择绝对值最大的一个。")
+    elif len(negative_freqs) == 1:
+        # 只有一个负数频率的情况
+        selected_freq = negative_freqs[0]
+    else:
+        # 没有找到负数频率
+        selected_freq = None
+        print("注意：没有检测到虚频。")
+
+    return selected_freq
+
+
 def read_ee(filepath, ee_index=-1, return_Hartree=True):
     data = cclib.io.ccread(filepath)
     ee = data.scfenergies[ee_index]
@@ -33,8 +58,5 @@ def read_ee(filepath, ee_index=-1, return_Hartree=True):
 
 # if __name__ == "__main__":
 #
-#     # print(data.scfenergies)
-#
-#     data = read_qm_out('01_02.out')
-#
-#     print(read_atom_coord('01_02_sp.out'))
+#     vib = read_imaginary_vib(filepath=None, vibfreqs=[-200, 100, 300])
+#     print(vib)
