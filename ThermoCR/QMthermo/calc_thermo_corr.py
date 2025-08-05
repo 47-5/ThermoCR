@@ -1,7 +1,7 @@
 import numpy as np
 
-from QMthermo.calc_q import q, q_trans, q_rot, q_vib_bot, q_vib_V0, q_ele
-from tools.constant import R, Na, k_b, au2eV, h, wave2freq, au2kj_mol, Eh
+from ThermoCR.QMthermo.calc_q import q, q_trans, q_rot, q_vib_bot, q_vib_V0, q_ele
+from ThermoCR.tools.constant import R, Na, k_b, au2eV, h, wave2freq, au2kj_mol, Eh
 
 
 def U_trans(T):

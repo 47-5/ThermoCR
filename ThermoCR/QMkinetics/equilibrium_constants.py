@@ -1,5 +1,5 @@
 import numpy as np
-from tools.constant import R
+from ThermoCR.tools.constant import R
 
 
 def k_equilibrium_constants(delta_G, T):

@@ -1,7 +1,7 @@
 import warnings
 
 import numpy as np
-from pointgroup.element_data import element_mass
+from ThermoCR.pointgroup.element_data import element_mass
 
 
 def get_mass(symbols):

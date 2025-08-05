@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
-from tools.constant import k_b, h, R
-from QMkinetics.tunnelling_effect import wigner_correction, eckart_correction
+from ThermoCR.tools.constant import k_b, h, R
+from ThermoCR.QMkinetics.tunnelling_effect import wigner_correction, eckart_correction
 from typing import List
 from os.path import basename
 

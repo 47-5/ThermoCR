@@ -7,8 +7,8 @@ from sklearn.metrics import mean_squared_error, mean_absolute_error, mean_absolu
 from matplotlib import rcParams
 import matplotlib.pyplot as plt
 
-from tools.constant import R
-from QMkinetics.export_cantera_kinetics_yaml import make_cantera_reaction_yaml
+from ThermoCR.tools.constant import R
+from ThermoCR.QMkinetics.export_cantera_kinetics_yaml import make_cantera_reaction_yaml
 
 
 class Arrhenius:

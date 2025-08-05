@@ -1,7 +1,7 @@
 __version__ = '0.4.4'
 import numpy as np
-from pointgroup.operations import Inversion, Rotation, ImproperRotation, Reflection, rotation_matrix
-from pointgroup import tools
+from ThermoCR.pointgroup.operations import Inversion, Rotation, ImproperRotation, Reflection, rotation_matrix
+from ThermoCR.pointgroup import tools
 
 
 def abs_to_rad(error, coord):

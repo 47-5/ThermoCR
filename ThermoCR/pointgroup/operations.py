@@ -1,5 +1,5 @@
 import numpy as np
-from pointgroup.tools import magic_formula, rotation_matrix
+from ThermoCR.pointgroup.tools import magic_formula, rotation_matrix
 
 
 class Inversion:

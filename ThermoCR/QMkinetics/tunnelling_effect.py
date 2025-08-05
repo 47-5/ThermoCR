@@ -1,6 +1,6 @@
 import numpy as np
 from scipy.integrate import quad
-from tools.constant import h, k_b, R, cm_1_to_s_1, Na
+from ThermoCR.tools.constant import h, k_b, R, cm_1_to_s_1, Na
 from numpy import sqrt, cosh, pi, exp
 
 
