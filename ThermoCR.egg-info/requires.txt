@@ -4,4 +4,4 @@ scipy
 ase
 openpyxl
 cclib
-sklearn
+scikit-learn

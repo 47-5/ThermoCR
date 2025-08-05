@@ -13,4 +13,4 @@ Requires-Dist: scipy
 Requires-Dist: ase
 Requires-Dist: openpyxl
 Requires-Dist: cclib
-Requires-Dist: sklearn
+Requires-Dist: scikit-learn
