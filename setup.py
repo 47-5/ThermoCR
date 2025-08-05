@@ -14,7 +14,7 @@ setup(
 
     packages=find_packages(),
 
-    install_requires=['pandas', 'numpy', 'scipy', 'ase', 'openpyxl', 'cclib'],
+    install_requires=['pandas', 'numpy', 'scipy', 'ase', 'openpyxl', 'cclib', 'sklearn'],
     python_requires='>3.5',
 
 

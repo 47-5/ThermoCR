@@ -4,3 +4,4 @@ scipy
 ase
 openpyxl
 cclib
+sklearn
