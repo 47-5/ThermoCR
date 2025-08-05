@@ -66,20 +66,18 @@ def S_rot_nonlinear(q_r, T):
 
 
 def U_ele(E_list, g_list, T, convert_unit=True):
-    E_s = np.copy(E_list)
+    E_s = np.array(E_list, dtype=float)
+    g_s = np.array(g_list, dtype=float)
+
     if convert_unit:
         E_s *= au2eV
-    E_s -= E_s[0]
+    E_s -= E_s.min()
 
-    numerator = 0
-    denominator = 0
+    exp_terms = np.exp(-E_s / (k_b * T))
+    numerator = np.sum(g_s * E_s * exp_terms) / (k_b * T)
+    denominator = np.sum(g_s * exp_terms)
 
-    for E, g in zip(E_s, g_list):
-        numerator += g * (E / (k_b * T)) * np.exp(-E / (k_b * T))
-        denominator += g * np.exp(-E / (k_b * T))
-
-    U = R * T * numerator / denominator
-    return U
+    return R * T * numerator / denominator
 
 
 def H_ele(E_list, g_list, T, convert_unit=True):
@@ -87,27 +85,22 @@ def H_ele(E_list, g_list, T, convert_unit=True):
 
 
 def Cv_ele(E_list, g_list, T, convert_unit=True):
-    E_s = np.copy(E_list)
+    E_s = np.array(E_list, dtype=float)
+    g_s = np.array(g_list, dtype=float)
+
     if convert_unit:
         E_s *= au2eV
-    E_s -= E_s[0]
+    E_s -= E_s.min()
 
-    numerator1 = 0
-    denominator1 = 0
-    for E, g in zip(E_s, g_list):
-        numerator1 += g * (E / (k_b * T)) ** 2 * np.exp(-E / (k_b * T))
-        denominator1 += g * np.exp(-E / (k_b * T))
-    term1 = R * numerator1 / denominator1
+    kT = k_b * T
+    exp_terms = np.exp(-E_s / kT)
+    gE_exp = g_s * exp_terms
+    sum_gE_exp = np.sum(gE_exp)
 
-    numerator2 = 0
-    denominator2 = 0
-    for E, g in zip(E_s, g_list):
-        numerator2 += g * (E / (k_b * T)) * np.exp(-E / (k_b * T))
-        denominator2 += g * np.exp(-E / (k_b * T))
-    term2 = R * (numerator2 / denominator2) ** 2
+    term1 = np.sum(g_s * (E_s / kT) ** 2 * exp_terms) / sum_gE_exp
+    term2 = (np.sum(g_s * (E_s / kT) * exp_terms) / sum_gE_exp) ** 2
 
-    Cv = term1 + term2
-    return Cv
+    return R * (term1 - term2)
 
 
 def Cp_ele(E_list, g_list, T, convert_unit=True):
@@ -115,35 +108,27 @@ def Cp_ele(E_list, g_list, T, convert_unit=True):
 
 
 def S_ele(E_list, g_list, T, convert_unit=True):
-    E_s = np.copy(E_list)
+    E_s = np.array(E_list, dtype=float)
+    g_s = np.array(g_list, dtype=float)
+
     if convert_unit:
         E_s *= au2eV
     E_s -= E_s[0]
 
-    numerator = 0
-    denominator = 0
+    exp_terms = np.exp(-E_s / (k_b * T))
+    sum_g_exp = np.sum(g_s * exp_terms)
+    sum_gE_exp = np.sum(g_s * E_s * exp_terms) / (k_b * T)
 
-    for E, g in zip(E_s, g_list):
-        numerator += g * (E / (k_b * T)) * np.exp(-E / (k_b * T))
-        denominator += g * np.exp(-E / (k_b * T))
-
-    term1 = R * np.log(denominator)
-    term2 = R * numerator / denominator
-    S = term1 + term2
-    return S
+    return R * (np.log(sum_g_exp) + sum_gE_exp / sum_g_exp)
 
 
 def ZPE(vibfreqs, convert_unit=True, scale_factor=1.0):
-    v = np.copy(vibfreqs)
-    v *= scale_factor
+    v = np.array(vibfreqs, dtype=float) * scale_factor
     if convert_unit:
         v = v * wave2freq / Eh
-    zpe = 0
-    for vibfreq in v:
-        if vibfreq < 0:
-            pass
-        else:
-            zpe += 0.5 * vibfreq * h
+
+    zpe = 0.5 * h * (v[v >= 0]).sum()
+
     zpe *= (au2kj_mol * 1000)
     return zpe
 
@@ -163,38 +148,58 @@ def ZPE_one_mode(vibfreq, convert_unit=True):
 
 
 def U_vib_0_T(vibfreqs, T, convert_unit=True, scale_factor=1.0):
-    v = np.copy(vibfreqs)
-    v *= scale_factor
+    v = np.array(vibfreqs, dtype=float) * scale_factor
     if convert_unit:
         v = v * wave2freq
-    U = 0
-    for vibfreq in v:
-        if vibfreq < 0:
-            pass
-        else:
-            U += U_vib_0_T_RRHO(vibfreq=vibfreq, T=T)
-    return U
+
+    pos_mask = v >= 0
+    v_pos = v[pos_mask]
+
+    if len(v_pos) == 0:
+        return 0.0
+
+    term = h * v_pos / (k_b * T)
+    exp_term = np.exp(-term)
+    return np.sum(R * T * term * exp_term / (1 - exp_term))
 
 
-def U_vib_T(vibfreqs, T, convert_unit=True, QRRHO=False, scale_factor_zpe=1.0, scale_factor_U_0_T=1.0):
-    v = np.copy(vibfreqs)
+def U_vib_T(vibfreqs, T, convert_unit=True, QRRHO=False,
+            scale_factor_zpe=1.0, scale_factor_U_0_T=1.0):
+    v = np.array(vibfreqs, dtype=float)
     if convert_unit:
         v = v * wave2freq
 
     v_zpe = v * scale_factor_zpe
     v_U_0_T = v * scale_factor_U_0_T
-    U = 0
-    for vibfreq, vibfreq_u, vibfreq_zpe in zip(v, v_U_0_T, v_zpe):
-        if vibfreq < 0:
-            pass
-        else:
-            U_RRHO = U_vib_0_T_RRHO(vibfreq=vibfreq_u, T=T) + ZPE_one_mode(vibfreq=vibfreq_zpe, convert_unit=convert_unit)
-            if QRRHO:
-                wei = w(v=vibfreq, convert_unit=convert_unit)
-                U += (wei * U_RRHO + (1 - wei) * U_vib_FR(T=T))
-            else:
-                U += U_RRHO
-    return U
+
+    pos_mask = v >= 0
+    v_pos = v[pos_mask]
+    v_zpe_pos = v_zpe[pos_mask]
+    v_U_0_T_pos = v_U_0_T[pos_mask]
+
+    if len(v_pos) == 0:
+        return 0.0
+
+    # 计算RRHO部分
+    term = h * v_U_0_T_pos / (k_b * T)
+    exp_term = np.exp(-term)
+    U_0_T = R * T * term * exp_term / (1 - exp_term)
+
+    # 计算ZPE部分
+    if convert_unit:
+        zpe = 0.5 * h * v_zpe_pos / Eh * (au2kj_mol * 1000)
+    else:
+        zpe = 0.5 * h * v_zpe_pos * (au2kj_mol * 1000)
+
+    U_RRHO = U_0_T + zpe
+
+    if not QRRHO:
+        return np.sum(U_RRHO)
+
+    # QRRHO处理
+    wei = w_vec(v_pos, convert_unit=False)
+    U_FR = R * T / 2
+    return np.sum(wei * U_RRHO + (1 - wei) * U_FR)
 
 
 def H_vib_0_T(vibfreqs, T, convert_unit=True, scale_factor=1.0):
@@ -207,17 +212,19 @@ def H_vib_T(vibfreqs, T, convert_unit=True, QRRHO=False, scale_factor_zpe=1.0, s
 
 
 def Cv_vib(vibfreqs, T, convert_unit=True, scale_factor=1.0):
-    v = np.copy(vibfreqs)
-    v *= scale_factor
+    v = np.array(vibfreqs, dtype=float) * scale_factor
     if convert_unit:
         v = v * wave2freq
-    Cv = 0
-    for vibfreq in v:
-        if vibfreq < 0:
-            pass
-        else:
-            Cv += R * (h * vibfreq  / (k_b * T)) ** 2 * np.exp(-h * vibfreq / (k_b * T)) / (1 - np.exp(-h * vibfreq / (k_b * T))) ** 2
-    return Cv
+
+    pos_mask = v >= 0
+    v_pos = v[pos_mask]
+
+    if len(v_pos) == 0:
+        return 0.0
+
+    term = h * v_pos / (k_b * T)
+    exp_term = np.exp(-term)
+    return np.sum(R * term ** 2 * exp_term / (1 - exp_term) ** 2)
 
 
 def Cp_vib(vibfreqs, T, convert_unit=True, scale_factor=1.0):
@@ -225,28 +232,32 @@ def Cp_vib(vibfreqs, T, convert_unit=True, scale_factor=1.0):
 
 
 def S_vib(vibfreqs, T, convert_unit=True, QRRHO=True, scale_factor=1.0):
-    v = np.copy(vibfreqs)
+    v = np.array(vibfreqs, dtype=float)
     if convert_unit:
         v = v * wave2freq
+
     v_s = v * scale_factor
-    S = 0
-    for vibfreq, vibfreq_s in zip(v, v_s):
-        if vibfreq < 0:
-            pass
-        else:
-            if QRRHO:
-                wei = w(vibfreq, T, convert_unit=convert_unit)
-                S += (wei * S_vib_RRHO(vibfreq=vibfreq_s, T=T) + (1 - wei) * S_vib_FR(vibfreq=vibfreq_s, T=T))
-            else:
-                S += S_vib_RRHO(vibfreq=vibfreq_s, T=T)
-    return S
+    pos_mask = v >= 0
+    v_pos = v[pos_mask]
+    v_s_pos = v_s[pos_mask]
+
+    if len(v_pos) == 0:
+        return 0.0
+
+    if not QRRHO:
+        return np.sum(S_vib_RRHO_vec(v_s_pos, T))
+
+    # QRRHO处理
+    wei = w_vec(v_pos, convert_unit=False)
+    S_RRHO = S_vib_RRHO_vec(v_s_pos, T)
+    S_FR = S_vib_FR_vec(v_s_pos, T)
+    return np.sum(wei * S_RRHO + (1 - wei) * S_FR)
 
 
-def w(v, v0=100, convert_unit=True):
+def w_vec(v, v0=100, convert_unit=True):
     if convert_unit:
         v0 = v0 * wave2freq
-    w = 1 / (1 + (v0 / v) ** 4)
-    return w
+    return 1 / (1 + (v0 / v)**4)
 
 
 def U_vib_0_T_RRHO(vibfreq, T):
@@ -259,18 +270,16 @@ def U_vib_FR(T):
     return U
 
 
-def S_vib_RRHO(vibfreq, T):
-    numerator = np.exp(-h * vibfreq / (k_b * T))
-    denominator = 1 - numerator
-    S = R * ((h * vibfreq / (k_b * T)) * numerator / denominator - np.log(denominator))
-    return S
+def S_vib_RRHO_vec(vibfreqs, T):
+    term = h * vibfreqs / (k_b * T)
+    exp_term = np.exp(-term)
+    return R * (term * exp_term / (1 - exp_term) - np.log(1 - exp_term))
 
 
-def S_vib_FR(vibfreq, T, Bav=1e-44):
-    miu = h / (8 * np.pi ** 2 * vibfreq)
+def S_vib_FR_vec(vibfreqs, T, Bav=1e-44):
+    miu = h / (8 * np.pi**2 * vibfreqs)
     miu_ = miu * Bav / (miu + Bav)
-    S = R * (0.5 + 0.5 * np.log(8 * np.pi ** 3 * miu_ * k_b * T / h ** 2))
-    return S
+    return R * (0.5 + 0.5 * np.log(8 * np.pi**3 * miu_ * k_b * T / h**2))
 
 
 # if __name__ == '__main__':
