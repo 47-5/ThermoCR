@@ -1,0 +1,15 @@
+Metadata-Version: 2.1
+Name: ThermoCR
+Version: 1.0
+Summary: ThermoCR -- A tool for calculating thermodynamic quantities and reaction rate constants based on quantum chemical calculations
+Home-page: https://github.com/47-5/ThermoCR
+Author: Ruichen Liu
+Author-email: 1197748182@qq.com
+Requires-Python: >3.5
+License-File: LICENSE
+Requires-Dist: pandas
+Requires-Dist: numpy
+Requires-Dist: scipy
+Requires-Dist: ase
+Requires-Dist: openpyxl
+Requires-Dist: cclib
