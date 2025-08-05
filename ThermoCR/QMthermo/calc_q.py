@@ -51,12 +51,9 @@ def q_vib_bot(vibfreqs, T, convert_unit=True):
     v = np.copy(vibfreqs)
     if convert_unit:
         v *= wave2freq
-    q_v = 1
-    for vibfreq in v:
-        if vibfreq < 0:
-            pass
-        else:
-            q_v *= (np.exp((-h * vibfreq) / (2 * k_b * T)) / (1 - np.exp((-h * vibfreq) / (k_b * T))))
+    positive_freq_mask = v >= 0
+    vibfreqs_pos = v[positive_freq_mask]
+    q_v = np.prod(np.exp((-h * vibfreqs_pos) / (2 * k_b * T)) / (1 - np.exp((-h * vibfreqs_pos) / (k_b * T))))
     return q_v
 
 
@@ -64,12 +61,9 @@ def q_vib_V0(vibfreqs, T, convert_unit=True):
     v = np.copy(vibfreqs)
     if convert_unit:
         v *= wave2freq
-    q_v = 1
-    for vibfreq in v:
-        if vibfreq < 0:
-            pass
-        else:
-            q_v *= 1 / (1 - np.exp((-h * vibfreq) / (k_b * T)))
+    positive_freq_mask = v >= 0
+    vibfreqs_pos = v[positive_freq_mask]
+    q_v = np.prod(1 / (1 - np.exp((-h * vibfreqs_pos) / (k_b * T))))
     return q_v
 
 
@@ -80,9 +74,7 @@ def q_ele(E_list, g_list, T, convert_unit=True):
     E_s -= E_s[0]
     g_s = np.copy(g_list)
 
-    q_e = 0
-    for E, g in zip(E_s, g_s):
-        q_e += g * np.exp(-E / (k_b * T))
+    q_e = np.sum(g_s * np.exp(-E_s / (k_b * T)))
     return q_e
 
 
