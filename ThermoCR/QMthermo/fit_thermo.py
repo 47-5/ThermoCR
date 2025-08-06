@@ -1,5 +1,5 @@
 import os
-from os.path import isfile, join
+from os.path import join
 import numpy as np
 import pandas as pd
 from scipy.optimize import curve_fit
@@ -7,7 +7,7 @@ from sklearn.metrics import mean_squared_error, mean_absolute_error, mean_absolu
 from matplotlib import rcParams
 import matplotlib.pyplot as plt
 
-from ThermoCR.QMthermo.export_cantera_thermo_yaml import write_cantera_yaml_thermo_NASA7, write_cantera_yaml_thermo_NASA9, write_cantera_yaml_thermo_Shomate
+from ThermoCR.tools.about_cantera.export_cantera_thermo_yaml import write_cantera_yaml_thermo_NASA7, write_cantera_yaml_thermo_NASA9, write_cantera_yaml_thermo_Shomate
 
 
 kj_to_j = 1000

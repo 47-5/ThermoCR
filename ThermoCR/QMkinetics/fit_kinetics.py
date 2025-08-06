@@ -1,5 +1,5 @@
 import os
-from os.path import isfile, join
+from os.path import join
 import numpy as np
 import pandas as pd
 from scipy.optimize import curve_fit
@@ -8,7 +8,7 @@ from matplotlib import rcParams
 import matplotlib.pyplot as plt
 
 from ThermoCR.tools.constant import R
-from ThermoCR.QMkinetics.export_cantera_kinetics_yaml import make_cantera_reaction_yaml
+from ThermoCR.tools.about_cantera.export_cantera_kinetics_yaml import make_cantera_reaction_yaml
 
 
 class Arrhenius:
