@@ -96,7 +96,8 @@ def fit_kinetics_model(
         r_name_list, p_name_list, reversible=True,
         model_type: str = 'Arrhenius',
         data_columns=None,
-
+        start_index: int = 0,
+        end_index: int = None,
         output_dir: str = ".",
         save_plots: bool = True,
         save_metrics: bool = True,
@@ -135,9 +136,9 @@ def fit_kinetics_model(
     df = pd.read_excel(data_path)
 
     # 提取列数据
-    T = df[data_columns["T"]].to_numpy()
+    T = df[data_columns["T"]].to_numpy()[start_index:end_index]
     T = np.array(T, dtype=float)
-    k = df[data_columns['k']].to_numpy()
+    k = df[data_columns['k']].to_numpy()[start_index:end_index]
 
     n_data = len(T)
     X = T
