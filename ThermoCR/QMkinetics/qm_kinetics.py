@@ -9,7 +9,9 @@ from os.path import basename
 __all__ = ['k_TST', 'k_VTST', 'k_TST_scan', 'k_VTST_scan']
 
 
-def k_TST(delta_G, delta_n, T=298.15, P0=100000, sigma=1, tunnelling_effect=None, imaginary_freq=None,
+def k_TST(delta_G, delta_n, T=298.15, P0=100000, sigma=1,
+          liquid=False,
+          tunnelling_effect=None, imaginary_freq=None,
           delta_H_barrier_f_0K=None, delta_H_barrier_r_0K=None):
     """
     calculate k base on TST
@@ -23,11 +25,14 @@ def k_TST(delta_G, delta_n, T=298.15, P0=100000, sigma=1, tunnelling_effect=None
     :param delta_H_barrier_r_0K:
     :param imaginary_freq:
     :param tunnelling_effect:
-    :return: k:双分子反应单位: s^-1 * (molecule / m^3)
-             k:单分子反应单位: s^-1
+    :return: if liquid==True: k: (mol/m^3)^(-delta_n) * s^-1
+             if liquid==False: k: (molecule/m^3)^(-delta_n) * s^-1
     """
+    if liquid:
+        k = sigma * k_b * T / h * np.exp(-delta_G / (R * T))
+    else:
+        k = sigma * k_b * T / h * (k_b * T / P0) ** delta_n * np.exp(-delta_G / (R * T))
 
-    k = sigma * k_b * T / h * (k_b * T / P0) ** delta_n * np.exp(-delta_G / (R * T))
     if tunnelling_effect is not None:
         assert imaginary_freq is not None, 'imaginary_freq must set when considering tunnelling effect'
         if tunnelling_effect == 'wigner':
@@ -46,6 +51,7 @@ def k_TST(delta_G, delta_n, T=298.15, P0=100000, sigma=1, tunnelling_effect=None
 
 
 def k_TST_scan(thermo_ts_path, thermo_r1_path, thermo_r2_path=None, thermo_p_path=None,
+               liquid=False,
                tunnelling_effect=None, imaginary_freq=None,
                sigma=1, out_path='QMkineticsScan.xlsx'):
     ts_thermo_df = pd.read_excel(thermo_ts_path)
@@ -65,7 +71,8 @@ def k_TST_scan(thermo_ts_path, thermo_r1_path, thermo_r2_path=None, thermo_p_pat
         if tunnelling_effect == 'wigner':
             k_scan = np.array(
                 [
-                    k_TST(delta_G=delta_g, delta_n=delta_n, T=t, sigma=sigma, tunnelling_effect='wigner', imaginary_freq=imaginary_freq)
+                    k_TST(delta_G=delta_g, delta_n=delta_n, T=t, sigma=sigma, liquid=liquid,
+                          tunnelling_effect='wigner', imaginary_freq=imaginary_freq)
                     for delta_g, t in zip(delta_G, T)
                 ]
             )
@@ -84,7 +91,8 @@ def k_TST_scan(thermo_ts_path, thermo_r1_path, thermo_r2_path=None, thermo_p_pat
                                    (p_thermo_df['ee/(J/mol)'] + p_thermo_df['zpe/(J/mol)'])
             k_scan = np.array(
                 [
-                    k_TST(delta_G=delta_g, delta_n=delta_n, T=t, sigma=sigma, tunnelling_effect=tunnelling_effect,
+                    k_TST(delta_G=delta_g, delta_n=delta_n, T=t, sigma=sigma, liquid=liquid,
+                          tunnelling_effect=tunnelling_effect,
                           imaginary_freq=imaginary_freq, delta_H_barrier_f_0K=f, delta_H_barrier_r_0K=r)
                     for delta_g, t, f, r in zip(delta_G, T, delta_H_barrier_f_0K_scan, delta_H_barrier_r_0K_scan)
                 ]
@@ -97,7 +105,8 @@ def k_TST_scan(thermo_ts_path, thermo_r1_path, thermo_r2_path=None, thermo_p_pat
     else:
         k_scan = np.array(
             [
-                k_TST(delta_G=delta_g, delta_n=delta_n, T=t, sigma=sigma, tunnelling_effect=tunnelling_effect,
+                k_TST(delta_G=delta_g, delta_n=delta_n, T=t, sigma=sigma, liquid=liquid,
+                      tunnelling_effect=tunnelling_effect,
                       imaginary_freq=imaginary_freq)
                 for delta_g, t in zip(delta_G, T)
             ]
@@ -109,10 +118,10 @@ def k_TST_scan(thermo_ts_path, thermo_r1_path, thermo_r2_path=None, thermo_p_pat
     return df
 
 
-def k_VTST(delta_G_list, delta_n, T=298.15, P0=100000, sigma=1, also_get_k_tst=False):
+def k_VTST(delta_G_list, delta_n, T=298.15, P0=100000, liquid=False, sigma=1, also_get_k_tst=False):
     if isinstance(delta_G_list, list):
         delta_G_list = np.array(delta_G_list)
-    k_tst_list = k_TST(delta_G=delta_G_list, delta_n=delta_n, T=T, P0=P0, sigma=sigma)
+    k_tst_list = k_TST(delta_G=delta_G_list, delta_n=delta_n, T=T, P0=P0, sigma=sigma, liquid=liquid)
     k_vtst = np.min(k_tst_list)
     if also_get_k_tst:
         return k_vtst, k_tst_list
@@ -121,12 +130,15 @@ def k_VTST(delta_G_list, delta_n, T=298.15, P0=100000, sigma=1, also_get_k_tst=F
 
 def k_VTST_scan(thermo_irc_path_list: List[str],
                 thermo_r1_path, thermo_r2_path=None, thermo_p_path=None,
+                liquid=False,
                 tunnelling_effect=None, imaginary_freq=None,
                 sigma=1, also_get_k_tst_scan=False, out_path='QMkineticsScanVTST.xlsx',
                 out_TST_path='QMkineticsScanTST.xlsx'):
     k_tst_scan_list = [
         k_TST_scan(thermo_ts_path=i, thermo_r1_path=thermo_r1_path, thermo_r2_path=thermo_r2_path,
-                   thermo_p_path=thermo_p_path, tunnelling_effect=tunnelling_effect, imaginary_freq=imaginary_freq,
+                   thermo_p_path=thermo_p_path,
+                   liquid=liquid,
+                   tunnelling_effect=tunnelling_effect, imaginary_freq=imaginary_freq,
                    sigma=sigma) for i in thermo_irc_path_list
     ]
 

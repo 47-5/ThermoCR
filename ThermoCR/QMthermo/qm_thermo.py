@@ -18,7 +18,8 @@ def qm_thermo(atom_coord_path=None, atom_numbers=None, coords=None,
               U_Minenkov=False, S_Grimme=True, verbose=True,
               read_ee_index=-1,
               E_list=None, g_list=None,
-              ignore_trans_and_rot=False):
+              ignore_trans_and_rot=False,
+              c=None):
     # load data
     # 如果提供了atom_numbers和coords，则不需要从atom_coord_path读取
     if atom_numbers is None or coords is None:
@@ -117,6 +118,11 @@ def qm_thermo(atom_coord_path=None, atom_numbers=None, coords=None,
     U = ee * au2j_mol + U_corr
     H = ee * au2j_mol  + H_corr
     G = ee * au2j_mol  + G_corr
+
+    if c is not None:
+        c_gas = P / (R * T)
+        delta_G_of_conc = R * T * np.log(c / c_gas)
+        G += delta_G_of_conc
     if verbose:
         print('========== Total ==========')
         print(f'Ignore contribution of trans and rot? {ignore_trans_and_rot}')
@@ -134,13 +140,26 @@ def qm_thermo(atom_coord_path=None, atom_numbers=None, coords=None,
         print(f'Sum of electronic energy and thermal correction to U: {U}  J/mol {U/au2j_mol} a.u.')
         print(f'Sum of electronic energy and thermal correction to H: {H}  J/mol {H/au2j_mol} a.u.')
         print(f'Sum of electronic energy and thermal correction to G: {G}  J/mol {G/au2j_mol} a.u.')
-    return {
-        'T/K': T, 'P/Pa': P,
-        'q_tot_v_0': q_tot_v_0, 'q_tot_bot': q_tot_bot,
-        'Cv/(J/mol/K)': Cv_tot, 'Cp/(J/mol/K)': Cp_tot, 'S/(J/mol/K)': S_tot,
-        'zpe/(J/mol)': zpe, 'U_corr/(J/mol)': U_corr, 'H_corr/(J/mol)': H_corr, 'G_corr/(J/mol)': G_corr,
-        'ee/(J/mol)': ee * au2j_mol, 'U/(J/mol)': U, 'H/(J/mol)': H, 'G/(J/mol)': G
-    }
+        if c is not None:
+            print(f'delta-G of conc. change: {delta_G_of_conc}  J/mol {delta_G_of_conc / au2j_mol} a.u.')
+
+    if c is not None:
+        return {
+            'T/K': T, 'P/Pa': P,
+            'q_tot_v_0': q_tot_v_0, 'q_tot_bot': q_tot_bot,
+            'Cv/(J/mol/K)': Cv_tot, 'Cp/(J/mol/K)': Cp_tot, 'S/(J/mol/K)': S_tot,
+            'zpe/(J/mol)': zpe, 'U_corr/(J/mol)': U_corr, 'H_corr/(J/mol)': H_corr, 'G_corr/(J/mol)': G_corr,
+            'ee/(J/mol)': ee * au2j_mol, 'U/(J/mol)': U, 'H/(J/mol)': H, 'G/(J/mol)': G,
+            'delta_G_of_conc.(J/mol)': delta_G_of_conc,
+        }
+    else:
+        return {
+            'T/K': T, 'P/Pa': P,
+            'q_tot_v_0': q_tot_v_0, 'q_tot_bot': q_tot_bot,
+            'Cv/(J/mol/K)': Cv_tot, 'Cp/(J/mol/K)': Cp_tot, 'S/(J/mol/K)': S_tot,
+            'zpe/(J/mol)': zpe, 'U_corr/(J/mol)': U_corr, 'H_corr/(J/mol)': H_corr, 'G_corr/(J/mol)': G_corr,
+            'ee/(J/mol)': ee * au2j_mol, 'U/(J/mol)': U, 'H/(J/mol)': H, 'G/(J/mol)': G,
+        }
 
 
 def qm_thermo_scan(
