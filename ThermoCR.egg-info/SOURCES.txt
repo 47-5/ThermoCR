@@ -9,14 +9,12 @@ ThermoCR.egg-info/requires.txt
 ThermoCR.egg-info/top_level.txt
 ThermoCR/QMkinetics/__init__.py
 ThermoCR/QMkinetics/equilibrium_constants.py
-ThermoCR/QMkinetics/export_cantera_kinetics_yaml.py
 ThermoCR/QMkinetics/fit_kinetics.py
 ThermoCR/QMkinetics/qm_kinetics.py
 ThermoCR/QMkinetics/tunnelling_effect.py
 ThermoCR/QMthermo/__init__.py
 ThermoCR/QMthermo/calc_q.py
 ThermoCR/QMthermo/calc_thermo_corr.py
-ThermoCR/QMthermo/export_cantera_thermo_yaml.py
 ThermoCR/QMthermo/fit_thermo.py
 ThermoCR/QMthermo/qm_thermo.py
 ThermoCR/pointgroup/__init__.py
@@ -28,6 +26,9 @@ ThermoCR/tools/__init__.py
 ThermoCR/tools/constant.py
 ThermoCR/tools/read_qm_out.py
 ThermoCR/tools/utils.py
+ThermoCR/tools/about_cantera/__init__.py
+ThermoCR/tools/about_cantera/export_cantera_kinetics_yaml.py
+ThermoCR/tools/about_cantera/export_cantera_thermo_yaml.py
 ThermoCR/tools/about_gaussian/__init__.py
 ThermoCR/tools/about_gaussian/calculate_solvent_energy.py
 ThermoCR/tools/about_gaussian/select_gaussian_out.py
