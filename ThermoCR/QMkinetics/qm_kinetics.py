@@ -139,7 +139,7 @@ def k_VTST_scan(thermo_irc_path_list: List[str],
                    thermo_p_path=thermo_p_path,
                    liquid=liquid,
                    tunnelling_effect=tunnelling_effect, imaginary_freq=imaginary_freq,
-                   sigma=sigma) for i in thermo_irc_path_list
+                   sigma=sigma)['k'].values for i in thermo_irc_path_list
     ]
 
     T = pd.read_excel(thermo_r1_path)['T/K']
