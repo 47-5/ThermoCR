@@ -171,6 +171,7 @@ def qm_thermo_scan(
         U_Minenkov=False, S_Grimme=True,
         read_ee_index=-1,
         E_list=None, g_list=None,
+        c=None,
         out_path='QMthermoScan.xlsx'
         ):
     results = []
@@ -185,7 +186,7 @@ def qm_thermo_scan(
                                sclZPE=sclZPE, sclU=sclU, sclCv=sclCv, sclS=sclS,
                                U_Minenkov=U_Minenkov, S_Grimme=S_Grimme,
                                read_ee_index=read_ee_index, E_list=E_list, g_list=g_list,
-                               verbose=False
+                               verbose=False, c=c
                                )
             results.append(result)
     df = pd.DataFrame(results)
