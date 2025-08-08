@@ -1,0 +1,42 @@
+- equation: S01 + S01 <=> S02
+  type: elementary
+  rate-constant: {A: -26.94870572241951, b: -5.198730195667512, Ea: -9200.306501170438 }
+- equation: S01 + S01 <=> S02
+  type: elementary
+  rate-constant: {A: -26.94870572241951, b: -5.198730195667512, Ea: -9200.306501170438 }
+- equation: S01 + S01 <=> S02
+  type: elementary
+  rate-constant: {A: 0.000548701560334721, b: 2.764686852143398, Ea: 73409.2277457762 }
+- equation: S01 + S01 <=> S02
+  type: elementary
+  rate-constant: {A: 0.000548701560334721, b: 2.764686852143398, Ea: 73409.2277457762 }
+- equation: S01 + S01 <=> S02
+  type: elementary
+  rate-constant: {A: 0.000548701560334721, b: 2.764686852143398, Ea: 73409.2277457762 }
+- equation: S01 + S01 <=> S02
+  type: elementary
+  rate-constant: {A: 0.000548701560334721, b: 2.764686852143398, Ea: 73409.2277457762 }
+- equation: S01 + S01 <=> S02
+  type: elementary
+  rate-constant: {A: 0.000548701560334721, b: 2.764686852143398, Ea: 73409.2277457762 }
+- equation: S01 + S01 <=> S02
+  type: elementary
+  rate-constant: {A: 0.06469856553682907, b: 1.9043211318080362, Ea: 73444.56880041768 }
+- equation: S01 + S01 <=> S02
+  type: elementary
+  rate-constant: {A: 0.06469856553682907, b: 1.9043211318080362, Ea: 73444.56880041768 }
+- equation: S01 + S01 <=> S02
+  type: elementary
+  rate-constant: {A: 0.06469856553682907, b: 1.9043211318080362, Ea: 73444.56880041768 }
+- equation: S01 + S01 <=> S02
+  type: elementary
+  rate-constant: {A: 0.06469856553682907, b: 1.9043211318080362, Ea: 73444.56880041768 }
+- equation: S01 + S01 <=> S02
+  type: elementary
+  rate-constant: {A: 0.2705059247569507, b: 1.7200515716021048, Ea: 74769.769770442 }
+- equation: S01 + S01 <=> S02
+  type: elementary
+  rate-constant: {A: 0.2705059247569507, b: 1.7200515716021048, Ea: 74769.769770442 }
+- equation: S01 + S01 <=> S02
+  type: elementary
+  rate-constant: {A: 0.2705059247569507, b: 1.7200515716021048, Ea: 74769.769770442 }

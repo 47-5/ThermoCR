@@ -20,10 +20,49 @@ class Arrhenius:
     def __call__(self, T):
         return arrhenius(T=T, A=self.A, Ea=self.Ea, b=self.b)
 
+    def get_parameters(self):
+        return self.A, self.Ea, self.b
+
 
 def arrhenius(T, A, Ea, b=1):
     k = A * T ** b * np.exp(-Ea / (R * T))
     return k
+
+
+class Arrhenius2Piecewise:
+    def __init__(self, A1, b1, b2, Ea1, Ea2, T_cut):
+        self.A1 = A1
+        self.b1 = b1
+        self.b2 = b2
+        self.Ea1 = Ea1
+        self.Ea2 = Ea2
+        self.T_cut = T_cut
+        self.A2 = None
+
+    def __call__(self, T):
+        return arrhenius_2piecewise(T, A1=self.A1, b1=self.b1, b2=self.b2, Ea1=self.Ea1, Ea2=self.Ea2, T_cut=self.T_cut)
+
+    def get_parameters(self):
+        self.A2 = A_nplus1(A_n=self.A1, Ea_n=self.Ea1, Ea_nplus1=self.Ea2, b_n=self.b1, b_nplus1=self.b2, T_cut_n=self.T_cut)
+        return {'A1':self.A1, 'b1': self.b1, 'Ea1': self.Ea1, 'A2': self.A2, 'b2': self.b2, 'Ea2':self.Ea2, 'Tcut':self.T_cut}
+
+
+def arrhenius_2piecewise(T, A1, b1, b2, Ea1, Ea2, T_cut):
+    A2 = A_nplus1(A_n=A1, Ea_n=Ea1, Ea_nplus1=Ea2, b_n=b1, b_nplus1=b2, T_cut_n=T_cut)
+
+    k = np.zeros_like(T)
+
+    mask_low = T < T_cut
+    mask_high = ~mask_low
+
+    k[mask_low] = A1 * T[mask_low] ** b1 * np.exp(-Ea1 / (R * T[mask_low]))
+    k[mask_high] = A2 * T[mask_high] ** b2 * np.exp(-Ea2 / (R * T[mask_high]))
+    return k
+
+
+def A_nplus1(A_n, Ea_n, Ea_nplus1, b_n, b_nplus1, T_cut_n):
+    A_nplus1 = A_n * T_cut_n ** (b_n - b_nplus1) * np.exp((Ea_nplus1 - Ea_n) / (R * T_cut_n))
+    return A_nplus1
 
 
 def fit(fun, xdata, ydata, sigma, p0, bounds, maxfev=10000):
@@ -152,6 +191,12 @@ def fit_kinetics_model(
             "n_params": 3,
             "yaml_writer": make_cantera_reaction_yaml,
         },
+        "Arrhenius2Piecewise": {
+            "fit_func": arrhenius_2piecewise,
+            "model_class": Arrhenius2Piecewise,
+            "n_params": 6,
+            "yaml_writer": None,
+        },
     }
 
     if model_type not in model_info:
@@ -181,6 +226,9 @@ def fit_kinetics_model(
 
     # 创建拟合模型对象
     fitted_model = FUN_CLASS(*popt)
+    params = fitted_model.get_parameters()
+    print('Fitted parameters:')
+    print(params)
 
     # 计算预测值
     k_pre = fitted_model(T)
@@ -201,18 +249,34 @@ def fit_kinetics_model(
     if write_yaml and model["yaml_writer"]:
         if model_type == "Arrhenius":
             model["yaml_writer"](
-                r_name_list=r_name_list, p_name_list=p_name_list, A=popt[0], Ea=popt[1], b=popt[2],
+                r_name_list=r_name_list, p_name_list=p_name_list, A=params[0], Ea=params[1], b=params[2],
                 reversible=reversible, root_path=output_dir
             )
 
     return popt, fitted_model
 
 
-# if __name__ == '__main__':
-#
-#     fit_kinetics_model(
-#         data_path='../QMkineticsScan.xlsx',
-#         r_name_list=['S01', 'S01'],
-#         p_name_list=['S02'],
-#         output_dir='../Arrhenius_result'
-#     )
+if __name__ == '__main__':
+
+    bound = ([0, -np.inf, -np.inf, 0, 0, 150], [np.inf, np.inf, np.inf, np.inf, np.inf, 301])
+    fit_kinetics_model(
+        model_type='Arrhenius2Piecewise',
+        bounds=bound,
+        data_path='../../03_09_vtst.xlsx',
+        r_name_list=['S01', 'S01'],
+        p_name_list=['S02'],
+        output_dir='../../Arrhenius_result2',
+        start_index=0,
+        end_index=None,
+        maxfev=1000000
+    )
+
+    fit_kinetics_model(
+        model_type='Arrhenius',
+        data_path='../../03_09_vtst.xlsx',
+        r_name_list=['S01', 'S01'],
+        p_name_list=['S02'],
+        output_dir='../../Arrhenius_result',
+        start_index=0,
+        end_index=None
+    )
