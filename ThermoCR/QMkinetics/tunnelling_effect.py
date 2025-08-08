@@ -90,11 +90,34 @@ def pE_exp(x, shiftE, C, A, D, T):
     return permeability * boltzmann
 
 
+def skodje_truhlar(imaginary_freq, T, delta_H_barrier_f_0K, delta_H_barrier_r_0K,
+                   convert_unit=True):
+    if convert_unit:
+        imaginary_freq *= cm_1_to_s_1
+
+    alpha = 2 * pi / (h * imaginary_freq)
+    beta = 1 / (k_b * T)
+
+    delta_H_reaction_0K = delta_H_barrier_f_0K - delta_H_barrier_r_0K
+    V = 0 if delta_H_reaction_0K < 0 else delta_H_reaction_0K
+    delta_V = delta_H_barrier_f_0K
+
+    if alpha > beta:
+        term1 = beta * pi / alpha
+        chi = term1 / np.sin(term1) - beta / (alpha - beta) * np.exp((beta - alpha) * (delta_V - V))
+    else:
+        chi = beta / (beta - alpha) * (np.exp((beta - alpha) - (delta_V - V)) - 1)
+    return chi
+
+
 # if __name__ == '__main__':
 #
 #     chi = wigner_correction(438.7819, 500)
 #     print(chi)
 #
 #     chi = eckart_correction(438.7819, 500, delta_H_barrier_f_0K=64180, delta_H_barrier_r_0K=160960, convert_unit=True)
+#     print(chi)
+#
+#     chi = skodje_truhlar(438.7819, 500, delta_H_barrier_f_0K=64180, delta_H_barrier_r_0K=160960, convert_unit=True)
 #     print(chi)
 
