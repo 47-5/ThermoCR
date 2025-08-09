@@ -5,67 +5,247 @@ from ThermoCR.tools.constant import R, Na, k_b, au2eV, h, wave2freq, au2kj_mol, 
 
 
 def U_trans(T):
+    """
+    Compute the translational contribution to internal energy U for an ideal gas.
+
+    Parameters:
+    T : float
+        Temperature in Kelvin.
+
+    Returns:
+    float
+        Translational contribution to the internal energy in the same units as R * T.
+    """
     return 1.5 * R * T
 
 
 def H_trans(T):
+    """
+    Compute the translational contribution to H for an ideal gas.
+
+    Parameters:
+    T : float
+        Temperature in Kelvin.
+
+    Returns:
+    float
+        Translational contribution to the H in the same units as R * T.
+    """
     return U_trans(T) + R * T
 
 
 def Cv_trans():
+    """
+    Calculate the specific heat at constant volume (Cv) for an ideal gas.
+
+    Summary:
+    This function computes the specific heat at constant volume (Cv) for an ideal gas,
+    using a predefined constant R. The result is 1.5 times the value of R, which is
+    a common approximation for diatomic gases in terms of their molar specific heat
+    at constant volume.
+
+    Returns:
+        float: The calculated specific heat at constant volume.
+    """
     return 1.5 * R
 
 
 def Cp_trans():
+    """
+    Calculate the molar specific heat at constant pressure for a substance.
+
+    This function computes the molar specific heat at constant pressure (Cp) by
+    adding the molar specific heat at constant volume (Cv) and the gas constant (R).
+    It assumes that Cv is provided by an external function `Cv_trans()` and R is a
+    predefined constant or variable in the scope of this function.
+
+    Returns:
+        float: The calculated molar specific heat at constant pressure.
+    """
     return Cv_trans() + R
 
 
 def S_trans(q_t, T):
+    """
+    Calculate the translational entropy of a gas.
+
+    This function computes the translational entropy (S_trans) of a gas using the given
+    quantity of gas (q_t) and temperature (T). The formula used for the calculation is
+    based on statistical mechanics principles, where R is the ideal gas constant,
+    and Na is Avogadro's number.
+
+    Args:
+        q_t (float): The translational partition function.
+        T (float): The temperature at which the entropy is calculated.
+
+    Returns:
+        float: The calculated translational entropy of the gas.
+    """
     S_trans = R * (np.log(q_t / Na) + 5 / 2)
     return S_trans
 
 
 def U_rot_linear(T):
+    """
+    Calculate the internal energy contributed by the rotating part of a linear molecule
+
+    Args:
+        T: Temperature
+    """
     return R * T
 
 
 def H_rot_linear(T):
+    """
+    Compute the rotational enthalpy for a linear molecule at a given temperature.
+
+    Summary:
+    This function calculates the rotational enthalpy (H_rot) for a linear molecule using the provided temperature. The calculation is based on the U_rot_linear function, which should be defined elsewhere in the code to provide the specific computation for the rotational internal energy of a linear molecule.
+
+    Parameters:
+    T: float
+        The temperature at which to compute the rotational enthalpy, typically in Kelvin.
+
+    Returns:
+    float
+        The computed rotational enthalpy for the linear molecule at the specified temperature.
+    """
     return U_rot_linear(T)
 
 
 def Cv_rot_linear():
+    """
+    Calculate the contribution of the rotating part of the linear molecule to Cv
+
+    Returns:
+        float: The calculated rotational linear coefficient.
+    """
     return R
 
 
 def Cp_rot_linear():
+    """
+    Calculate the contribution of the rotating part of the linear molecule to Cp
+
+    Returns:
+        float: The calculated rotational linear coefficient.
+    """
     return Cv_rot_linear()
 
 
 def S_rot_linear(q_r, T):
+    """
+    Calculate the rotational entropy for a linear molecule.
+
+    This function computes the rotational entropy (S_rot) for a linear molecule
+    using the given rotational partition function (q_r) and temperature (T).
+    The formula used is S_rot = R * (ln(q_r) + 1), where R is the gas constant.
+
+    Parameters:
+    q_r : float
+        The rotational partition function of the molecule.
+    T : float
+        Temperature in Kelvin at which to calculate the entropy.
+
+    Returns:
+    float
+        The calculated rotational entropy in J/(mol*K).
+
+    Raises:
+    ValueError
+        If q_r or T are non-positive, as these are not physically meaningful values.
+    """
     return R * (np.log(q_r) + 1)
 
 
 def U_rot_nonlinear(T):
+    """
+    Calculate the non-linear rotational contribution to the internal energy.
+
+    This function computes the non-linear rotational part of the internal energy
+    of a molecule based on its temperature. The formula used is 1.5 * R * T,
+    where R is the ideal gas constant and T is the temperature in Kelvin.
+
+    :raises ValueError: If the temperature is negative.
+    :returns: The non-linear rotational contribution to the internal energy.
+    :rtype: float
+    """
     return 1.5 * R * T
 
 
 def H_rot_nonlinear(T):
+    """
+    Calculate the non-linear rotational contribution to the H.
+
+    This function computes the non-linear rotational part of the H
+    of a molecule based on its temperature. The formula used is 1.5 * R * T,
+    where R is the ideal gas constant and T is the temperature in Kelvin.
+
+    :raises ValueError: If the temperature is negative.
+    :returns: The non-linear rotational contribution to the H.
+    :rtype: float
+    """
     return U_rot_nonlinear(T)
 
 
 def Cv_rot_nonlinear():
+    """
+    Calculate the contribution of the rotating part of the nonlinear molecule to Cv
+
+    Returns:
+        float: The calculated rotational linear coefficient.
+    """
     return 1.5 * R
 
 
 def Cp_rot_nonlinear():
+    """
+    Calculate the contribution of the rotating part of the nonlinear molecule to Cp
+
+    Returns:
+        float: The calculated rotational linear coefficient.
+    """
     return Cv_rot_nonlinear()
 
 
 def S_rot_nonlinear(q_r, T):
+    """
+   Calculate the rotational entropy for a nonlinear molecule.
+
+   This function computes the rotational entropy (S_rot) for a nonlinear molecule
+   using the given rotational partition function (q_r) and temperature (T).
+   The formula used is S_rot = R * (ln(q_r) + 1.5), where R is the gas constant.
+
+   Parameters:
+   q_r : float
+       The rotational partition function of the molecule.
+   T : float
+       Temperature in Kelvin at which to calculate the entropy.
+
+   Returns:
+   float
+       The calculated rotational entropy in J/(mol*K).
+
+   Raises:
+   ValueError
+       If q_r or T are non-positive, as these are not physically meaningful values.
+   """
     return R * (np.log(q_r) + 1.5)
 
 
 def U_ele(E_list, g_list, T, convert_unit=True):
+    """
+    Calculate the contribution of the electronic excitation part to internal energy (U).
+
+    Summary: Calculates the internal energy of a system given its energy levels,
+             their degeneracies, and the temperature.
+    Parameters: E_list (list[float]): List of energy levels of the system.
+                g_list (list[float]): Degeneracy of each energy level.
+                T (float): Temperature at which to calculate the internal energy.
+                convert_unit (bool, optional): If True, converts E_list from atomic
+                                               units to electron volts. Default is True.
+    Returns: float: The calculated internal energy of the system.
+    """
     E_s = np.array(E_list, dtype=float)
     g_s = np.array(g_list, dtype=float)
 
@@ -81,10 +261,34 @@ def U_ele(E_list, g_list, T, convert_unit=True):
 
 
 def H_ele(E_list, g_list, T, convert_unit=True):
+    """
+    Calculate the contribution of the electronic excitation part to H.
+
+    Summary: Calculates the H of a system given its energy levels,
+             their degeneracies, and the temperature.
+    Parameters: E_list (list[float]): List of energy levels of the system.
+                g_list (list[float]): Degeneracy of each energy level.
+                T (float): Temperature at which to calculate the H.
+                convert_unit (bool, optional): If True, converts E_list from atomic
+                                               units to electron volts. Default is True.
+    Returns: float: the contribution of the electronic excitation part to H.
+    """
     return U_ele(E_list=E_list, g_list=g_list, T=T, convert_unit=convert_unit)
 
 
 def Cv_ele(E_list, g_list, T, convert_unit=True):
+    """
+   Calculate the contribution of the electronic excitation part to Cv.
+
+   Summary: Calculates the Cv of a system given its energy levels,
+            their degeneracies, and the temperature.
+   Parameters: E_list (list[float]): List of energy levels of the system.
+               g_list (list[float]): Degeneracy of each energy level.
+               T (float): Temperature at which to calculate the Cv.
+               convert_unit (bool, optional): If True, converts E_list from atomic
+                                              units to electron volts. Default is True.
+   Returns: float: the contribution of the electronic excitation part to Cv.
+   """
     E_s = np.array(E_list, dtype=float)
     g_s = np.array(g_list, dtype=float)
 
@@ -104,10 +308,34 @@ def Cv_ele(E_list, g_list, T, convert_unit=True):
 
 
 def Cp_ele(E_list, g_list, T, convert_unit=True):
+    """
+   Calculate the contribution of the electronic excitation part to Cp.
+
+   Summary: Calculates the Cp of a system given its energy levels,
+            their degeneracies, and the temperature.
+   Parameters: E_list (list[float]): List of energy levels of the system.
+               g_list (list[float]): Degeneracy of each energy level.
+               T (float): Temperature at which to calculate the Cp.
+               convert_unit (bool, optional): If True, converts E_list from atomic
+                                              units to electron volts. Default is True.
+   Returns: float: the contribution of the electronic excitation part to Cp.
+   """
     return Cv_ele(E_list=E_list, g_list=g_list, T=T, convert_unit=convert_unit)
 
 
 def S_ele(E_list, g_list, T, convert_unit=True):
+    """
+   Calculate the contribution of the electronic excitation part to S.
+
+   Summary: Calculates the S of a system given its energy levels,
+            their degeneracies, and the temperature.
+   Parameters: E_list (list[float]): List of energy levels of the system.
+               g_list (list[float]): Degeneracy of each energy level.
+               T (float): Temperature at which to calculate the S.
+               convert_unit (bool, optional): If True, converts E_list from atomic
+                                              units to electron volts. Default is True.
+   Returns: float: the contribution of the electronic excitation part to S.
+   """
     E_s = np.array(E_list, dtype=float)
     g_s = np.array(g_list, dtype=float)
 
@@ -123,6 +351,35 @@ def S_ele(E_list, g_list, T, convert_unit=True):
 
 
 def ZPE(vibfreqs, convert_unit=True, scale_factor=1.0):
+    """
+    Calculate the Zero Point Energy (ZPE) from a list of vibrational frequencies.
+
+    The function computes the ZPE based on the given vibrational frequencies. It can optionally
+    convert the units of the input frequencies and apply a scale factor to them before performing
+    the calculation. The final ZPE is returned in J/mol.
+
+    Parameters:
+    vibfreqs: list[float] or array-like
+        A list or an array of vibrational frequencies. when unit is cm^-1, set convert_unit to be True
+    convert_unit: bool, optional
+        If True, converts the unit of vibfreqs. Default is True.
+    scale_factor: float, optional
+        A factor to scale the vibrational frequencies. Default is 1.0.
+
+    Returns:
+    float
+        The calculated Zero Point Energy in J/mol.
+
+    Raises:
+    ValueError
+        If any of the vibrational frequencies are negative after scaling.
+
+    Notes:
+    - The conversion and scaling of the vibrational frequencies are applied only if specified.
+    - Negative vibrational frequencies are ignored in the ZPE calculation.
+    - Constants used in the calculation such as Planck's constant (h), conversion factors,
+      and energy units are assumed to be defined elsewhere in the code.
+    """
     v = np.array(vibfreqs, dtype=float) * scale_factor
     if convert_unit:
         v = v * wave2freq / Eh
@@ -148,6 +405,28 @@ def ZPE_one_mode(vibfreq, convert_unit=True):
 
 
 def U_vib_0_T(vibfreqs, T, convert_unit=True, scale_factor=1.0):
+    """
+    Calculate the vibrational contribution to the U(T)vib - U(0)vib.
+
+    This function computes the vibrational contribution to the U(T)vib - U(0)vib
+    for a given set of vibrational frequencies at a specified temperature.
+    The calculation is based on the formula for the vibrational partition function
+    and its derivatives. The function can optionally convert the input frequencies
+    from wavenumbers to frequency and apply a scaling factor to the frequencies.
+
+    Parameters:
+    vibfreqs (Iterable[float]): Vibrational frequencies in cm^-1 or Hz. When unit is cm^-1, set convert_unit to be True.
+    T (float): Temperature in Kelvin.
+    convert_unit (bool, optional): If True, convert vibfreqs from cm^-1 to Hz. Default is True.
+    scale_factor (float, optional): Scaling factor to apply to the vibrational frequencies. Default is 1.0.
+
+    Returns:
+    float: Vibrational contribution to the U(T)vib - U(0)vib at temperature T in J/mol.
+
+    Raises:
+    ValueError: If T is not positive.
+    TypeError: If vibfreqs is not iterable or if any element in vibfreqs is not a number.
+    """
     v = np.array(vibfreqs, dtype=float) * scale_factor
     if convert_unit:
         v = v * wave2freq
@@ -165,6 +444,55 @@ def U_vib_0_T(vibfreqs, T, convert_unit=True, scale_factor=1.0):
 
 def U_vib_T(vibfreqs, T, convert_unit=True, QRRHO=False,
             scale_factor_zpe=1.0, scale_factor_U_0_T=1.0):
+    """
+    Calculate the vibrational contribution to the internal energy at a given temperature.
+
+    Summary:
+    This function computes the vibrational contribution (U_vib) to the internal energy
+    for a set of vibrational frequencies at a specified temperature. It supports
+    options for unit conversion, quasi-rigid rotor harmonic oscillator (QRRHO) approximation,
+    and scaling factors for zero-point energy and thermal contributions.
+
+    Parameters:
+    vibfreqs: list or numpy.ndarray of float
+        Vibrational frequencies, in wavenumbers (cm^-1) if convert_unit is True.
+    T: float
+        Temperature in Kelvin.
+    convert_unit: bool, optional
+        If True, converts input frequencies from cm^-1 to Hz. Default is True.
+    QRRHO: bool, optional
+        If True, applies QRRHO correction. Default is False.
+    scale_factor_zpe: float, optional
+        Scaling factor for zero-point energy. Default is 1.0.
+    scale_factor_U_0_T: float, optional
+        Scaling factor for thermal contribution. Default is 1.0.
+
+    Returns:
+    float
+        The total vibrational contribution to the internal energy in kJ/mol.
+
+    Raises:
+    ValueError
+        If any of the input parameters are invalid or out of expected range.
+    TypeError
+        If the type of the input parameters does not match the required types.
+
+    Notes:
+    - The function uses physical constants such as Planck's constant (h), Boltzmann's
+      constant (k_b), and the gas constant (R).
+    - For QRRHO approximation, an additional weighting function (w_vec) is applied.
+    - The function handles both positive and negative vibrational frequencies but
+      only positive frequencies contribute to the final result.
+    - The function assumes that the necessary physical constants and conversion factors
+      (e.g., wave2freq, au2kj_mol, Eh) are defined elsewhere in the code.
+    - The term "Eh" refers to Hartree energy, used in the context of atomic units.
+    - The function sums up the contributions from all vibrational modes to return
+      the total vibrational internal energy.
+    - The default behavior without QRRHO correction is to sum the RRHO and ZPE
+      contributions directly.
+    - The QRRHO option modifies the calculation by blending between RRHO and free
+      rotor (FR) models using a weighting function.
+    """
     v = np.array(vibfreqs, dtype=float)
     if convert_unit:
         v = v * wave2freq
@@ -203,15 +531,45 @@ def U_vib_T(vibfreqs, T, convert_unit=True, QRRHO=False,
 
 
 def H_vib_0_T(vibfreqs, T, convert_unit=True, scale_factor=1.0):
+    """
+    See U_vib_0_T
+    """
     return U_vib_0_T(vibfreqs=vibfreqs, T=T, convert_unit=convert_unit, scale_factor=scale_factor)
 
 
 def H_vib_T(vibfreqs, T, convert_unit=True, QRRHO=False, scale_factor_zpe=1.0, scale_factor_U_0_T=1.0):
+    """
+    See U_vib_T
+    """
     return U_vib_T(vibfreqs=vibfreqs, T=T, convert_unit=convert_unit, QRRHO=QRRHO,
                    scale_factor_zpe=scale_factor_zpe, scale_factor_U_0_T=scale_factor_U_0_T)
 
 
 def Cv_vib(vibfreqs, T, convert_unit=True, scale_factor=1.0):
+    """
+    Calculate the vibrational contribution to the molar heat capacity (Cv) at a given temperature.
+
+    Summary:
+    This function computes the vibrational component of the molar heat capacity (Cv) for a set of vibrational frequencies at a specified temperature. It supports unit conversion and scaling of the input frequencies. The calculation is based on the Bose-Einstein distribution, considering only positive frequencies.
+
+    Parameters:
+    vibfreqs: list or array-like
+        Vibrational frequencies in cm^-1.
+    T: float
+        Temperature in Kelvin.
+    convert_unit: bool, optional
+        If True, converts the input frequencies from cm^-1 to Hz. Default is True.
+    scale_factor: float, optional
+        A factor to scale the input frequencies. Default is 1.0.
+
+    Returns:
+    float
+        The calculated vibrational contribution to the molar heat capacity (Cv) in J/(mol*K).
+
+    Raises:
+    ValueError
+        If any of the input parameters are not of the expected type or if the temperature is non-positive.
+    """
     v = np.array(vibfreqs, dtype=float) * scale_factor
     if convert_unit:
         v = v * wave2freq
@@ -228,10 +586,51 @@ def Cv_vib(vibfreqs, T, convert_unit=True, scale_factor=1.0):
 
 
 def Cp_vib(vibfreqs, T, convert_unit=True, scale_factor=1.0):
+    """
+    same as Cv_vib
+    """
     return Cv_vib(vibfreqs=vibfreqs, T=T, convert_unit=convert_unit, scale_factor=scale_factor)
 
 
 def S_vib(vibfreqs, T, convert_unit=True, QRRHO=True, scale_factor=1.0):
+    """
+    Calculate the vibrational entropy of a molecule.
+
+    This function computes the vibrational entropy of a molecule given its
+    vibrational frequencies and the temperature. It supports both RRHO (Rigid
+    Rotor Harmonic Oscillator) and QRRHO (Quasi Rigid Rotor Harmonic Oscillator)
+    approximations, with an option to scale the vibrational frequencies and
+    convert their units from wavenumbers to frequency.
+
+    Summary:
+    The function takes in vibrational frequencies, temperature, and optional
+    parameters for unit conversion, QRRHO usage, and a scaling factor. It
+    returns the total vibrational entropy based on the selected approximation.
+
+    Parameters:
+    - vibfreqs: list or numpy.ndarray of float
+        Vibrational frequencies of the molecule. When unit is cm^-1, set convert_unit to be True
+    - T: float
+        Temperature at which to calculate the entropy.
+    - convert_unit: bool, default True
+        Whether to convert the input frequencies from wavenumbers to frequency.
+    - QRRHO: bool, default True
+        Whether to use the Quasi Rigid Rotor Harmonic Oscillator approximation.
+    - scale_factor: float, default 1.0
+        Scaling factor applied to the vibrational frequencies.
+
+    Returns:
+    - float
+        The calculated vibrational entropy.
+
+    Raises:
+    - ValueError
+        If `vibfreqs` is empty or contains non-positive values after applying
+        the scale factor.
+    - TypeError
+        If `vibfreqs` is not a list or numpy array, or if `T` and `scale_factor`
+        are not numbers.
+    """
     v = np.array(vibfreqs, dtype=float)
     if convert_unit:
         v = v * wave2freq
