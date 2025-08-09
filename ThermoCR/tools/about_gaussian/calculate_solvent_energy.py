@@ -12,6 +12,35 @@ standard_state_energy = 1.84 * kcal / mol
 
 def calculate_solvent_energy(gas_gaussian_out_path, sol_gaussian_out_path, add_standard_state=True,
                              return_hartree=True):
+    """
+    Calculate the energy difference between a solvated and gaseous state of a molecule.
+
+    Summary:
+    This function computes the energy difference (delta_energy) between a molecule in its solvated
+    state and its gaseous state. The energies are extracted from Gaussian output files. An option to
+    add standard state energy correction is provided, as well as an option to return the result in
+    Hartree units instead of eV.
+
+    Parameters:
+    - gas_gaussian_out_path: str
+      Path to the Gaussian output file for the gaseous state.
+    - sol_gaussian_out_path: str
+      Path to the Gaussian output file for the solvated state.
+    - add_standard_state: bool, optional
+      If True, adds a standard state energy correction to the delta_energy. Default is True.
+    - return_hartree: bool, optional
+      If True, returns the delta_energy in Hartree units; otherwise, in electronvolts. Default is True.
+
+    Returns:
+    - float
+      The calculated energy difference (delta_energy) based on the specified options.
+
+    Raises:
+    - FileNotFoundError
+      If either of the provided paths does not exist or cannot be accessed.
+    - ValueError
+      If the Gaussian output files do not contain the necessary information for energy extraction.
+    """
     gas_atoms = read(gas_gaussian_out_path, format='gaussian-out')
     sol_atoms = read(sol_gaussian_out_path, format='gaussian-out')
     gas_energy = gas_atoms.get_potential_energy() / Hartree

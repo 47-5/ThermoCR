@@ -5,6 +5,25 @@ import pandas as pd
 
 
 def read_orca_wB97Mp2_out(orca_out_file_path):
+    """
+
+    Reads the final single point energy from an ORCA output file.
+
+    Summary:
+    This function reads an ORCA output file, searches for the line containing
+    the final single point energy, and returns this value as a float. It specifically
+    targets energies calculated using the wB97M-V functional.
+
+    Parameters:
+        orca_out_file_path (str): Path to the ORCA output file.
+
+    Returns:
+        float: The final single point energy found in the ORCA output file.
+
+    Raises:
+        FileNotFoundError: If the provided file path does not exist.
+        IndexError: If no matches are found for the final single point energy pattern.
+    """
     pattern = re.compile(r'FINAL SINGLE POINT ENERGY\s+([-+]?\d+\.\d+)')
 
     matches = [pattern.search(line) for line in open(orca_out_file_path, 'r')]
