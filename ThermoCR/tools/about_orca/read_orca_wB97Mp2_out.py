@@ -27,28 +27,28 @@ def sort_key(file_name):
 
 
 
-if __name__ == '__main__':
-
-    run_mode = 'batch'
-    sort = True
-
-    if run_mode == 'single':
-        read_orca_wB97Mp2_out(orca_out_file_path='done/01_02_path1_1.out')
-
-    elif run_mode == 'batch':
-        orca_out_file_path_list = glob.glob('species_wB97Mp2_QZVPP/*.out')
-        if sort:
-            orca_out_file_path_list = sorted(orca_out_file_path_list, key=sort_key)
-        print(orca_out_file_path_list)
-
-        # todo name根据实际情况修改
-        name = [os.path.basename(i) for i in orca_out_file_path_list]
-        name = [i.split('.')[0] for i in name]
-        print(name)
-
-        result = []
-        for i in orca_out_file_path_list:
-            result.append(read_orca_wB97Mp2_out(i))
-
-        df = pd.DataFrame({'name': name, 'wB97Mp2': result})
-        df.to_excel('wB97Mp2_QZVPP_out.xlsx', index=False)
+# if __name__ == '__main__':
+#
+#     run_mode = 'batch'
+#     sort = True
+#
+#     if run_mode == 'single':
+#         read_orca_wB97Mp2_out(orca_out_file_path='done/01_02_path1_1.out')
+#
+#     elif run_mode == 'batch':
+#         orca_out_file_path_list = glob.glob('species_wB97Mp2_QZVPP/*.out')
+#         if sort:
+#             orca_out_file_path_list = sorted(orca_out_file_path_list, key=sort_key)
+#         print(orca_out_file_path_list)
+#
+#         # todo name根据实际情况修改
+#         name = [os.path.basename(i) for i in orca_out_file_path_list]
+#         name = [i.split('.')[0] for i in name]
+#         print(name)
+#
+#         result = []
+#         for i in orca_out_file_path_list:
+#             result.append(read_orca_wB97Mp2_out(i))
+#
+#         df = pd.DataFrame({'name': name, 'wB97Mp2': result})
+#         df.to_excel('wB97Mp2_QZVPP_out.xlsx', index=False)
