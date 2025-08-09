@@ -256,27 +256,27 @@ def fit_kinetics_model(
     return popt, fitted_model
 
 
-if __name__ == '__main__':
-
-    bound = ([0, -np.inf, -np.inf, 0, 0, 150], [np.inf, np.inf, np.inf, np.inf, np.inf, 301])
-    fit_kinetics_model(
-        model_type='Arrhenius2Piecewise',
-        bounds=bound,
-        data_path='../../03_09_vtst.xlsx',
-        r_name_list=['S01', 'S01'],
-        p_name_list=['S02'],
-        output_dir='../../Arrhenius_result2',
-        start_index=0,
-        end_index=None,
-        maxfev=1000000
-    )
-
-    fit_kinetics_model(
-        model_type='Arrhenius',
-        data_path='../../03_09_vtst.xlsx',
-        r_name_list=['S01', 'S01'],
-        p_name_list=['S02'],
-        output_dir='../../Arrhenius_result',
-        start_index=0,
-        end_index=None
-    )
+# if __name__ == '__main__':
+#
+#     bound = ([0, -np.inf, -np.inf, 0, 0, 150], [np.inf, np.inf, np.inf, np.inf, np.inf, 301])
+#     fit_kinetics_model(
+#         model_type='Arrhenius2Piecewise',
+#         bounds=bound,
+#         data_path='../../03_09_vtst.xlsx',
+#         r_name_list=['S01', 'S01'],
+#         p_name_list=['S02'],
+#         output_dir='../../Arrhenius_result2',
+#         start_index=0,
+#         end_index=None,
+#         maxfev=1000000
+#     )
+#
+#     fit_kinetics_model(
+#         model_type='Arrhenius',
+#         data_path='../../03_09_vtst.xlsx',
+#         r_name_list=['S01', 'S01'],
+#         p_name_list=['S02'],
+#         output_dir='../../Arrhenius_result',
+#         start_index=0,
+#         end_index=None
+#     )
