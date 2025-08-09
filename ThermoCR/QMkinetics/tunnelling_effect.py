@@ -4,10 +4,28 @@ from ThermoCR.tools.constant import h, k_b, R, cm_1_to_s_1, Na
 from numpy import sqrt, cosh, pi, exp
 
 
-__all__ = ['wigner_correction', 'eckart_correction']
+__all__ = ['wigner_correction', 'eckart_correction', 'skodje_truhlar']
 
 
 def wigner_correction(imaginary_freq, T, convert_unit=True):
+    """
+    Calculates the Wigner correction factor for a given imaginary frequency and temperature. The function
+    optionally converts the imaginary frequency from cm^-1 to s^-1 based on the `convert_unit` parameter.
+
+    Args:
+        imaginary_freq: float, the imaginary frequency of the system, typically in units of cm^-1 unless
+            `convert_unit` is set to False.
+        T: float, the temperature at which the correction is being calculated, in Kelvin.
+        convert_unit: bool, optional, a flag to determine whether to convert the imaginary frequency from
+            cm^-1 to s^-1. Defaults to True.
+
+    Returns:
+        float, the Wigner correction factor, chi, which adjusts the partition function or other thermodynamic
+        quantities to account for quantum effects at low temperatures.
+
+    Raises:
+        ValueError: If `T` is not a positive number, indicating an invalid temperature.
+    """
     if convert_unit:
         chi = 1 + 1 / 24 * (h * imaginary_freq * cm_1_to_s_1/ (k_b * T)) ** 2
     else:
@@ -17,6 +35,31 @@ def wigner_correction(imaginary_freq, T, convert_unit=True):
 
 def eckart_correction(imaginary_freq, T, delta_H_barrier_f_0K, delta_H_barrier_r_0K, nDOF=300,
                       convert_unit=True):
+    """
+    Computes the Eckart correction for a given set of parameters, which is used in
+    transition state theory to correct the partition functions for reactions. The
+    correction accounts for the anharmonicity and the coupling between the reaction
+    coordinate and the vibrational modes of the molecule.
+
+    Args:
+        imaginary_freq: float, the imaginary frequency associated with the transition
+            state. If convert_unit is True, it should be in cm^-1; otherwise, in s^-1.
+        T: float, the temperature in Kelvin at which the correction is to be computed.
+        delta_H_barrier_f_0K: float, the forward barrier height (enthalpy difference)
+            at 0 K. If convert_unit is True, it should be in kJ/mol; otherwise, in J.
+        delta_H_barrier_r_0K: float, the reverse barrier height (enthalpy difference)
+            at 0 K. If convert_unit is True, it should be in kJ/mol; otherwise, in J.
+        nDOF: int, optional, the number of degrees of freedom, default is 300.
+        convert_unit: bool, optional, if True, converts the input units from kJ/mol
+            and cm^-1 to J and s^-1 respectively, default is True.
+
+    Returns:
+        chi: float, the computed Eckart correction factor.
+
+    Raises:
+        ValueError: If any of the input parameters are outside their expected range
+            or if the computation fails due to numerical instability.
+    """
     nthEpsilon = 1e4  # 用于判断 Boltzmann 分布终止处
     if convert_unit:
         imaginary_freq *= cm_1_to_s_1
@@ -92,6 +135,27 @@ def pE_exp(x, shiftE, C, A, D, T):
 
 def skodje_truhlar(imaginary_freq, T, delta_H_barrier_f_0K, delta_H_barrier_r_0K,
                    convert_unit=True):
+    """
+    Calculates the Skodje-Truhlar tunneling correction factor for a chemical reaction.
+    This function computes the tunneling correction factor using the Skodje-Truhlar
+    approximation, which is particularly useful in reactions involving a small barrier
+    or when the reaction occurs at low temperatures.
+
+    Args:
+        imaginary_freq (float): The imaginary frequency of the transition state. If convert_unit is True, it should be in cm^-1; otherwise, in s^-1.
+        T (float): The temperature in Kelvin at which the reaction takes place.
+        delta_H_barrier_f_0K (float): The forward activation enthalpy at 0 K.
+        delta_H_barrier_r_0K (float): The reverse activation enthalpy at 0 K.
+        convert_unit (bool, optional): A flag to indicate whether the imaginary
+            frequency should be converted from cm^-1 to s^-1. Defaults to True.
+
+    Returns:
+        float: The tunneling correction factor (chi) that accounts for quantum
+            mechanical tunneling through the reaction barrier.
+
+    Raises:
+        ValueError: If the provided temperature is not positive.
+    """
     if convert_unit:
         imaginary_freq *= cm_1_to_s_1
 

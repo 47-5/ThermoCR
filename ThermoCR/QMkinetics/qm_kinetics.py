@@ -14,19 +14,28 @@ def k_TST(delta_G, delta_n, T=298.15, P0=100000, sigma=1,
           tunnelling_effect=None, imaginary_freq=None,
           delta_H_barrier_f_0K=None, delta_H_barrier_r_0K=None):
     """
-    calculate k base on TST
+    Calculates the rate constant using the Transition State Theory (TST) with optional corrections for tunnelling and liquid phase.
 
-    :param delta_G: G_TS - G_IS / (J/mol)
-    :param delta_n: 双分子反应取1，单分子反应取0
-    :param T: K
-    :param P0: 标准压力 100000 Pa = 1 bar
-    :param sigma: 反应路径简并度 = sigma_rot_TS / sigma_rot_IS 如果计算G时已经考虑转动对称数，这里应该设置为1
-    :param delta_H_barrier_f_0K:
-    :param delta_H_barrier_r_0K:
-    :param imaginary_freq:
-    :param tunnelling_effect:
-    :return: if liquid==True: k: (mol/m^3)^(-delta_n) * s^-1
-             if liquid==False: k: (molecule/m^3)^(-delta_n) * s^-1
+    Args:
+        delta_G: float, Gibbs free energy change of the reaction. G_TS - G_IS / (J/mol).
+        delta_n: int, difference in the number of gas molecules between products and reactants. Take 1 for bimolecular reactions and 0 for single-molecule reactions
+        T: float, temperature in Kelvin. Default is 298.15 K.
+        P0: float, reference pressure in Pascals. Default is 100000 Pa (1 bar).
+        sigma: Reaction path degeneracy = sigma_rot_TS/sigma_rot_IS This should be set to 1 if the rotational symmetry number is already taken into account when calculating G
+        liquid: bool, indicates if the reaction occurs in a liquid phase. Default is False.
+        tunnelling_effect: Optional[str], specifies the type of tunnelling correction to apply. Can be 'wigner', 'eckart', or 'skodje_truhlar'. Default is None.
+        imaginary_freq: Optional[float], frequency of the imaginary mode associated with the transition state. Required if tunnelling_effect is not None.
+        delta_H_barrier_f_0K: Optional[float], enthalpy barrier of the forward reaction at 0 K. Required for 'eckart' and 'skodje_truhlar' tunnelling effects.
+        delta_H_barrier_r_0K: Optional[float], enthalpy barrier of the reverse reaction at 0 K. Required for 'eckart' and 'skodje_truhlar' tunnelling effects.
+
+    Returns:
+        float, the calculated rate constant k.
+        if liquid==True: k: (mol/m^3)^(-delta_n) * s^-1
+        if liquid==False: k: (molecule/m^3)^(-delta_n) * s^-1
+
+    Raises:
+        AssertionError: If required parameters for specific tunnelling corrections are not provided.
+        NotImplementedError: If an unsupported tunnelling effect is specified.
     """
     if liquid:
         k = sigma * k_b * T / h * np.exp(-delta_G / (R * T))
@@ -59,6 +68,31 @@ def k_TST_scan(thermo_ts_path, thermo_r1_path, thermo_r2_path=None, thermo_p_pat
                liquid=False,
                tunnelling_effect=None, imaginary_freq=None,
                sigma=1, out_path='QMkineticsScan.xlsx'):
+    """
+    Calculates the kinetic rate constants using the Transition State Theory (TST) method. The function supports
+    consideration of tunneling effects through different models and can handle both gas-phase and liquid-phase reactions.
+    The function reads thermodynamic data from provided Excel files, calculates the rate constants for a range of temperatures,
+    and outputs the results to an Excel file.
+
+    Args:
+        thermo_ts_path: str, path to the Excel file containing thermodynamic data for the transition state.
+        thermo_r1_path: str, path to the Excel file containing thermodynamic data for reactant 1.
+        thermo_r2_path: Optional[str], path to the Excel file containing thermodynamic data for reactant 2. Default is None.
+        thermo_p_path: Optional[str], path to the Excel file containing thermodynamic data for the product. Required if 'eckart' or 'skodje_truhlar' tunnelling effects are considered. Default is None.
+        liquid: bool, indicates whether the reaction occurs in a liquid phase. Default is False.
+        tunnelling_effect: Optional[str], specifies the type of tunnelling effect to consider. Options are 'wigner', 'eckart', and 'skodje_truhlar'. Default is None, meaning no tunnelling effect is considered.
+        imaginary_freq: Optional[float], the value of the imaginary frequency at the transition state, required when considering any tunnelling effect. Default is None.
+        sigma: int, symmetry number for the transition state. Default is 1.
+        out_path: Optional[str], path to the output Excel file where the calculated rate constants will be saved. Default is 'QMkineticsScan.xlsx'.
+
+    Returns:
+        pandas.DataFrame, contains the temperature ('T/K') and corresponding rate constant ('k') values.
+
+    Raises:
+        AssertionError: If `imaginary_freq` is not provided when a tunnelling effect is specified.
+        AssertionError: If `thermo_p_path` is not provided when 'eckart' or 'skodje_truhlar' tunnelling effects are considered.
+        NotImplementedError: If an unsupported tunnelling effect is specified.
+    """
     ts_thermo_df = pd.read_excel(thermo_ts_path)
     r1_thermo_df = pd.read_excel(thermo_r1_path)
     if thermo_r2_path is not None:
@@ -145,6 +179,26 @@ def k_TST_scan(thermo_ts_path, thermo_r1_path, thermo_r2_path=None, thermo_p_pat
 
 
 def k_VTST(delta_G_list, delta_n, T=298.15, P0=100000, liquid=False, sigma=1, also_get_k_tst=False):
+    """
+    Calculates the variational transition state theory (VTST) rate constant for a given set of Gibbs free energy differences.
+    This function computes the VTST rate constant by first calculating the transition state theory (TST) rate constants
+    for each provided Gibbs free energy difference and then selecting the minimum value. It can also return the list of TST
+    rate constants if requested.
+
+    Args:
+        delta_G_list: A list or numpy array of Gibbs free energy differences (in J/mol).
+        delta_n: The change in the number of moles (dimensionless).
+        T: The temperature at which to calculate the rate constant, default is 298.15 K.
+        P0: The standard pressure, default is 100000 Pa.
+        liquid: A boolean indicating if the reaction is in a liquid phase, default is False.
+        sigma: The symmetry factor, default is 1.
+        also_get_k_tst: A boolean, if True, the function returns both the VTST rate constant and the list of TST rate constants,
+                        otherwise, it returns only the VTST rate constant.
+
+    Returns:
+        k_vtst: The VTST rate constant [if liquid==True: k: (mol/m^3)^(-delta_n) * s^-1, if liquid==False: k: (molecule/m^3)^(-delta_n) * s^-1)],
+        or a tuple containing the VTST rate constant and the list of TST rate constants if `also_get_k_tst` is True.
+    """
     if isinstance(delta_G_list, list):
         delta_G_list = np.array(delta_G_list)
     k_tst_list = k_TST(delta_G=delta_G_list, delta_n=delta_n, T=T, P0=P0, sigma=sigma, liquid=liquid)
@@ -160,6 +214,38 @@ def k_VTST_scan(thermo_irc_path_list: List[str],
                 tunnelling_effect=None, imaginary_freq=None,
                 sigma=1, also_get_k_tst_scan=False, out_path='QMkineticsScanVTST.xlsx',
                 out_TST_path='QMkineticsScanTST.xlsx'):
+    """
+    Calculates the variational transition state theory (VTST) rate constants for a given set of thermodynamic paths.
+    This function computes the VTST rate constants by first calculating the TST (Transition State Theory) rate
+    constants for each path in the provided list, then taking the minimum of these TST rate constants at each
+    temperature. Optionally, it can also return the TST scan data.
+
+    Args:
+        thermo_irc_path_list: List of strings representing the file paths to the IRC (Intrinsic Reaction Coordinate)
+            thermodynamic data for each reaction path.
+        thermo_r1_path: String representing the file path to the thermodynamic data for reactant 1.
+        thermo_r2_path: Optional string representing the file path to the thermodynamic data for reactant 2.
+        thermo_p_path: Optional string representing the file path to the thermodynamic data for the product.
+        liquid: Boolean indicating if the reaction is in a liquid phase. Default is False.
+        tunnelling_effect: Optional parameter to account for the tunnelling effect in the calculations.
+        imaginary_freq: Optional parameter specifying the imaginary frequency used in the calculations.
+        sigma: Integer or float representing the symmetry number. Default is 1.
+        also_get_k_tst_scan: Boolean indicating whether to also calculate and return the TST scan data.
+            Default is False.
+        out_path: String representing the output file path for the VTST scan data. Default is 'QMkineticsScanVTST.xlsx'.
+        out_TST_path: String representing the output file path for the TST scan data, if requested.
+            Default is 'QMkineticsScanTST.xlsx'.
+
+    Returns:
+        A pandas DataFrame containing the VTST scan data with columns 'T/K' and 'k', representing temperature and
+        the VTST rate constant, respectively. If `also_get_k_tst_scan` is True, a second DataFrame containing
+        the TST scan data is also returned, with each column (except 'T/K') named after the corresponding
+        IRC path's basename, and values being the TST rate constants for that path.
+
+    Raises:
+        ValueError: If any of the required input files are not found or cannot be read.
+        TypeError: If the types of the arguments do not match their expected types.
+    """
     k_tst_scan_list = [
         k_TST_scan(thermo_ts_path=i, thermo_r1_path=thermo_r1_path, thermo_r2_path=thermo_r2_path,
                    thermo_p_path=thermo_p_path,

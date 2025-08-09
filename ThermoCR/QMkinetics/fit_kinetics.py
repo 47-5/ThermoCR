@@ -146,22 +146,38 @@ def fit_kinetics_model(
         maxfev: int = 100000,
 ):
     """
-    根据热力学数据拟合NASA/Shomate模型参数
+    Fits a kinetic model to the provided experimental data. The function supports
+    fitting of different types of models, saving plots and metrics, and writing
+    the results to a Cantera YAML file.
 
-    参数:
-    data_path -- 热力学数据文件路径 (Excel格式)
-    model_type -- 模型类型: Arrhenius
-    data_columns -- 数据列名映射字典 (默认: Shermo输出格式)
-    output_dir -- 输出目录 (默认: 当前目录)
-    save_plots -- 是否保存拟合图表 (默认: True)
-    save_metrics -- 是否保存评估指标 (默认: True)
-    write_yaml -- 是否输出Cantera YAML文件 (默认: True)
-    guess -- 初始参数猜测值 (默认: None)
-    bounds -- 参数边界 (默认: None表示无界)
-    maxfev -- 最大函数评估次数 (默认: 100000)
+    Args:
+        data_path: Path to the Excel file containing the experimental data.
+        r_name_list: List of reactant names for the reaction.
+        p_name_list: List of product names for the reaction.
+        reversible: Boolean indicating if the reaction is reversible.
+        model_type: Type of the kinetic model to be fitted. Default is 'Arrhenius'.
+        data_columns: Dictionary mapping column names in the data file to the
+            corresponding data (e.g., temperature, rate constant). If not provided,
+            default values are used.
+        start_index: Index of the first data point to be used for fitting. Default is 0.
+        end_index: Index of the last data point to be used for fitting. If None, all
+            data points from start_index to the end of the dataset are used.
+        output_dir: Directory where the output files (plots, metrics, YAML) will be saved.
+            Default is the current directory.
+        save_plots: Boolean indicating whether to save the plots of the fitted model.
+            Default is True.
+        save_metrics: Boolean indicating whether to save the metrics of the fitted model.
+            Default is True.
+        write_yaml: Boolean indicating whether to write the fitted parameters to a
+            Cantera YAML file. Default is True.
+        guess: Initial guess for the parameters of the model. If None, the solver
+            will use its own initial guess.
+        bounds: Tuple of lower and upper bounds for the model parameters. If None,
+            no bounds are applied.
+        maxfev: Maximum number of function evaluations for the curve fitting. Default is 100000.
 
-    返回:
-    拟合参数和模型对象
+    Returns:
+        A tuple containing the optimized parameters (popt) and the fitted model object.
     """
     # 确保输出目录存在
     if data_columns is None:
