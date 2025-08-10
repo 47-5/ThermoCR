@@ -15,18 +15,18 @@ def q_trans(M, T, P, convert_unit=True):
     molecule due to its translational motion at the specified conditions.
 
     Parameters:
-        M (float): Molar mass of the substance in g/mol.
-        T (float): Temperature in Kelvin.
-        P (float): Pressure in Pascals.
-        convert_unit (bool, optional): Whether to convert molar mass to kilograms. Defaults to True.
+    - M (float): Molar mass of the substance in g/mol.
+    - T (float): Temperature in Kelvin.
+    - P (float): Pressure in Pascals.
+    - convert_unit (bool, optional): Whether to convert molar mass to kilograms. Defaults to True.
 
     Returns:
         float: Translational partition function.
 
     Notes:
-        - The constants R, amu2kg, k_b, and h used in the calculation are assumed to be defined elsewhere
-          in the code and represent the gas constant, atomic mass units to kilograms conversion factor,
-          Boltzmann's constant, and Planck's constant, respectively.
+    - The constants R, amu2kg, k_b, and h used in the calculation are assumed to be defined elsewhere
+      in the code and represent the gas constant, atomic mass units to kilograms conversion factor,
+      Boltzmann's constant, and Planck's constant, respectively.
     """
     if convert_unit:
         q_t = (R * T / P) * ((2 * np.pi * M * amu2kg * k_b * T) / (h ** 2)) ** 1.5
@@ -47,10 +47,10 @@ def q_rot(atom_numbers, coords, T, convert_unit=True):
     approach based on the linearity of the molecule and the need to convert units.
 
     Parameters:
-        atom_numbers (List[int]): List of atomic numbers for each atom in the molecule.
-        coords (List[List[float]]): 3D coordinates of each atom in the molecule.
-        T (float): Temperature at which the partition function is calculated.
-        convert_unit (bool, optional): Flag to indicate if the moment of inertia should be converted
+    - atom_numbers (List[int]): List of atomic numbers for each atom in the molecule.
+    - coords (List[List[float]]): 3D coordinates of each atom in the molecule.
+    - T (float): Temperature at which the partition function is calculated.
+    - convert_unit (bool, optional): Flag to indicate if the moment of inertia should be converted
                                        to appropriate units. Defaults to True.
 
     Returns:
@@ -61,13 +61,13 @@ def q_rot(atom_numbers, coords, T, convert_unit=True):
                     atom_numbers and coords, or if the temperature is not positive.
 
     Notes:
-        - For single-atom systems, a specific function `q_rot_single_atom` is called.
-        - The point group and rotational symmetry number are determined using `get_point_group`
+    - For single-atom systems, a specific function `q_rot_single_atom` is called.
+    - The point group and rotational symmetry number are determined using `get_point_group`
           and `get_rotational_symmetry_number` functions, respectively.
-        - The moment of inertia tensor is computed by `get_I`, and its units may be converted
+    - The moment of inertia tensor is computed by `get_I`, and its units may be converted
           if `convert_unit` is set to True.
-        - The linearity of the molecule is checked with `check_linear`.
-        - Depending on the linearity, either `q_rot_linear` or `q_rot_nonlinear` is used to
+    - The linearity of the molecule is checked with `check_linear`.
+    - Depending on the linearity, either `q_rot_linear` or `q_rot_nonlinear` is used to
           calculate the partition function.
     """
     if len(atom_numbers) == 1:
@@ -95,9 +95,9 @@ def q_rot_single_atom():
     q_rot_single_atom is a function that returns a fixed integer value.
 
     Returns:
-        int: A fixed integer value.
+        int: A fixed integer value (1.0).
     """
-    return 1
+    return 1.0
 
 
 def q_rot_linear(sigma, I, T):
@@ -108,17 +108,17 @@ def q_rot_linear(sigma, I, T):
     the provided sigma, I, and T values. The formula used is derived from
     physical chemistry principles.
 
-    :formula: q_r = (8 * π^2 * I * k_b * T) / (σ * h^2)
+    formula: q_r = (8 * π^2 * I * k_b * T) / (σ * h^2)
 
-    :parameters:
-    - sigma: float
+    parameters:
+    - sigma: (float)
         rotational symmetry number of the molecule
-    - I: float
+    - I: (float)
         The moment of inertia of the molecule.
-    - T: float
+    - T: (float)
         The absolute temperature in Kelvin at which the diffusion is being considered.
 
-    :returns: float
+    :returns: (float)
         The calculated rotational partition function (q_r).
     """
     q_r = (8 * np.pi ** 2 * I * k_b * T) / (sigma * h ** 2)
@@ -127,7 +127,6 @@ def q_rot_linear(sigma, I, T):
 
 def q_rot_nonlinear(sigma, IA, IB, IC, T):
     """
-
     Calculate the rotational partition function for a nonlinear molecule.
 
     The function computes the rotational partition function (q_r) for a given
@@ -136,20 +135,20 @@ def q_rot_nonlinear(sigma, IA, IB, IC, T):
 
     Parameters:
     -----------
-    sigma: int
+    - sigma: (int)
         Rotational symmetry number of the molecule.
-    IA: float
+    - IA: (float)
         Moment of inertia along the A axis.
-    IB: float
+    - IB: (float)
         Moment of inertia along the B axis.
-    IC: float
+    - IC: (float)
         Moment of inertia along the C axis.
-    T: float
+    - T: (float)
         Temperature in Kelvin.
 
     Returns:
     --------
-    float
+    (float)
         The calculated rotational partition function (q_r).
 
     Notes:
@@ -175,15 +174,15 @@ def q_vib_bot(vibfreqs, T, convert_unit=True):
     mechanics, which involves the Boltzmann constant (k_b), Planck's constant (h), and the provided temperature (T).
 
     Parameters:
-    vibfreqs: Union[List[float], np.ndarray]
+    - vibfreqs (Union[List[float], np.ndarray]):
         A list or numpy array containing the vibrational frequencies. unit is Hz, if your input is cm^-1, set convert_unit to be True
-    T: float
+    - T (float):
         Temperature at which the partition function is calculated.
-    convert_unit: bool, optional
+    convert_unit (bool, optional):
         If True, converts the input frequencies from wavenumbers to frequency units. Default is True.
 
     Returns:
-    float
+    (float)
         The computed vibrational partition function value.
 
     Raises:
@@ -207,20 +206,23 @@ def q_vib_V0(vibfreqs, T, convert_unit=True):
     the partition function  calculated by viewing vibrational ground state as zero point, and it reflects thermal excitation of vibrational states.
     This function computes the vibrational partition function, q_v, which is a key quantity in statistical thermodynamics. It takes into account only positive vibrational frequencies and can optionally convert the input frequencies from wavenumbers to frequency units.
 
-    :Parameters:
-        vibfreqs : array-like
-            Array of vibrational frequencies, unit is Hz, if your input is cm^-1, set convert_unit to be True
-        T : float
-            Temperature in Kelvin.
-        convert_unit : bool, optional
-            If True, converts the input vibrational frequencies from wavenumbers to frequency units. Default is True.
+    Parameters:
+    - vibfreqs (Union[List[float], np.ndarray]):
+        A list or numpy array containing the vibrational frequencies. unit is Hz, if your input is cm^-1, set convert_unit to be True
+    - T (float):
+        Temperature at which the partition function is calculated.
+    convert_unit (bool, optional):
+        If True, converts the input frequencies from wavenumbers to frequency units. Default is True.
 
-    :Returns:
-        q_v : float
-            The calculated vibrational partition function.
+    Returns:
+    (float)
+        The computed vibrational partition function value.
 
-    :Raises:
-        ValueError: If any of the vibrational frequencies are negative after conversion and filtering.
+    Raises:
+    ValueError
+        If the temperature T is not a positive number.
+    TypeError
+        If vibfreqs is neither a list nor a numpy array.
     """
     v = np.copy(vibfreqs)
     if convert_unit:
@@ -241,18 +243,18 @@ def q_ele(E_list, g_list, T, convert_unit=True):
     used to calculate various thermodynamic properties of a system.
 
     Parameters:
-    E_list: list of float
+    - E_list (list of float):
         The list of energy levels of the system. Unit is eV
-    g_list: list of int
+    - g_list (list of int):
         The degeneracies corresponding to each energy level.
-    T: float
+    - T (float):
         The temperature at which the partition function is evaluated.
-    convert_unit: bool, optional
+    - convert_unit (bool, optional):
         If True, converts the energy from atomic units (a.u.) to electronvolts (eV).
         Default is True.
 
     Returns:
-    float
+    (float)
         The calculated partition function.
 
     Raises:
@@ -276,11 +278,11 @@ def q(q_t, q_r, q_v, q_e, ignore_trans_and_rot=False):
     Calculate total partition function, with an option to ignore translation and rotation.
 
     Parameters:
-    q_t (float): The translation partition function.
-    q_r (float): The rotation partition function.
-    q_v (float): The Vibration partition function.
-    q_e (float): The Electron partition function.
-    ignore_trans_and_rot (bool, optional): If True, ignores the translation and rotation partition function in the calculation. Defaults to False.
+    - q_t (float): The translation partition function.
+    - q_r (float): The rotation partition function.
+    - q_v (float): The Vibration partition function.
+    - q_e (float): The Electron partition function.
+    - ignore_trans_and_rot (bool, optional): If True, ignores the translation and rotation partition function in the calculation. Defaults to False.
 
     Returns:
     float: The calculated value.

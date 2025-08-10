@@ -235,50 +235,50 @@ def fit_thermo_model(
     to a Cantera YAML file for further use in chemical kinetic simulations.
 
     Parameters:
-        data_path: str
+    - data_path (str):
             Path to the Excel file containing the thermodynamic data.
-        name: str
+    - name (str):
             Name of the species or reaction for which the model is being fitted.
-        model_type: str, optional
+    - model_type (str, optional):
             Type of the thermodynamic model to fit. Default is "NASA7".
-        data_columns: dict, optional
+    - data_columns (dict, optional):
             Dictionary mapping column names in the Excel file to their corresponding
             thermodynamic properties. Default maps are provided if not specified.
-        start_index: int, optional
+    - start_index (int, optional):
             Index of the first row to include in the fit. Default is 0.
-        end_index: int, optional
+    - end_index (int, optional):
             Index of the last row to include in the fit. If None, all rows after
             `start_index` are included. Default is None.
-        weight_strategy: str, optional
+    - weight_strategy (str, optional):
             Strategy for weighting the data points during the fit. Options are
             "inverse_mean_abs" and "uniform". Default is "inverse_mean_abs".
-        output_dir: str, optional
+    - output_dir (str, optional):
             Directory where output files (plots, metrics, YAML) will be saved. Default is ".".
-        save_plots: bool, optional
+    - save_plots (bool, optional):
             Whether to save plots of the fitted data. Default is True.
-        save_metrics: bool, optional
+    - save_metrics (bool, optional):
             Whether to save metrics of the fit. Default is True.
-        write_yaml: bool, optional
+    - write_yaml (bool, optional):
             Whether to write the fitted parameters to a Cantera YAML file. Default is True.
-        T_range: list, optional
+    - T_range (list, optional):
             Temperature range [T_min, T_max] for the fitted model. If None, the range
             is determined from the data. Default is None.
-        guess: list, optional
+    - guess (list, optional):
             Initial guess for the model parameters. If None, default guesses are used.
             Default is None.
-        bounds: tuple, optional
-            Bounds on the model parameters. If None, default bounds are used. Default is None.
-        maxfev: int, optional
+    - bounds (tuple, optional):
+            Bounds on the model parameters. If None, default bounds are used. Default is None. See scipy document.
+    - maxfev (int, optional):
             Maximum number of function evaluations for the fitting process. Default is 100000.
 
     Returns:
-        popt: list
+    - popt (list):
             List of optimized parameters for the fitted model.
-        fitted_model: object
+    - fitted_model (object):
             Fitted model object that can be used to evaluate the model at different temperatures.
 
     Raises:
-        ValueError: If an unsupported model type is specified.
+    - ValueError: If an unsupported model type is specified.
     """
     # 确保输出目录存在
     if data_columns is None:

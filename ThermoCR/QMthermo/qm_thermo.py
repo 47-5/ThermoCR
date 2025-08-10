@@ -30,51 +30,51 @@ def qm_thermo(atom_coord_path=None, atom_numbers=None, coords=None,
     for more accurate results.
 
     Parameters:
-        atom_coord_path: str
+    - atom_coord_path (str):
             Path to the file containing atomic coordinates.
-        atom_numbers: list[int]
+    - atom_numbers (list[int]):
             List of atomic numbers.
-        coords: np.ndarray
+    - coords (np.ndarray):
             Array of atomic coordinates.
-        vib_path: str
+    - vib_path (str):
             Path to the file containing vibrational frequencies.
-        vibfreqs: list[float]
+    - vibfreqs (list[float]):
             List of vibrational frequencies in cm^-1.
-        ee_path: str
+    - ee_path (str):
             Path to the file containing electronic energies.
-        ee: float
+    - ee (float):
             Electronic energy in Hartrees.
-        T: float
+    - T (float):
             Temperature in Kelvin.
-        P: float
+    - P (float):
             Pressure in Pascals.
-        sclZPE: float
+    - sclZPE (float):
             Scaling factor for zero-point energy.
-        sclU: float
+    - sclU (float):
             Scaling factor for internal energy.
-        sclCv: float
+    - sclCv (float):
             Scaling factor for constant volume heat capacity.
-        sclS: float
+    - sclS (float):
             Scaling factor for entropy.
-        U_Minenkov: bool
+    - U_Minenkov (bool):
             Flag to use Minenkov's method for internal energy correction.
-        S_Grimme: bool
+    - S_Grimme (bool):
             Flag to use Grimme's method for entropy correction.
-        verbose: bool
+    - verbose (bool):
             Flag to print detailed output.
-        read_ee_index: int
+    - read_ee_index (int):
             Index to select the electronic energy value when multiple values are available. (When use ee_path rather than ee)
-        E_list: list[float]
+    - E_list (list[float]):
             List of electronic energy levels.
-        g_list: list[int]
+    - g_list (list[int]):
             List of degeneracies corresponding to the electronic energy levels.
-        ignore_trans_and_rot: bool
+    - ignore_trans_and_rot (bool):
             Flag to ignore translational and rotational contributions.
-        c: float
+    - c (float):
             Concentration in mol/m^3 for calculating concentration-dependent Gibbs free energy.
 
     Returns:
-        dict
+        (dict)
             A dictionary containing the calculated thermodynamic properties.
 
     Raises:
@@ -246,45 +246,49 @@ def qm_thermo_scan(
     energies, and allows customization of scaling factors and thermodynamic corrections.
 
     Parameters:
-    atom_coord_path: str, optional
-        Path to a file containing atomic coordinates.
-    atom_numbers: list, optional
-        List of atomic numbers.
-    coords: list, optional
-        List of atomic coordinates.
-    vib_path: str, optional
-        Path to a file containing vibrational frequencies.
-    vibfreqs: list, optional
-        List of vibrational frequencies.
-    ee_path: str, optional
-        Path to a file containing electronic energies.
-    ee: list, optional
-        List of electronic energies.
-    T: List[int | float], default [298.15]
+    - atom_coord_path (str):
+            Path to the file containing atomic coordinates.
+    - atom_numbers (list[int]):
+            List of atomic numbers.
+    - coords (np.ndarray):
+            Array of atomic coordinates.
+    - vib_path (str):
+            Path to the file containing vibrational frequencies.
+    - vibfreqs (list[float]):
+            List of vibrational frequencies in cm^-1.
+    - ee_path (str):
+            Path to the file containing electronic energies.
+    - ee (float):
+            Electronic energy in Hartrees.
+    - T: List[int | float], default [298.15]
         List of temperatures in Kelvin.
-    P: List[int | float], default [101325]
+    - P: List[int | float], default [101325]
         List of pressures in Pascal.
-    sclZPE: float, default 1.0
-        Scaling factor for zero-point energy.
-    sclU: float, default 1.0
-        Scaling factor for internal energy.
-    sclCv: float, default 1.0
-        Scaling factor for heat capacity at constant volume.
-    sclS: float, default 1.0
-        Scaling factor for entropy.
-    U_Minenkov: bool, default False
-        Flag to use Minenkov's method for internal energy correction.
-    S_Grimme: bool, default True
-        Flag to use Grimme's method for entropy correction.
-    read_ee_index: int, default -1
-        Index to read from the electronic energy list.
-    E_list: list, optional
-        List of additional energies.
-    g_list: list, optional
-        List of degeneracies.
-    c: any, optional
-        Additional context or parameters.
-    out_path: str, default 'QMthermoScan.xlsx'
+    - sclZPE (float):
+            Scaling factor for zero-point energy.
+    - sclU (float):
+            Scaling factor for internal energy.
+    - sclCv (float):
+            Scaling factor for constant volume heat capacity.
+    - sclS (float):
+            Scaling factor for entropy.
+    - U_Minenkov (bool):
+            Flag to use Minenkov's method for internal energy correction.
+    - S_Grimme (bool):
+            Flag to use Grimme's method for entropy correction.
+    - verbose (bool):
+            Flag to print detailed output.
+    - read_ee_index (int):
+            Index to select the electronic energy value when multiple values are available. (When use ee_path rather than ee)
+    - E_list (list[float]):
+            List of electronic energy levels.
+    - g_list (list[int]):
+            List of degeneracies corresponding to the electronic energy levels.
+    - ignore_trans_and_rot (bool):
+            Flag to ignore translational and rotational contributions.
+    - c (float):
+            Concentration in mol/m^3 for calculating concentration-dependent Gibbs free energy.
+    - out_path: str, default 'QMthermoScan.xlsx'
         Path to save the output Excel file.
 
     Returns:
@@ -331,16 +335,16 @@ def qm_thermo_conformation_weighting(
     thermodynamic properties: U, H, G, S, Cv, and Cp, along with the temperature used in the calculation.
 
     Parameters:
-        U_list (List[float] | np.ndarray): List or array of internal energies for each conformation in J/mol.
-        H_list (List[float] | np.ndarray): List or array of enthalpies for each conformation in J/mol.
-        G_list (List[float] | np.ndarray): List or array of Gibbs free energies for each conformation in J/mol.
-        S_list (List[float] | np.ndarray): List or array of entropies for each conformation in J/(mol·K).
-        Cv_list (List[float] | np.ndarray): List or array of constant volume heat capacities for each conformation in J/(mol·K).
-        Cp_list (List[float] | np.ndarray): List or array of constant pressure heat capacities for each conformation in J/(mol·K).
-        T (float, optional): Temperature in Kelvin. Defaults to 298.15 K.
+    - U_list (List[float] | np.ndarray): List or array of internal energies for each conformation in J/mol.
+    - H_list (List[float] | np.ndarray): List or array of enthalpies for each conformation in J/mol.
+    - G_list (List[float] | np.ndarray): List or array of Gibbs free energies for each conformation in J/mol.
+    - S_list (List[float] | np.ndarray): List or array of entropies for each conformation in J/(mol·K).
+    - Cv_list (List[float] | np.ndarray): List or array of constant volume heat capacities for each conformation in J/(mol·K).
+    - Cp_list (List[float] | np.ndarray): List or array of constant pressure heat capacities for each conformation in J/(mol·K).
+    - T (float, optional): Temperature in Kelvin. Defaults to 298.15 K.
 
     Returns:
-        dict: A dictionary with keys 'weight', 'U/(J/mol)', 'H/(J/mol)', 'G/(J/mol)', 'S/(J/mol)',
+        (dict): A dictionary with keys 'weight', 'U/(J/mol)', 'H/(J/mol)', 'G/(J/mol)', 'S/(J/mol)',
               'Cv/(J/mol)', 'Cp/(J/mol)', and 'T/K' corresponding to the calculated values.
 
     Raises:
@@ -389,22 +393,22 @@ def calculate_conformation_weighting(G_list, T=298.15):
 
     Parameters:
     ----------
-    G_list: List[float] or np.ndarray
+    - G_list (List[float] or np.ndarray):
         A list or numpy array containing the free energy values of each conformation. unit is eV.
-    T: float
+    T (float):
         The temperature in Kelvin at which to evaluate the Boltzmann distribution. Default is 298.15 K.
 
     Returns:
     -------
-    np.ndarray
+    (np.ndarray)
         An array representing the probability of each conformation occurring, normalized such that
         the sum of all probabilities equals one.
 
     Raises:
     ------
-    ValueError
+    - ValueError
         If G_list is not a list or numpy array, or if T is not a positive number.
-    TypeError
+    - TypeError
         If elements in G_list are not numeric.
 
     Notes:
@@ -430,20 +434,17 @@ def contribution_trans(M, T, P):
     heat capacities at constant volume (Cv_t) and pressure (Cp_t), and entropy (S_t)
     based on the given mass (M), temperature (T), and pressure (P).
 
-    :returns:
-        - q_t: Translational partition function
-        - U_t: Translational internal energy
-        - H_t: Translational enthalpy
-        - Cv_t: Translational heat capacity at constant volume
-        - Cp_t: Translational heat capacity at constant pressure
-        - S_t: Translational entropy
-
     :param M: Mass of the particle
     :type M: float
     :param T: Temperature in Kelvin
     :type T: float
     :param P: Pressure in Pascals
     :type P: float
+
+    :returns:
+    - Tuple[float, float, float, float, float, float]: A tuple containing q_t, U_t, H_t, Cv_t, Cp_t, S_t respectively.
+
+
     """
     q_t = q_trans(M=M, T=T, P=P)
     U_t = U_trans(T=T)
@@ -525,34 +526,34 @@ def contribution_vib(vibfreqs, T, convert_unit=True, sclZPE=1.0, sclU=1.0, sclCv
     enthalpy, heat capacities, and entropy, with options to apply scaling factors and specific corrections.
 
     Parameters:
-    vibfreqs: list
+    - vibfreqs: list
         List of vibrational frequencies.
-    T: float
+    - T: float
         Temperature in Kelvin.
-    convert_unit: bool, optional
+    - convert_unit: bool, optional
         If True, converts the input frequencies from cm-1 to Hz. Default is True.
-    sclZPE: float, optional
+    - sclZPE: float, optional
         Scaling factor for zero-point energy. Default is 1.0.
-    sclU: float, optional
+    - sclU: float, optional
         Scaling factor for internal energy. Default is 1.0.
-    sclCv: float, optional
+    - sclCv: float, optional
         Scaling factor for constant volume heat capacity. Default is 1.0.
-    sclS: float, optional
+    - sclS: float, optional
         Scaling factor for entropy. Default is 1.0.
-    U_Minenkov: bool, optional
+    - U_Minenkov: bool, optional
         If True, applies Minenkov's correction for internal energy. Default is False.
-    S_Grimme: bool, optional
+    - S_Grimme: bool, optional
         If True, applies Grimme's correction for entropy. Default is True.
 
     Returns:
-    tuple
+    (tuple)
         A tuple containing (q_v_0, q_v_bot, U_v_0_T, H_v_0_T, U_v, H_v, Cv_v, Cp_v, S_v, zpe) where each element
         represents a calculated thermodynamic property.
 
     Raises:
-    ValueError
+    - ValueError
         If vibfreqs is empty or if T is not positive.
-    TypeError
+    - TypeError
         If any of the parameters are of incorrect type.
     """
     q_v_0 = q_vib_V0(vibfreqs=vibfreqs, T=T, convert_unit=convert_unit)
@@ -578,10 +579,10 @@ def contribution_ele(E_list, g_list, T, convert_unit=True):
     optionally converts units to standard SI units.
 
     Parameters:
-    E_list (List[float]): A list of energy levels for the states. eV
-    g_list (List[int]): A list of degeneracies corresponding to each energy level.
-    T (float): Temperature in Kelvin.
-    convert_unit (bool, optional): If True, converts the output to standard SI units.
+    - E_list (List[float]): A list of energy levels for the states. eV
+    - g_list (List[int]): A list of degeneracies corresponding to each energy level.
+    - T (float): Temperature in Kelvin.
+    - convert_unit (bool, optional): If True, converts the output to standard SI units.
         Default is True.
 
     Returns:

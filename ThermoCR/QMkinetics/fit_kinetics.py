@@ -150,31 +150,31 @@ def fit_kinetics_model(
     fitting of different types of models, saving plots and metrics, and writing
     the results to a Cantera YAML file.
 
-    Args:
-        data_path: Path to the Excel file containing the experimental data.
-        r_name_list: List of reactant names for the reaction.
-        p_name_list: List of product names for the reaction.
-        reversible: Boolean indicating if the reaction is reversible.
-        model_type: Type of the kinetic model to be fitted. Default is 'Arrhenius'.
-        data_columns: Dictionary mapping column names in the data file to the
+    Parameters:
+    - data_path: Path to the Excel file containing the experimental data.
+    - r_name_list: List of reactant names for the reaction.
+    - p_name_list: List of product names for the reaction.
+    - reversible: Boolean indicating if the reaction is reversible.
+    - model_type: Type of the kinetic model to be fitted. Default is 'Arrhenius'.
+    - data_columns: Dictionary mapping column names in the data file to the
             corresponding data (e.g., temperature, rate constant). If not provided,
             default values are used.
-        start_index: Index of the first data point to be used for fitting. Default is 0.
-        end_index: Index of the last data point to be used for fitting. If None, all
+    - start_index: Index of the first data point to be used for fitting. Default is 0.
+    - end_index: Index of the last data point to be used for fitting. If None, all
             data points from start_index to the end of the dataset are used.
-        output_dir: Directory where the output files (plots, metrics, YAML) will be saved.
+    - output_dir: Directory where the output files (plots, metrics, YAML) will be saved.
             Default is the current directory.
-        save_plots: Boolean indicating whether to save the plots of the fitted model.
+    - save_plots: Boolean indicating whether to save the plots of the fitted model.
             Default is True.
-        save_metrics: Boolean indicating whether to save the metrics of the fitted model.
+    - save_metrics: Boolean indicating whether to save the metrics of the fitted model.
             Default is True.
-        write_yaml: Boolean indicating whether to write the fitted parameters to a
+    - write_yaml: Boolean indicating whether to write the fitted parameters to a
             Cantera YAML file. Default is True.
-        guess: Initial guess for the parameters of the model. If None, the solver
-            will use its own initial guess.
-        bounds: Tuple of lower and upper bounds for the model parameters. If None,
-            no bounds are applied.
-        maxfev: Maximum number of function evaluations for the curve fitting. Default is 100000.
+    - guess: Initial guess for the parameters of the model. If None, the solver
+            will use its own initial guess. See document of Scipy for more details.
+    - bounds: Tuple of lower and upper bounds for the model parameters. If None,
+            no bounds are applied. See document of Scipy for more details.
+    - maxfev: Maximum number of function evaluations for the curve fitting. Default is 100000. See document of Scipy for more details.
 
     Returns:
         A tuple containing the optimized parameters (popt) and the fitted model object.

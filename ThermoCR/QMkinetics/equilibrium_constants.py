@@ -8,9 +8,9 @@ def k_equilibrium_constants(delta_G, T):
     Gibbs free energy change (delta_G) and temperature (T). The formula used is
     k_eq = exp(-delta_G / (R * T)), where R is the ideal gas constant.
 
-    Args:
-        delta_G: float, Gibbs free energy change of the reaction in joules per mole.
-        T: float, Temperature at which the reaction occurs in Kelvin.
+    Parameters:
+    - delta_G (float): Gibbs free energy change of the reaction in joules per mole.
+    - T (float): Temperature at which the reaction occurs in Kelvin.
 
     Returns:
         float, The equilibrium constant (k_eq) of the reaction.
