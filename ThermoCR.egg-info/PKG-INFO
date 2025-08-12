@@ -1,4 +1,4 @@
-Metadata-Version: 2.4
+Metadata-Version: 2.1
 Name: ThermoCR
 Version: 1.0
 Summary: ThermoCR -- A tool for calculating thermodynamic quantities and reaction rate constants based on quantum chemical calculations
@@ -14,10 +14,3 @@ Requires-Dist: ase
 Requires-Dist: openpyxl
 Requires-Dist: cclib
 Requires-Dist: scikit-learn
-Dynamic: author
-Dynamic: author-email
-Dynamic: home-page
-Dynamic: license-file
-Dynamic: requires-dist
-Dynamic: requires-python
-Dynamic: summary
