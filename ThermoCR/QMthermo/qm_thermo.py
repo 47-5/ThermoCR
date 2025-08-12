@@ -451,7 +451,7 @@ def contribution_trans(M, T, P):
     H_t = H_trans(T=T)
     Cv_t = Cv_trans()
     Cp_t = Cp_trans()
-    S_t = S_trans(q_t=q_t, T=T)
+    S_t = S_trans(q_t=q_t)
     return q_t, U_t, H_t, Cv_t, Cp_t, S_t
 
 
