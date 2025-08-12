@@ -515,7 +515,7 @@ def contribution_rot(atom_numbers, coords, T, convert_unit=True):
             H_r = H_rot_nonlinear(T=T)
             Cv_r = Cv_rot_nonlinear()
             Cp_r = Cp_rot_nonlinear()
-            S_r = S_rot_nonlinear(q_r=q_r, T=T)
+            S_r = S_rot_nonlinear(q_r=q_r)
     return q_r, U_r, H_r, Cv_r, Cp_r, S_r
 
 
