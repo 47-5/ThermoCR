@@ -276,7 +276,7 @@ def k_VTST_scan(thermo_irc_path_list: List[str],
         return df_vtst, df_tst
 
 
-    return k_vtst_scan
+    return df_vtst
 
 
 

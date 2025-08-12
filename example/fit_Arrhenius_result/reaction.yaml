@@ -1,0 +1,3 @@
+- equation: CPD + CPD <=> DCPD
+  type: elementary
+  rate-constant: {A: 1.0631598419814308e-30, b: 2.8428707621407554, Ea: 57408.7680557581 }
