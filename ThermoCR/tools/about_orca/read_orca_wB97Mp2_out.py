@@ -15,14 +15,14 @@ def read_orca_wB97Mp2_out(orca_out_file_path):
     targets energies calculated using the wB97M-V functional.
 
     Parameters:
-        orca_out_file_path (str): Path to the ORCA output file.
+    - orca_out_file_path (str): Path to the ORCA output file.
 
     Returns:
         float: The final single point energy found in the ORCA output file.
 
     Raises:
-        FileNotFoundError: If the provided file path does not exist.
-        IndexError: If no matches are found for the final single point energy pattern.
+    - FileNotFoundError: If the provided file path does not exist.
+    - IndexError: If no matches are found for the final single point energy pattern.
     """
     pattern = re.compile(r'FINAL SINGLE POINT ENERGY\s+([-+]?\d+\.\d+)')
 

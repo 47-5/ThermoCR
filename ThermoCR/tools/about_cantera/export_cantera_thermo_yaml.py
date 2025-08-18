@@ -16,25 +16,25 @@ def write_cantera_yaml_thermo_piecewise_Gibbs(specie_name,
     name in the specified root path. The function assumes that the temperature array includes 298.15 K, which is used
     as a reference point for calculating the standard enthalpy of formation.
 
-    Args:
-        specie_name (str): The name of the chemical species.
-        T (Optional[ArrayLike]): An array of temperatures in Kelvin.
-        H_formation (Optional[ArrayLike]): An array of enthalpies of formation at the given temperatures in kJ/mol.
-        G_formation (Optional[ArrayLike]): An array of Gibbs free energies of formation at the given temperatures in kJ/mol.
-        root_path (str): The directory where the YAML file will be saved. Defaults to the current working directory.
+    Parameters:
+    - specie_name (str): The name of the chemical species.
+    - T (Optional[ArrayLike]): An array of temperatures in Kelvin.
+    - H_formation (Optional[ArrayLike]): An array of enthalpies of formation at the given temperatures in kJ/mol.
+    - G_formation (Optional[ArrayLike]): An array of Gibbs free energies of formation at the given temperatures in kJ/mol.
+    - root_path (str): The directory where the YAML file will be saved. Defaults to the current working directory.
 
     Returns:
         None
 
     Raises:
-        IndexError: If 298.15 K is not found in the provided temperature array.
-        ValueError: If any of the input arrays (T, H_formation, G_formation) are not of the same length.
+    - IndexError: If 298.15 K is not found in the provided temperature array.
+    - ValueError: If any of the input arrays (T, H_formation, G_formation) are not of the same length.
     """
     T298_index = T.tolist().index(298.15)
 
     data = {str(t): str(g) for t, g in zip(T, G_formation)}
 
-    yaml_path = os.path.join(root_path, f'{specie_name}.yaml')
+    yaml_path = os.path.join(root_path, f'{specie_name}_thermo.yaml')
     with open(yaml_path, 'w') as f:
         f.write(f'  thermo:\n')
         f.write(f'   model: piecewise-Gibbs\n')
@@ -55,22 +55,22 @@ def write_cantera_yaml_thermo_NASA7(specie_name, T_range, nasa7_parameters,
     directory or the current working directory if no path is provided.
 
     Parameters:
-    specie_name (str): The name of the chemical species.
-    T_range (Tuple[float, float]): A tuple containing the minimum and maximum
+    - specie_name (str): The name of the chemical species.
+    - T_range (Tuple[float, float]): A tuple containing the minimum and maximum
     temperature for which the NASA7 polynomial is valid.
-    nasa7_parameters (List[float]): A list of 14 coefficients for the NASA7
+    - nasa7_parameters (List[float]): A list of 14 coefficients for the NASA7
     polynomial.
-    root_path (str, optional): The root directory where the YAML file will be
+    - root_path (str, optional): The root directory where the YAML file will be
     saved. Defaults to the current working directory ('.').
 
     Raises:
-    ValueError: If the length of nasa7_parameters is not exactly 14.
-    TypeError: If T_range is not a tuple or if nasa7_parameters is not a list.
+    - ValueError: If the length of nasa7_parameters is not exactly 14.
+    - TypeError: If T_range is not a tuple or if nasa7_parameters is not a list.
 
     Returns:
     None: This function does not return any value. It writes the output to a file.
     """
-    yaml_path = os.path.join(root_path, f'{specie_name}.yaml')
+    yaml_path = os.path.join(root_path, f'{specie_name}_thermo.yaml')
     with open(yaml_path, 'w') as f:
         f.write(f'  thermo:\n')
         f.write(f'   model: NASA7\n')
@@ -90,21 +90,21 @@ def write_cantera_yaml_thermo_NASA9(specie_name, T_range, nasa9_parameters, refe
     species name as the filename.
 
     Parameters:
-    specie_name (str): The name of the species to write the thermodynamic data for.
-    T_range (Tuple[float, float, float]): A tuple containing three temperature points that define
+    - specie_name (str): The name of the species to write the thermodynamic data for.
+    - T_range (Tuple[float, float, float]): A tuple containing three temperature points that define
     the temperature ranges over which the NASA9 polynomials are valid.
-    nasa9_parameters (List[float]): A list of 14 or 15 NASA9 polynomial coefficients.
-    reference_p (float, optional): The reference pressure in bar. Defaults to 1 bar.
-    root_path (str, optional): The directory where the YAML file will be saved. Defaults to the
+    - nasa9_parameters (List[float]): A list of 14 or 15 NASA9 polynomial coefficients.
+    - reference_p (float, optional): The reference pressure in bar. Defaults to 1 bar.
+    - root_path (str, optional): The directory where the YAML file will be saved. Defaults to the
     current working directory.
 
     Returns:
     None
 
     Raises:
-    FileNotFoundError: If the specified root path does not exist or is not writable.
-    TypeError: If any of the input parameters do not match their expected types.
-    ValueError: If the length of nasa9_parameters is not 14 or 15, or if T_range does not contain
+    - FileNotFoundError: If the specified root path does not exist or is not writable.
+    - TypeError: If any of the input parameters do not match their expected types.
+    - ValueError: If the length of nasa9_parameters is not 14 or 15, or if T_range does not contain
     exactly three elements.
 
     Notes:
@@ -113,7 +113,7 @@ def write_cantera_yaml_thermo_NASA9(specie_name, T_range, nasa9_parameters, refe
     - The output file will be named as `<specie_name>.yaml` and placed in the `root_path`.
     - No checks are performed on the validity of the NASA9 coefficients or the temperature range.
     """
-    yaml_path = os.path.join(root_path, f'{specie_name}.yaml')
+    yaml_path = os.path.join(root_path, f'{specie_name}_thermo.yaml')
     with open(yaml_path, 'w') as f:
         f.write(f'  thermo:\n')
         f.write(f'   model: NASA9\n')
@@ -136,26 +136,26 @@ def write_cantera_yaml_thermo_Shomate(specie_name, T_range, Shomate_parameters, 
     kinetics and thermodynamics simulations with Cantera.
 
     Parameters:
-    specie_name (str): Name of the species for which the thermodynamic data is being
+    - specie_name (str): Name of the species for which the thermodynamic data is being
                        written.
-    T_range (tuple): A tuple specifying the temperature range over which the
+    - T_range (tuple): A tuple specifying the temperature range over which the
                      Shomate parameters are valid.
-    Shomate_parameters (list): List of Shomate parameters used to define the
+    - Shomate_parameters (list): List of Shomate parameters used to define the
                                thermodynamic properties.
-    reference_p (float, optional): Reference pressure in bar. Default is 1 bar.
-    root_path (str, optional): Root directory where the YAML file will be saved.
+    - reference_p (float, optional): Reference pressure in bar. Default is 1 bar.
+    - root_path (str, optional): Root directory where the YAML file will be saved.
                                Default is the current working directory.
 
     Returns:
     None
 
     Raises:
-    FileNotFoundError: If the specified root path does not exist.
-    TypeError: If `specie_name` is not a string or if `T_range` or
+    - FileNotFoundError: If the specified root path does not exist.
+    - TypeError: If `specie_name` is not a string or if `T_range` or
                `Shomate_parameters` are not provided as expected types.
-    ValueError: If `T_range` does not contain exactly two elements.
+    - ValueError: If `T_range` does not contain exactly two elements.
     """
-    yaml_path = os.path.join(root_path, f'{specie_name}.yaml')
+    yaml_path = os.path.join(root_path, f'{specie_name}_thermo.yaml')
     with open(yaml_path, 'w') as f:
         f.write(f'  thermo:\n')
         f.write(f'   model: NASA9\n')

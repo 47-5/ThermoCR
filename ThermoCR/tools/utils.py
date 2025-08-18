@@ -18,30 +18,24 @@ def get_point_group(coords, symbols=None, numbers=None):
     is then used to determine the point group of the structure.
 
     Parameters:
-    coords: List[List[float]]
+    - coords: (List[List[float]])
         A list of 3D Cartesian coordinates for each atom.
-    symbols: Optional[List[str]]
+    - symbols: (Optional[List[str]])
         A list of atomic symbols corresponding to the atoms at the given
         coordinates. If not provided, `numbers` must be specified.
-    numbers: Optional[List[int]]
+    - numbers: (Optional[List[int]])
         A list of atomic numbers corresponding to the atoms at the given
         coordinates. This is used if `symbols` are not provided.
 
     Returns:
-    str
+    (str)
         The point group symbol as a string.
 
     Raises:
-    ValueError
+    - ValueError
         If neither `symbols` nor `numbers` are provided, or if there is
         a mismatch in the length of `coords` and the provided `symbols`
         or `numbers`.
-
-    Examples:
-    None
-
-    See Also:
-    None
 
     Notes:
     The function internally creates an Atoms object using the provided
@@ -64,8 +58,8 @@ def get_I(coords, numbers):
     numbers. The result is normalized by the square of the Bohr radius.
 
     Parameters:
-    coords (List[List[float]]): A list of 3D Cartesian coordinates for each atom.
-    numbers (List[int]): A list of atomic numbers corresponding to each coordinate.
+    - coords (List[List[float]]): A list of 3D Cartesian coordinates for each atom.
+    - numbers (List[int]): A list of atomic numbers corresponding to each coordinate.
 
     Returns:
     numpy.ndarray: An array containing the three principal moments of inertia.
@@ -88,9 +82,9 @@ def check_linear(I, threshold=1e-3):
     difference between the second and third elements of `I` is also below this threshold; otherwise, it returns `False`.
 
 
-    Args:
-        I (List[float]): The input list or array to be checked.
-        threshold (float, optional): The threshold value used for comparison. Defaults to 1e-3.
+    Parameters:
+    - I (List[float]): The input list or array to be checked.
+    - threshold (float, optional): The threshold value used for comparison. Defaults to 1e-3.
 
     Returns:
         bool: True if the array is considered linear, False otherwise.

@@ -130,6 +130,20 @@ def export_data(x_data, y_data, export_path):
     return None
 
 
+def convert_k_unit_from_ThermoCR_to_Cantera(k):
+    """
+    convert k unit: (mol/m^3)^(-delta_n) * s^-1  -->  (kmol/m^3)^(-delta_n) * s^-1
+    Args:
+        k:
+
+    Returns: k
+
+    """
+    print('convert k unit: (mol/m^3)^(-delta_n) * s^-1  -->  (kmol/m^3)^(-delta_n) * s^-1')
+    k = k * 1000
+    return k
+
+
 def fit_kinetics_model(
         data_path: str,
         r_name_list, p_name_list, reversible=True,
@@ -144,6 +158,7 @@ def fit_kinetics_model(
         guess: list = None,
         bounds: tuple = None,
         maxfev: int = 100000,
+        convert_k_unit_fun = convert_k_unit_from_ThermoCR_to_Cantera
 ):
     """
     Fits a kinetic model to the provided experimental data. The function supports
@@ -194,6 +209,9 @@ def fit_kinetics_model(
     T = df[data_columns["T"]].to_numpy()[start_index:end_index]
     T = np.array(T, dtype=float)
     k = df[data_columns['k']].to_numpy()[start_index:end_index]
+
+    if convert_k_unit_fun is not None:
+        k = convert_k_unit_fun(k)
 
     n_data = len(T)
     X = T

@@ -13,16 +13,16 @@ def read_qm_out(filepath):
     for different types of QM calculations.
 
     Parameters:
-        filepath: str
+    - filepath: (str)
             The path to the QM software output file to be read and parsed.
 
     Returns:
-        cclib.parser.data.ccData
+        (cclib.parser.data.ccData)
             An object containing the parsed data from the QM output file.
 
     Raises:
-        IOError: If there is an issue with reading the file.
-        cclib.parser.ParseError: If there is an error in parsing the file content.
+    - IOError: If there is an issue with reading the file.
+    - cclib.parser.ParseError: If there is an error in parsing the file content.
     """
     data = cclib.io.ccread(filepath)
     return data
@@ -40,8 +40,8 @@ def read_atom_coord(filepath, coord_index=-1):
     default being the last geometry (usually the optimized structure).
 
     Parameters:
-    filepath (str): Path to the computational chemistry output file.
-    coord_index (int, optional): Index of the coordinate set to read,
+    - filepath (str): Path to the computational chemistry output file.
+    - coord_index (int, optional): Index of the coordinate set to read,
                                  default is -1 which selects the last set.
 
     Returns:
@@ -50,8 +50,8 @@ def read_atom_coord(filepath, coord_index=-1):
            2. A numpy array of the corresponding atomic coordinates.
 
     Raises:
-    IOError: If the specified file does not exist or cannot be read.
-    ValueError: If the file format is not supported or if the coord_index
+    - IOError: If the specified file does not exist or cannot be read.
+    - ValueError: If the file format is not supported or if the coord_index
                 is out of range for the number of geometries in the file.
 
     """
@@ -71,16 +71,16 @@ def read_vib(filepath):
     file is 1 or less, an empty list is returned instead, as vibrational analysis is not meaningful
     for such systems.
 
-    Args:
-        filepath (str): The path to the computational chemistry output file to be read.
+    Parameters:
+    - filepath (str): The path to the computational chemistry output file to be read.
 
     Returns:
-        List[float]: A list containing the vibrational frequencies extracted from the file.
+        (List[float]): A list containing the vibrational frequencies extracted from the file.
                      Returns an empty list if the file contains 1 or fewer atoms.
 
     Raises:
-        IOError: If there is an issue reading the file at the provided filepath.
-        ValueError: If the data does not contain expected attributes like 'vibfreqs' or 'atomnos'.
+    - IOError: If there is an issue reading the file at the provided filepath.
+    - ValueError: If the data does not contain expected attributes like 'vibfreqs' or 'atomnos'.
     """
     data = cclib.io.ccread(filepath)
     if len(data.atomnos) <= 1:
@@ -99,15 +99,15 @@ def read_imaginary_vib(filepath, vibfreqs=None):
     the largest absolute value as the most significant. If no negative frequencies are found, it returns None.
 
     Parameters:
-        filepath (str): Path to the file containing vibration frequencies.
-        vibfreqs (Optional[List[Union[int, float, str]]]): A list of vibration frequencies. If not provided, they will be read from `filepath`.
+    - filepath (str): Path to the file containing vibration frequencies.
+    - vibfreqs (Optional[List[Union[int, float, str]]]): A list of vibration frequencies. If not provided, they will be read from `filepath`.
 
     Returns:
         Optional[float]: The selected imaginary frequency with the largest absolute value, or None if no imaginary frequencies were found.
 
     Raises:
-        FileNotFoundError: If the specified file does not exist.
-        ValueError: If the file contains non-convertible elements when trying to convert to float.
+    - FileNotFoundError: If the specified file does not exist.
+    - ValueError: If the file contains non-convertible elements when trying to convert to float.
     """
     if vibfreqs is None:
         vibfreqs = read_vib(filepath=filepath)
@@ -141,19 +141,19 @@ def read_ee(filepath, ee_index=-1, return_Hartree=True):
     software, extracts the electronic energy, and optionally converts it to Hartree units.
     It supports reading the last or any specific electronic energy from the file.
 
-    Args:
-        filepath (str): The path to the computational chemistry output file.
-        ee_index (int, optional): The index of the electronic energy to read. Defaults to -1,
+    Parameters:
+    - filepath (str): The path to the computational chemistry output file.
+    - ee_index (int, optional): The index of the electronic energy to read. Defaults to -1,
             which corresponds to the last electronic energy in the file.
-        return_Hartree (bool, optional): If True, the electronic energy is returned in Hartree units.
+    - return_Hartree (bool, optional): If True, the electronic energy is returned in Hartree units.
             If False, the energy is returned in the original units of the file. Defaults to True.
 
     Returns:
         float: The electronic energy. The unit depends on the `return_Hartree` parameter.
 
     Raises:
-        FileNotFoundError: If the file at `filepath` does not exist.
-        ValueError: If `ee_index` is out of range for the number of electronic energies in the file.
+    - FileNotFoundError: If the file at `filepath` does not exist.
+    - ValueError: If `ee_index` is out of range for the number of electronic energies in the file.
     """
     data = cclib.io.ccread(filepath)
     ee = data.scfenergies[ee_index]
