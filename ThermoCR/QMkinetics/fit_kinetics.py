@@ -158,7 +158,8 @@ def fit_kinetics_model(
         guess: list = None,
         bounds: tuple = None,
         maxfev: int = 100000,
-        convert_k_unit_fun = convert_k_unit_from_ThermoCR_to_Cantera
+        convert_k_unit_fun = None,
+        convert_A_unit_fun = convert_k_unit_from_ThermoCR_to_Cantera
 ):
     """
     Fits a kinetic model to the provided experimental data. The function supports
@@ -284,7 +285,7 @@ def fit_kinetics_model(
         if model_type == "Arrhenius":
             model["yaml_writer"](
                 r_name_list=r_name_list, p_name_list=p_name_list, A=params[0], Ea=params[1], b=params[2],
-                reversible=reversible, root_path=output_dir
+                reversible=reversible, root_path=output_dir, convert_A_unit_fun=convert_A_unit_fun
             )
 
     return popt, fitted_model

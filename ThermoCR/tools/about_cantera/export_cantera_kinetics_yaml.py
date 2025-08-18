@@ -1,9 +1,10 @@
 import os.path
 
 
+
 def make_cantera_reaction_yaml(r_name_list, p_name_list, A, b, Ea, reversible=True,
                                yaml_name='reaction.yaml', write_mode='a',
-                               root_path='.'):
+                               root_path='.', convert_A_unit_fun = None):
     """
     Generate a Cantera reaction in YAML format and write it to a file.
 
@@ -47,6 +48,10 @@ def make_cantera_reaction_yaml(r_name_list, p_name_list, A, b, Ea, reversible=Tr
         n_right += 1
 
     yaml_path = os.path.join(root_path, yaml_name)
+
+    if convert_A_unit_fun is not None:
+        A = convert_A_unit_fun(A)
+
     with open(yaml_path, write_mode) as f:
         f.write(f'- equation: {left} {middle} {right}\n')
         f.write(f'  type: elementary\n')
