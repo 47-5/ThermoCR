@@ -87,25 +87,25 @@
 </span><span id="L-16"><a href="#L-16"><span class="linenos"> 16</span></a><span class="sd">    name in the specified root path. The function assumes that the temperature array includes 298.15 K, which is used</span>
 </span><span id="L-17"><a href="#L-17"><span class="linenos"> 17</span></a><span class="sd">    as a reference point for calculating the standard enthalpy of formation.</span>
 </span><span id="L-18"><a href="#L-18"><span class="linenos"> 18</span></a>
-</span><span id="L-19"><a href="#L-19"><span class="linenos"> 19</span></a><span class="sd">    Args:</span>
-</span><span id="L-20"><a href="#L-20"><span class="linenos"> 20</span></a><span class="sd">        specie_name (str): The name of the chemical species.</span>
-</span><span id="L-21"><a href="#L-21"><span class="linenos"> 21</span></a><span class="sd">        T (Optional[ArrayLike]): An array of temperatures in Kelvin.</span>
-</span><span id="L-22"><a href="#L-22"><span class="linenos"> 22</span></a><span class="sd">        H_formation (Optional[ArrayLike]): An array of enthalpies of formation at the given temperatures in kJ/mol.</span>
-</span><span id="L-23"><a href="#L-23"><span class="linenos"> 23</span></a><span class="sd">        G_formation (Optional[ArrayLike]): An array of Gibbs free energies of formation at the given temperatures in kJ/mol.</span>
-</span><span id="L-24"><a href="#L-24"><span class="linenos"> 24</span></a><span class="sd">        root_path (str): The directory where the YAML file will be saved. Defaults to the current working directory.</span>
+</span><span id="L-19"><a href="#L-19"><span class="linenos"> 19</span></a><span class="sd">    Parameters:</span>
+</span><span id="L-20"><a href="#L-20"><span class="linenos"> 20</span></a><span class="sd">    - specie_name (str): The name of the chemical species.</span>
+</span><span id="L-21"><a href="#L-21"><span class="linenos"> 21</span></a><span class="sd">    - T (Optional[ArrayLike]): An array of temperatures in Kelvin.</span>
+</span><span id="L-22"><a href="#L-22"><span class="linenos"> 22</span></a><span class="sd">    - H_formation (Optional[ArrayLike]): An array of enthalpies of formation at the given temperatures in kJ/mol.</span>
+</span><span id="L-23"><a href="#L-23"><span class="linenos"> 23</span></a><span class="sd">    - G_formation (Optional[ArrayLike]): An array of Gibbs free energies of formation at the given temperatures in kJ/mol.</span>
+</span><span id="L-24"><a href="#L-24"><span class="linenos"> 24</span></a><span class="sd">    - root_path (str): The directory where the YAML file will be saved. Defaults to the current working directory.</span>
 </span><span id="L-25"><a href="#L-25"><span class="linenos"> 25</span></a>
 </span><span id="L-26"><a href="#L-26"><span class="linenos"> 26</span></a><span class="sd">    Returns:</span>
 </span><span id="L-27"><a href="#L-27"><span class="linenos"> 27</span></a><span class="sd">        None</span>
 </span><span id="L-28"><a href="#L-28"><span class="linenos"> 28</span></a>
 </span><span id="L-29"><a href="#L-29"><span class="linenos"> 29</span></a><span class="sd">    Raises:</span>
-</span><span id="L-30"><a href="#L-30"><span class="linenos"> 30</span></a><span class="sd">        IndexError: If 298.15 K is not found in the provided temperature array.</span>
-</span><span id="L-31"><a href="#L-31"><span class="linenos"> 31</span></a><span class="sd">        ValueError: If any of the input arrays (T, H_formation, G_formation) are not of the same length.</span>
+</span><span id="L-30"><a href="#L-30"><span class="linenos"> 30</span></a><span class="sd">    - IndexError: If 298.15 K is not found in the provided temperature array.</span>
+</span><span id="L-31"><a href="#L-31"><span class="linenos"> 31</span></a><span class="sd">    - ValueError: If any of the input arrays (T, H_formation, G_formation) are not of the same length.</span>
 </span><span id="L-32"><a href="#L-32"><span class="linenos"> 32</span></a><span class="sd">    &quot;&quot;&quot;</span>
 </span><span id="L-33"><a href="#L-33"><span class="linenos"> 33</span></a>    <span class="n">T298_index</span> <span class="o">=</span> <span class="n">T</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="mf">298.15</span><span class="p">)</span>
 </span><span id="L-34"><a href="#L-34"><span class="linenos"> 34</span></a>
 </span><span id="L-35"><a href="#L-35"><span class="linenos"> 35</span></a>    <span class="n">data</span> <span class="o">=</span> <span class="p">{</span><span class="nb">str</span><span class="p">(</span><span class="n">t</span><span class="p">):</span> <span class="nb">str</span><span class="p">(</span><span class="n">g</span><span class="p">)</span> <span class="k">for</span> <span class="n">t</span><span class="p">,</span> <span class="n">g</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">T</span><span class="p">,</span> <span class="n">G_formation</span><span class="p">)}</span>
 </span><span id="L-36"><a href="#L-36"><span class="linenos"> 36</span></a>
-</span><span id="L-37"><a href="#L-37"><span class="linenos"> 37</span></a>    <span class="n">yaml_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">root_path</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">specie_name</span><span class="si">}</span><span class="s1">.yaml&#39;</span><span class="p">)</span>
+</span><span id="L-37"><a href="#L-37"><span class="linenos"> 37</span></a>    <span class="n">yaml_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">root_path</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">specie_name</span><span class="si">}</span><span class="s1">_thermo.yaml&#39;</span><span class="p">)</span>
 </span><span id="L-38"><a href="#L-38"><span class="linenos"> 38</span></a>    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">yaml_path</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
 </span><span id="L-39"><a href="#L-39"><span class="linenos"> 39</span></a>        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;  thermo:</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
 </span><span id="L-40"><a href="#L-40"><span class="linenos"> 40</span></a>        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;   model: piecewise-Gibbs</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
@@ -126,22 +126,22 @@
 </span><span id="L-55"><a href="#L-55"><span class="linenos"> 55</span></a><span class="sd">    directory or the current working directory if no path is provided.</span>
 </span><span id="L-56"><a href="#L-56"><span class="linenos"> 56</span></a>
 </span><span id="L-57"><a href="#L-57"><span class="linenos"> 57</span></a><span class="sd">    Parameters:</span>
-</span><span id="L-58"><a href="#L-58"><span class="linenos"> 58</span></a><span class="sd">    specie_name (str): The name of the chemical species.</span>
-</span><span id="L-59"><a href="#L-59"><span class="linenos"> 59</span></a><span class="sd">    T_range (Tuple[float, float]): A tuple containing the minimum and maximum</span>
+</span><span id="L-58"><a href="#L-58"><span class="linenos"> 58</span></a><span class="sd">    - specie_name (str): The name of the chemical species.</span>
+</span><span id="L-59"><a href="#L-59"><span class="linenos"> 59</span></a><span class="sd">    - T_range (Tuple[float, float]): A tuple containing the minimum and maximum</span>
 </span><span id="L-60"><a href="#L-60"><span class="linenos"> 60</span></a><span class="sd">    temperature for which the NASA7 polynomial is valid.</span>
-</span><span id="L-61"><a href="#L-61"><span class="linenos"> 61</span></a><span class="sd">    nasa7_parameters (List[float]): A list of 14 coefficients for the NASA7</span>
+</span><span id="L-61"><a href="#L-61"><span class="linenos"> 61</span></a><span class="sd">    - nasa7_parameters (List[float]): A list of 14 coefficients for the NASA7</span>
 </span><span id="L-62"><a href="#L-62"><span class="linenos"> 62</span></a><span class="sd">    polynomial.</span>
-</span><span id="L-63"><a href="#L-63"><span class="linenos"> 63</span></a><span class="sd">    root_path (str, optional): The root directory where the YAML file will be</span>
+</span><span id="L-63"><a href="#L-63"><span class="linenos"> 63</span></a><span class="sd">    - root_path (str, optional): The root directory where the YAML file will be</span>
 </span><span id="L-64"><a href="#L-64"><span class="linenos"> 64</span></a><span class="sd">    saved. Defaults to the current working directory (&#39;.&#39;).</span>
 </span><span id="L-65"><a href="#L-65"><span class="linenos"> 65</span></a>
 </span><span id="L-66"><a href="#L-66"><span class="linenos"> 66</span></a><span class="sd">    Raises:</span>
-</span><span id="L-67"><a href="#L-67"><span class="linenos"> 67</span></a><span class="sd">    ValueError: If the length of nasa7_parameters is not exactly 14.</span>
-</span><span id="L-68"><a href="#L-68"><span class="linenos"> 68</span></a><span class="sd">    TypeError: If T_range is not a tuple or if nasa7_parameters is not a list.</span>
+</span><span id="L-67"><a href="#L-67"><span class="linenos"> 67</span></a><span class="sd">    - ValueError: If the length of nasa7_parameters is not exactly 14.</span>
+</span><span id="L-68"><a href="#L-68"><span class="linenos"> 68</span></a><span class="sd">    - TypeError: If T_range is not a tuple or if nasa7_parameters is not a list.</span>
 </span><span id="L-69"><a href="#L-69"><span class="linenos"> 69</span></a>
 </span><span id="L-70"><a href="#L-70"><span class="linenos"> 70</span></a><span class="sd">    Returns:</span>
 </span><span id="L-71"><a href="#L-71"><span class="linenos"> 71</span></a><span class="sd">    None: This function does not return any value. It writes the output to a file.</span>
 </span><span id="L-72"><a href="#L-72"><span class="linenos"> 72</span></a><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="L-73"><a href="#L-73"><span class="linenos"> 73</span></a>    <span class="n">yaml_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">root_path</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">specie_name</span><span class="si">}</span><span class="s1">.yaml&#39;</span><span class="p">)</span>
+</span><span id="L-73"><a href="#L-73"><span class="linenos"> 73</span></a>    <span class="n">yaml_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">root_path</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">specie_name</span><span class="si">}</span><span class="s1">_thermo.yaml&#39;</span><span class="p">)</span>
 </span><span id="L-74"><a href="#L-74"><span class="linenos"> 74</span></a>    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">yaml_path</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
 </span><span id="L-75"><a href="#L-75"><span class="linenos"> 75</span></a>        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;  thermo:</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
 </span><span id="L-76"><a href="#L-76"><span class="linenos"> 76</span></a>        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;   model: NASA7</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
@@ -161,21 +161,21 @@
 </span><span id="L-90"><a href="#L-90"><span class="linenos"> 90</span></a><span class="sd">    species name as the filename.</span>
 </span><span id="L-91"><a href="#L-91"><span class="linenos"> 91</span></a>
 </span><span id="L-92"><a href="#L-92"><span class="linenos"> 92</span></a><span class="sd">    Parameters:</span>
-</span><span id="L-93"><a href="#L-93"><span class="linenos"> 93</span></a><span class="sd">    specie_name (str): The name of the species to write the thermodynamic data for.</span>
-</span><span id="L-94"><a href="#L-94"><span class="linenos"> 94</span></a><span class="sd">    T_range (Tuple[float, float, float]): A tuple containing three temperature points that define</span>
+</span><span id="L-93"><a href="#L-93"><span class="linenos"> 93</span></a><span class="sd">    - specie_name (str): The name of the species to write the thermodynamic data for.</span>
+</span><span id="L-94"><a href="#L-94"><span class="linenos"> 94</span></a><span class="sd">    - T_range (Tuple[float, float, float]): A tuple containing three temperature points that define</span>
 </span><span id="L-95"><a href="#L-95"><span class="linenos"> 95</span></a><span class="sd">    the temperature ranges over which the NASA9 polynomials are valid.</span>
-</span><span id="L-96"><a href="#L-96"><span class="linenos"> 96</span></a><span class="sd">    nasa9_parameters (List[float]): A list of 14 or 15 NASA9 polynomial coefficients.</span>
-</span><span id="L-97"><a href="#L-97"><span class="linenos"> 97</span></a><span class="sd">    reference_p (float, optional): The reference pressure in bar. Defaults to 1 bar.</span>
-</span><span id="L-98"><a href="#L-98"><span class="linenos"> 98</span></a><span class="sd">    root_path (str, optional): The directory where the YAML file will be saved. Defaults to the</span>
+</span><span id="L-96"><a href="#L-96"><span class="linenos"> 96</span></a><span class="sd">    - nasa9_parameters (List[float]): A list of 14 or 15 NASA9 polynomial coefficients.</span>
+</span><span id="L-97"><a href="#L-97"><span class="linenos"> 97</span></a><span class="sd">    - reference_p (float, optional): The reference pressure in bar. Defaults to 1 bar.</span>
+</span><span id="L-98"><a href="#L-98"><span class="linenos"> 98</span></a><span class="sd">    - root_path (str, optional): The directory where the YAML file will be saved. Defaults to the</span>
 </span><span id="L-99"><a href="#L-99"><span class="linenos"> 99</span></a><span class="sd">    current working directory.</span>
 </span><span id="L-100"><a href="#L-100"><span class="linenos">100</span></a>
 </span><span id="L-101"><a href="#L-101"><span class="linenos">101</span></a><span class="sd">    Returns:</span>
 </span><span id="L-102"><a href="#L-102"><span class="linenos">102</span></a><span class="sd">    None</span>
 </span><span id="L-103"><a href="#L-103"><span class="linenos">103</span></a>
 </span><span id="L-104"><a href="#L-104"><span class="linenos">104</span></a><span class="sd">    Raises:</span>
-</span><span id="L-105"><a href="#L-105"><span class="linenos">105</span></a><span class="sd">    FileNotFoundError: If the specified root path does not exist or is not writable.</span>
-</span><span id="L-106"><a href="#L-106"><span class="linenos">106</span></a><span class="sd">    TypeError: If any of the input parameters do not match their expected types.</span>
-</span><span id="L-107"><a href="#L-107"><span class="linenos">107</span></a><span class="sd">    ValueError: If the length of nasa9_parameters is not 14 or 15, or if T_range does not contain</span>
+</span><span id="L-105"><a href="#L-105"><span class="linenos">105</span></a><span class="sd">    - FileNotFoundError: If the specified root path does not exist or is not writable.</span>
+</span><span id="L-106"><a href="#L-106"><span class="linenos">106</span></a><span class="sd">    - TypeError: If any of the input parameters do not match their expected types.</span>
+</span><span id="L-107"><a href="#L-107"><span class="linenos">107</span></a><span class="sd">    - ValueError: If the length of nasa9_parameters is not 14 or 15, or if T_range does not contain</span>
 </span><span id="L-108"><a href="#L-108"><span class="linenos">108</span></a><span class="sd">    exactly three elements.</span>
 </span><span id="L-109"><a href="#L-109"><span class="linenos">109</span></a>
 </span><span id="L-110"><a href="#L-110"><span class="linenos">110</span></a><span class="sd">    Notes:</span>
@@ -184,7 +184,7 @@
 </span><span id="L-113"><a href="#L-113"><span class="linenos">113</span></a><span class="sd">    - The output file will be named as `&lt;specie_name&gt;.yaml` and placed in the `root_path`.</span>
 </span><span id="L-114"><a href="#L-114"><span class="linenos">114</span></a><span class="sd">    - No checks are performed on the validity of the NASA9 coefficients or the temperature range.</span>
 </span><span id="L-115"><a href="#L-115"><span class="linenos">115</span></a><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="L-116"><a href="#L-116"><span class="linenos">116</span></a>    <span class="n">yaml_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">root_path</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">specie_name</span><span class="si">}</span><span class="s1">.yaml&#39;</span><span class="p">)</span>
+</span><span id="L-116"><a href="#L-116"><span class="linenos">116</span></a>    <span class="n">yaml_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">root_path</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">specie_name</span><span class="si">}</span><span class="s1">_thermo.yaml&#39;</span><span class="p">)</span>
 </span><span id="L-117"><a href="#L-117"><span class="linenos">117</span></a>    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">yaml_path</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
 </span><span id="L-118"><a href="#L-118"><span class="linenos">118</span></a>        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;  thermo:</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
 </span><span id="L-119"><a href="#L-119"><span class="linenos">119</span></a>        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;   model: NASA9</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
@@ -207,26 +207,26 @@
 </span><span id="L-136"><a href="#L-136"><span class="linenos">136</span></a><span class="sd">    kinetics and thermodynamics simulations with Cantera.</span>
 </span><span id="L-137"><a href="#L-137"><span class="linenos">137</span></a>
 </span><span id="L-138"><a href="#L-138"><span class="linenos">138</span></a><span class="sd">    Parameters:</span>
-</span><span id="L-139"><a href="#L-139"><span class="linenos">139</span></a><span class="sd">    specie_name (str): Name of the species for which the thermodynamic data is being</span>
+</span><span id="L-139"><a href="#L-139"><span class="linenos">139</span></a><span class="sd">    - specie_name (str): Name of the species for which the thermodynamic data is being</span>
 </span><span id="L-140"><a href="#L-140"><span class="linenos">140</span></a><span class="sd">                       written.</span>
-</span><span id="L-141"><a href="#L-141"><span class="linenos">141</span></a><span class="sd">    T_range (tuple): A tuple specifying the temperature range over which the</span>
+</span><span id="L-141"><a href="#L-141"><span class="linenos">141</span></a><span class="sd">    - T_range (tuple): A tuple specifying the temperature range over which the</span>
 </span><span id="L-142"><a href="#L-142"><span class="linenos">142</span></a><span class="sd">                     Shomate parameters are valid.</span>
-</span><span id="L-143"><a href="#L-143"><span class="linenos">143</span></a><span class="sd">    Shomate_parameters (list): List of Shomate parameters used to define the</span>
+</span><span id="L-143"><a href="#L-143"><span class="linenos">143</span></a><span class="sd">    - Shomate_parameters (list): List of Shomate parameters used to define the</span>
 </span><span id="L-144"><a href="#L-144"><span class="linenos">144</span></a><span class="sd">                               thermodynamic properties.</span>
-</span><span id="L-145"><a href="#L-145"><span class="linenos">145</span></a><span class="sd">    reference_p (float, optional): Reference pressure in bar. Default is 1 bar.</span>
-</span><span id="L-146"><a href="#L-146"><span class="linenos">146</span></a><span class="sd">    root_path (str, optional): Root directory where the YAML file will be saved.</span>
+</span><span id="L-145"><a href="#L-145"><span class="linenos">145</span></a><span class="sd">    - reference_p (float, optional): Reference pressure in bar. Default is 1 bar.</span>
+</span><span id="L-146"><a href="#L-146"><span class="linenos">146</span></a><span class="sd">    - root_path (str, optional): Root directory where the YAML file will be saved.</span>
 </span><span id="L-147"><a href="#L-147"><span class="linenos">147</span></a><span class="sd">                               Default is the current working directory.</span>
 </span><span id="L-148"><a href="#L-148"><span class="linenos">148</span></a>
 </span><span id="L-149"><a href="#L-149"><span class="linenos">149</span></a><span class="sd">    Returns:</span>
 </span><span id="L-150"><a href="#L-150"><span class="linenos">150</span></a><span class="sd">    None</span>
 </span><span id="L-151"><a href="#L-151"><span class="linenos">151</span></a>
 </span><span id="L-152"><a href="#L-152"><span class="linenos">152</span></a><span class="sd">    Raises:</span>
-</span><span id="L-153"><a href="#L-153"><span class="linenos">153</span></a><span class="sd">    FileNotFoundError: If the specified root path does not exist.</span>
-</span><span id="L-154"><a href="#L-154"><span class="linenos">154</span></a><span class="sd">    TypeError: If `specie_name` is not a string or if `T_range` or</span>
+</span><span id="L-153"><a href="#L-153"><span class="linenos">153</span></a><span class="sd">    - FileNotFoundError: If the specified root path does not exist.</span>
+</span><span id="L-154"><a href="#L-154"><span class="linenos">154</span></a><span class="sd">    - TypeError: If `specie_name` is not a string or if `T_range` or</span>
 </span><span id="L-155"><a href="#L-155"><span class="linenos">155</span></a><span class="sd">               `Shomate_parameters` are not provided as expected types.</span>
-</span><span id="L-156"><a href="#L-156"><span class="linenos">156</span></a><span class="sd">    ValueError: If `T_range` does not contain exactly two elements.</span>
+</span><span id="L-156"><a href="#L-156"><span class="linenos">156</span></a><span class="sd">    - ValueError: If `T_range` does not contain exactly two elements.</span>
 </span><span id="L-157"><a href="#L-157"><span class="linenos">157</span></a><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="L-158"><a href="#L-158"><span class="linenos">158</span></a>    <span class="n">yaml_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">root_path</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">specie_name</span><span class="si">}</span><span class="s1">.yaml&#39;</span><span class="p">)</span>
+</span><span id="L-158"><a href="#L-158"><span class="linenos">158</span></a>    <span class="n">yaml_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">root_path</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">specie_name</span><span class="si">}</span><span class="s1">_thermo.yaml&#39;</span><span class="p">)</span>
 </span><span id="L-159"><a href="#L-159"><span class="linenos">159</span></a>    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">yaml_path</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
 </span><span id="L-160"><a href="#L-160"><span class="linenos">160</span></a>        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;  thermo:</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
 </span><span id="L-161"><a href="#L-161"><span class="linenos">161</span></a>        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;   model: NASA9</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
@@ -286,25 +286,25 @@
 </span><span id="write_cantera_yaml_thermo_piecewise_Gibbs-17"><a href="#write_cantera_yaml_thermo_piecewise_Gibbs-17"><span class="linenos">17</span></a><span class="sd">    name in the specified root path. The function assumes that the temperature array includes 298.15 K, which is used</span>
 </span><span id="write_cantera_yaml_thermo_piecewise_Gibbs-18"><a href="#write_cantera_yaml_thermo_piecewise_Gibbs-18"><span class="linenos">18</span></a><span class="sd">    as a reference point for calculating the standard enthalpy of formation.</span>
 </span><span id="write_cantera_yaml_thermo_piecewise_Gibbs-19"><a href="#write_cantera_yaml_thermo_piecewise_Gibbs-19"><span class="linenos">19</span></a>
-</span><span id="write_cantera_yaml_thermo_piecewise_Gibbs-20"><a href="#write_cantera_yaml_thermo_piecewise_Gibbs-20"><span class="linenos">20</span></a><span class="sd">    Args:</span>
-</span><span id="write_cantera_yaml_thermo_piecewise_Gibbs-21"><a href="#write_cantera_yaml_thermo_piecewise_Gibbs-21"><span class="linenos">21</span></a><span class="sd">        specie_name (str): The name of the chemical species.</span>
-</span><span id="write_cantera_yaml_thermo_piecewise_Gibbs-22"><a href="#write_cantera_yaml_thermo_piecewise_Gibbs-22"><span class="linenos">22</span></a><span class="sd">        T (Optional[ArrayLike]): An array of temperatures in Kelvin.</span>
-</span><span id="write_cantera_yaml_thermo_piecewise_Gibbs-23"><a href="#write_cantera_yaml_thermo_piecewise_Gibbs-23"><span class="linenos">23</span></a><span class="sd">        H_formation (Optional[ArrayLike]): An array of enthalpies of formation at the given temperatures in kJ/mol.</span>
-</span><span id="write_cantera_yaml_thermo_piecewise_Gibbs-24"><a href="#write_cantera_yaml_thermo_piecewise_Gibbs-24"><span class="linenos">24</span></a><span class="sd">        G_formation (Optional[ArrayLike]): An array of Gibbs free energies of formation at the given temperatures in kJ/mol.</span>
-</span><span id="write_cantera_yaml_thermo_piecewise_Gibbs-25"><a href="#write_cantera_yaml_thermo_piecewise_Gibbs-25"><span class="linenos">25</span></a><span class="sd">        root_path (str): The directory where the YAML file will be saved. Defaults to the current working directory.</span>
+</span><span id="write_cantera_yaml_thermo_piecewise_Gibbs-20"><a href="#write_cantera_yaml_thermo_piecewise_Gibbs-20"><span class="linenos">20</span></a><span class="sd">    Parameters:</span>
+</span><span id="write_cantera_yaml_thermo_piecewise_Gibbs-21"><a href="#write_cantera_yaml_thermo_piecewise_Gibbs-21"><span class="linenos">21</span></a><span class="sd">    - specie_name (str): The name of the chemical species.</span>
+</span><span id="write_cantera_yaml_thermo_piecewise_Gibbs-22"><a href="#write_cantera_yaml_thermo_piecewise_Gibbs-22"><span class="linenos">22</span></a><span class="sd">    - T (Optional[ArrayLike]): An array of temperatures in Kelvin.</span>
+</span><span id="write_cantera_yaml_thermo_piecewise_Gibbs-23"><a href="#write_cantera_yaml_thermo_piecewise_Gibbs-23"><span class="linenos">23</span></a><span class="sd">    - H_formation (Optional[ArrayLike]): An array of enthalpies of formation at the given temperatures in kJ/mol.</span>
+</span><span id="write_cantera_yaml_thermo_piecewise_Gibbs-24"><a href="#write_cantera_yaml_thermo_piecewise_Gibbs-24"><span class="linenos">24</span></a><span class="sd">    - G_formation (Optional[ArrayLike]): An array of Gibbs free energies of formation at the given temperatures in kJ/mol.</span>
+</span><span id="write_cantera_yaml_thermo_piecewise_Gibbs-25"><a href="#write_cantera_yaml_thermo_piecewise_Gibbs-25"><span class="linenos">25</span></a><span class="sd">    - root_path (str): The directory where the YAML file will be saved. Defaults to the current working directory.</span>
 </span><span id="write_cantera_yaml_thermo_piecewise_Gibbs-26"><a href="#write_cantera_yaml_thermo_piecewise_Gibbs-26"><span class="linenos">26</span></a>
 </span><span id="write_cantera_yaml_thermo_piecewise_Gibbs-27"><a href="#write_cantera_yaml_thermo_piecewise_Gibbs-27"><span class="linenos">27</span></a><span class="sd">    Returns:</span>
 </span><span id="write_cantera_yaml_thermo_piecewise_Gibbs-28"><a href="#write_cantera_yaml_thermo_piecewise_Gibbs-28"><span class="linenos">28</span></a><span class="sd">        None</span>
 </span><span id="write_cantera_yaml_thermo_piecewise_Gibbs-29"><a href="#write_cantera_yaml_thermo_piecewise_Gibbs-29"><span class="linenos">29</span></a>
 </span><span id="write_cantera_yaml_thermo_piecewise_Gibbs-30"><a href="#write_cantera_yaml_thermo_piecewise_Gibbs-30"><span class="linenos">30</span></a><span class="sd">    Raises:</span>
-</span><span id="write_cantera_yaml_thermo_piecewise_Gibbs-31"><a href="#write_cantera_yaml_thermo_piecewise_Gibbs-31"><span class="linenos">31</span></a><span class="sd">        IndexError: If 298.15 K is not found in the provided temperature array.</span>
-</span><span id="write_cantera_yaml_thermo_piecewise_Gibbs-32"><a href="#write_cantera_yaml_thermo_piecewise_Gibbs-32"><span class="linenos">32</span></a><span class="sd">        ValueError: If any of the input arrays (T, H_formation, G_formation) are not of the same length.</span>
+</span><span id="write_cantera_yaml_thermo_piecewise_Gibbs-31"><a href="#write_cantera_yaml_thermo_piecewise_Gibbs-31"><span class="linenos">31</span></a><span class="sd">    - IndexError: If 298.15 K is not found in the provided temperature array.</span>
+</span><span id="write_cantera_yaml_thermo_piecewise_Gibbs-32"><a href="#write_cantera_yaml_thermo_piecewise_Gibbs-32"><span class="linenos">32</span></a><span class="sd">    - ValueError: If any of the input arrays (T, H_formation, G_formation) are not of the same length.</span>
 </span><span id="write_cantera_yaml_thermo_piecewise_Gibbs-33"><a href="#write_cantera_yaml_thermo_piecewise_Gibbs-33"><span class="linenos">33</span></a><span class="sd">    &quot;&quot;&quot;</span>
 </span><span id="write_cantera_yaml_thermo_piecewise_Gibbs-34"><a href="#write_cantera_yaml_thermo_piecewise_Gibbs-34"><span class="linenos">34</span></a>    <span class="n">T298_index</span> <span class="o">=</span> <span class="n">T</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="mf">298.15</span><span class="p">)</span>
 </span><span id="write_cantera_yaml_thermo_piecewise_Gibbs-35"><a href="#write_cantera_yaml_thermo_piecewise_Gibbs-35"><span class="linenos">35</span></a>
 </span><span id="write_cantera_yaml_thermo_piecewise_Gibbs-36"><a href="#write_cantera_yaml_thermo_piecewise_Gibbs-36"><span class="linenos">36</span></a>    <span class="n">data</span> <span class="o">=</span> <span class="p">{</span><span class="nb">str</span><span class="p">(</span><span class="n">t</span><span class="p">):</span> <span class="nb">str</span><span class="p">(</span><span class="n">g</span><span class="p">)</span> <span class="k">for</span> <span class="n">t</span><span class="p">,</span> <span class="n">g</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">T</span><span class="p">,</span> <span class="n">G_formation</span><span class="p">)}</span>
 </span><span id="write_cantera_yaml_thermo_piecewise_Gibbs-37"><a href="#write_cantera_yaml_thermo_piecewise_Gibbs-37"><span class="linenos">37</span></a>
-</span><span id="write_cantera_yaml_thermo_piecewise_Gibbs-38"><a href="#write_cantera_yaml_thermo_piecewise_Gibbs-38"><span class="linenos">38</span></a>    <span class="n">yaml_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">root_path</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">specie_name</span><span class="si">}</span><span class="s1">.yaml&#39;</span><span class="p">)</span>
+</span><span id="write_cantera_yaml_thermo_piecewise_Gibbs-38"><a href="#write_cantera_yaml_thermo_piecewise_Gibbs-38"><span class="linenos">38</span></a>    <span class="n">yaml_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">root_path</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">specie_name</span><span class="si">}</span><span class="s1">_thermo.yaml&#39;</span><span class="p">)</span>
 </span><span id="write_cantera_yaml_thermo_piecewise_Gibbs-39"><a href="#write_cantera_yaml_thermo_piecewise_Gibbs-39"><span class="linenos">39</span></a>    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">yaml_path</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
 </span><span id="write_cantera_yaml_thermo_piecewise_Gibbs-40"><a href="#write_cantera_yaml_thermo_piecewise_Gibbs-40"><span class="linenos">40</span></a>        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;  thermo:</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
 </span><span id="write_cantera_yaml_thermo_piecewise_Gibbs-41"><a href="#write_cantera_yaml_thermo_piecewise_Gibbs-41"><span class="linenos">41</span></a>        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;   model: piecewise-Gibbs</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
@@ -323,19 +323,25 @@ and Gibbs free energy of formation) to generate a Cantera-compatible YAML file. 
 name in the specified root path. The function assumes that the temperature array includes 298.15 K, which is used
 as a reference point for calculating the standard enthalpy of formation.</p>
 
-<p>Args:
-    specie_name (str): The name of the chemical species.
-    T (Optional[ArrayLike]): An array of temperatures in Kelvin.
-    H_formation (Optional[ArrayLike]): An array of enthalpies of formation at the given temperatures in kJ/mol.
-    G_formation (Optional[ArrayLike]): An array of Gibbs free energies of formation at the given temperatures in kJ/mol.
-    root_path (str): The directory where the YAML file will be saved. Defaults to the current working directory.</p>
+<p>Parameters:</p>
+
+<ul>
+<li>specie_name (str): The name of the chemical species.</li>
+<li>T (Optional[ArrayLike]): An array of temperatures in Kelvin.</li>
+<li>H_formation (Optional[ArrayLike]): An array of enthalpies of formation at the given temperatures in kJ/mol.</li>
+<li>G_formation (Optional[ArrayLike]): An array of Gibbs free energies of formation at the given temperatures in kJ/mol.</li>
+<li>root_path (str): The directory where the YAML file will be saved. Defaults to the current working directory.</li>
+</ul>
 
 <p>Returns:
     None</p>
 
-<p>Raises:
-    IndexError: If 298.15 K is not found in the provided temperature array.
-    ValueError: If any of the input arrays (T, H_formation, G_formation) are not of the same length.</p>
+<p>Raises:</p>
+
+<ul>
+<li>IndexError: If 298.15 K is not found in the provided temperature array.</li>
+<li>ValueError: If any of the input arrays (T, H_formation, G_formation) are not of the same length.</li>
+</ul>
 </div>
 
 
@@ -362,22 +368,22 @@ as a reference point for calculating the standard enthalpy of formation.</p>
 </span><span id="write_cantera_yaml_thermo_NASA7-56"><a href="#write_cantera_yaml_thermo_NASA7-56"><span class="linenos">56</span></a><span class="sd">    directory or the current working directory if no path is provided.</span>
 </span><span id="write_cantera_yaml_thermo_NASA7-57"><a href="#write_cantera_yaml_thermo_NASA7-57"><span class="linenos">57</span></a>
 </span><span id="write_cantera_yaml_thermo_NASA7-58"><a href="#write_cantera_yaml_thermo_NASA7-58"><span class="linenos">58</span></a><span class="sd">    Parameters:</span>
-</span><span id="write_cantera_yaml_thermo_NASA7-59"><a href="#write_cantera_yaml_thermo_NASA7-59"><span class="linenos">59</span></a><span class="sd">    specie_name (str): The name of the chemical species.</span>
-</span><span id="write_cantera_yaml_thermo_NASA7-60"><a href="#write_cantera_yaml_thermo_NASA7-60"><span class="linenos">60</span></a><span class="sd">    T_range (Tuple[float, float]): A tuple containing the minimum and maximum</span>
+</span><span id="write_cantera_yaml_thermo_NASA7-59"><a href="#write_cantera_yaml_thermo_NASA7-59"><span class="linenos">59</span></a><span class="sd">    - specie_name (str): The name of the chemical species.</span>
+</span><span id="write_cantera_yaml_thermo_NASA7-60"><a href="#write_cantera_yaml_thermo_NASA7-60"><span class="linenos">60</span></a><span class="sd">    - T_range (Tuple[float, float]): A tuple containing the minimum and maximum</span>
 </span><span id="write_cantera_yaml_thermo_NASA7-61"><a href="#write_cantera_yaml_thermo_NASA7-61"><span class="linenos">61</span></a><span class="sd">    temperature for which the NASA7 polynomial is valid.</span>
-</span><span id="write_cantera_yaml_thermo_NASA7-62"><a href="#write_cantera_yaml_thermo_NASA7-62"><span class="linenos">62</span></a><span class="sd">    nasa7_parameters (List[float]): A list of 14 coefficients for the NASA7</span>
+</span><span id="write_cantera_yaml_thermo_NASA7-62"><a href="#write_cantera_yaml_thermo_NASA7-62"><span class="linenos">62</span></a><span class="sd">    - nasa7_parameters (List[float]): A list of 14 coefficients for the NASA7</span>
 </span><span id="write_cantera_yaml_thermo_NASA7-63"><a href="#write_cantera_yaml_thermo_NASA7-63"><span class="linenos">63</span></a><span class="sd">    polynomial.</span>
-</span><span id="write_cantera_yaml_thermo_NASA7-64"><a href="#write_cantera_yaml_thermo_NASA7-64"><span class="linenos">64</span></a><span class="sd">    root_path (str, optional): The root directory where the YAML file will be</span>
+</span><span id="write_cantera_yaml_thermo_NASA7-64"><a href="#write_cantera_yaml_thermo_NASA7-64"><span class="linenos">64</span></a><span class="sd">    - root_path (str, optional): The root directory where the YAML file will be</span>
 </span><span id="write_cantera_yaml_thermo_NASA7-65"><a href="#write_cantera_yaml_thermo_NASA7-65"><span class="linenos">65</span></a><span class="sd">    saved. Defaults to the current working directory (&#39;.&#39;).</span>
 </span><span id="write_cantera_yaml_thermo_NASA7-66"><a href="#write_cantera_yaml_thermo_NASA7-66"><span class="linenos">66</span></a>
 </span><span id="write_cantera_yaml_thermo_NASA7-67"><a href="#write_cantera_yaml_thermo_NASA7-67"><span class="linenos">67</span></a><span class="sd">    Raises:</span>
-</span><span id="write_cantera_yaml_thermo_NASA7-68"><a href="#write_cantera_yaml_thermo_NASA7-68"><span class="linenos">68</span></a><span class="sd">    ValueError: If the length of nasa7_parameters is not exactly 14.</span>
-</span><span id="write_cantera_yaml_thermo_NASA7-69"><a href="#write_cantera_yaml_thermo_NASA7-69"><span class="linenos">69</span></a><span class="sd">    TypeError: If T_range is not a tuple or if nasa7_parameters is not a list.</span>
+</span><span id="write_cantera_yaml_thermo_NASA7-68"><a href="#write_cantera_yaml_thermo_NASA7-68"><span class="linenos">68</span></a><span class="sd">    - ValueError: If the length of nasa7_parameters is not exactly 14.</span>
+</span><span id="write_cantera_yaml_thermo_NASA7-69"><a href="#write_cantera_yaml_thermo_NASA7-69"><span class="linenos">69</span></a><span class="sd">    - TypeError: If T_range is not a tuple or if nasa7_parameters is not a list.</span>
 </span><span id="write_cantera_yaml_thermo_NASA7-70"><a href="#write_cantera_yaml_thermo_NASA7-70"><span class="linenos">70</span></a>
 </span><span id="write_cantera_yaml_thermo_NASA7-71"><a href="#write_cantera_yaml_thermo_NASA7-71"><span class="linenos">71</span></a><span class="sd">    Returns:</span>
 </span><span id="write_cantera_yaml_thermo_NASA7-72"><a href="#write_cantera_yaml_thermo_NASA7-72"><span class="linenos">72</span></a><span class="sd">    None: This function does not return any value. It writes the output to a file.</span>
 </span><span id="write_cantera_yaml_thermo_NASA7-73"><a href="#write_cantera_yaml_thermo_NASA7-73"><span class="linenos">73</span></a><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="write_cantera_yaml_thermo_NASA7-74"><a href="#write_cantera_yaml_thermo_NASA7-74"><span class="linenos">74</span></a>    <span class="n">yaml_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">root_path</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">specie_name</span><span class="si">}</span><span class="s1">.yaml&#39;</span><span class="p">)</span>
+</span><span id="write_cantera_yaml_thermo_NASA7-74"><a href="#write_cantera_yaml_thermo_NASA7-74"><span class="linenos">74</span></a>    <span class="n">yaml_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">root_path</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">specie_name</span><span class="si">}</span><span class="s1">_thermo.yaml&#39;</span><span class="p">)</span>
 </span><span id="write_cantera_yaml_thermo_NASA7-75"><a href="#write_cantera_yaml_thermo_NASA7-75"><span class="linenos">75</span></a>    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">yaml_path</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
 </span><span id="write_cantera_yaml_thermo_NASA7-76"><a href="#write_cantera_yaml_thermo_NASA7-76"><span class="linenos">76</span></a>        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;  thermo:</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
 </span><span id="write_cantera_yaml_thermo_NASA7-77"><a href="#write_cantera_yaml_thermo_NASA7-77"><span class="linenos">77</span></a>        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;   model: NASA7</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
@@ -395,18 +401,24 @@ polynomial coefficients to generate a YAML file that can be used with Cantera
 for thermodynamic properties. The generated file is saved in the specified root
 directory or the current working directory if no path is provided.</p>
 
-<p>Parameters:
-specie_name (str): The name of the chemical species.
-T_range (Tuple[float, float]): A tuple containing the minimum and maximum
-temperature for which the NASA7 polynomial is valid.
-nasa7_parameters (List[float]): A list of 14 coefficients for the NASA7
-polynomial.
-root_path (str, optional): The root directory where the YAML file will be
-saved. Defaults to the current working directory ('.').</p>
+<p>Parameters:</p>
 
-<p>Raises:
-ValueError: If the length of nasa7_parameters is not exactly 14.
-TypeError: If T_range is not a tuple or if nasa7_parameters is not a list.</p>
+<ul>
+<li>specie_name (str): The name of the chemical species.</li>
+<li>T_range (Tuple[float, float]): A tuple containing the minimum and maximum
+temperature for which the NASA7 polynomial is valid.</li>
+<li>nasa7_parameters (List[float]): A list of 14 coefficients for the NASA7
+polynomial.</li>
+<li>root_path (str, optional): The root directory where the YAML file will be
+saved. Defaults to the current working directory ('.').</li>
+</ul>
+
+<p>Raises:</p>
+
+<ul>
+<li>ValueError: If the length of nasa7_parameters is not exactly 14.</li>
+<li>TypeError: If T_range is not a tuple or if nasa7_parameters is not a list.</li>
+</ul>
 
 <p>Returns:
 None: This function does not return any value. It writes the output to a file.</p>
@@ -435,21 +447,21 @@ None: This function does not return any value. It writes the output to a file.</
 </span><span id="write_cantera_yaml_thermo_NASA9-91"><a href="#write_cantera_yaml_thermo_NASA9-91"><span class="linenos"> 91</span></a><span class="sd">    species name as the filename.</span>
 </span><span id="write_cantera_yaml_thermo_NASA9-92"><a href="#write_cantera_yaml_thermo_NASA9-92"><span class="linenos"> 92</span></a>
 </span><span id="write_cantera_yaml_thermo_NASA9-93"><a href="#write_cantera_yaml_thermo_NASA9-93"><span class="linenos"> 93</span></a><span class="sd">    Parameters:</span>
-</span><span id="write_cantera_yaml_thermo_NASA9-94"><a href="#write_cantera_yaml_thermo_NASA9-94"><span class="linenos"> 94</span></a><span class="sd">    specie_name (str): The name of the species to write the thermodynamic data for.</span>
-</span><span id="write_cantera_yaml_thermo_NASA9-95"><a href="#write_cantera_yaml_thermo_NASA9-95"><span class="linenos"> 95</span></a><span class="sd">    T_range (Tuple[float, float, float]): A tuple containing three temperature points that define</span>
+</span><span id="write_cantera_yaml_thermo_NASA9-94"><a href="#write_cantera_yaml_thermo_NASA9-94"><span class="linenos"> 94</span></a><span class="sd">    - specie_name (str): The name of the species to write the thermodynamic data for.</span>
+</span><span id="write_cantera_yaml_thermo_NASA9-95"><a href="#write_cantera_yaml_thermo_NASA9-95"><span class="linenos"> 95</span></a><span class="sd">    - T_range (Tuple[float, float, float]): A tuple containing three temperature points that define</span>
 </span><span id="write_cantera_yaml_thermo_NASA9-96"><a href="#write_cantera_yaml_thermo_NASA9-96"><span class="linenos"> 96</span></a><span class="sd">    the temperature ranges over which the NASA9 polynomials are valid.</span>
-</span><span id="write_cantera_yaml_thermo_NASA9-97"><a href="#write_cantera_yaml_thermo_NASA9-97"><span class="linenos"> 97</span></a><span class="sd">    nasa9_parameters (List[float]): A list of 14 or 15 NASA9 polynomial coefficients.</span>
-</span><span id="write_cantera_yaml_thermo_NASA9-98"><a href="#write_cantera_yaml_thermo_NASA9-98"><span class="linenos"> 98</span></a><span class="sd">    reference_p (float, optional): The reference pressure in bar. Defaults to 1 bar.</span>
-</span><span id="write_cantera_yaml_thermo_NASA9-99"><a href="#write_cantera_yaml_thermo_NASA9-99"><span class="linenos"> 99</span></a><span class="sd">    root_path (str, optional): The directory where the YAML file will be saved. Defaults to the</span>
+</span><span id="write_cantera_yaml_thermo_NASA9-97"><a href="#write_cantera_yaml_thermo_NASA9-97"><span class="linenos"> 97</span></a><span class="sd">    - nasa9_parameters (List[float]): A list of 14 or 15 NASA9 polynomial coefficients.</span>
+</span><span id="write_cantera_yaml_thermo_NASA9-98"><a href="#write_cantera_yaml_thermo_NASA9-98"><span class="linenos"> 98</span></a><span class="sd">    - reference_p (float, optional): The reference pressure in bar. Defaults to 1 bar.</span>
+</span><span id="write_cantera_yaml_thermo_NASA9-99"><a href="#write_cantera_yaml_thermo_NASA9-99"><span class="linenos"> 99</span></a><span class="sd">    - root_path (str, optional): The directory where the YAML file will be saved. Defaults to the</span>
 </span><span id="write_cantera_yaml_thermo_NASA9-100"><a href="#write_cantera_yaml_thermo_NASA9-100"><span class="linenos">100</span></a><span class="sd">    current working directory.</span>
 </span><span id="write_cantera_yaml_thermo_NASA9-101"><a href="#write_cantera_yaml_thermo_NASA9-101"><span class="linenos">101</span></a>
 </span><span id="write_cantera_yaml_thermo_NASA9-102"><a href="#write_cantera_yaml_thermo_NASA9-102"><span class="linenos">102</span></a><span class="sd">    Returns:</span>
 </span><span id="write_cantera_yaml_thermo_NASA9-103"><a href="#write_cantera_yaml_thermo_NASA9-103"><span class="linenos">103</span></a><span class="sd">    None</span>
 </span><span id="write_cantera_yaml_thermo_NASA9-104"><a href="#write_cantera_yaml_thermo_NASA9-104"><span class="linenos">104</span></a>
 </span><span id="write_cantera_yaml_thermo_NASA9-105"><a href="#write_cantera_yaml_thermo_NASA9-105"><span class="linenos">105</span></a><span class="sd">    Raises:</span>
-</span><span id="write_cantera_yaml_thermo_NASA9-106"><a href="#write_cantera_yaml_thermo_NASA9-106"><span class="linenos">106</span></a><span class="sd">    FileNotFoundError: If the specified root path does not exist or is not writable.</span>
-</span><span id="write_cantera_yaml_thermo_NASA9-107"><a href="#write_cantera_yaml_thermo_NASA9-107"><span class="linenos">107</span></a><span class="sd">    TypeError: If any of the input parameters do not match their expected types.</span>
-</span><span id="write_cantera_yaml_thermo_NASA9-108"><a href="#write_cantera_yaml_thermo_NASA9-108"><span class="linenos">108</span></a><span class="sd">    ValueError: If the length of nasa9_parameters is not 14 or 15, or if T_range does not contain</span>
+</span><span id="write_cantera_yaml_thermo_NASA9-106"><a href="#write_cantera_yaml_thermo_NASA9-106"><span class="linenos">106</span></a><span class="sd">    - FileNotFoundError: If the specified root path does not exist or is not writable.</span>
+</span><span id="write_cantera_yaml_thermo_NASA9-107"><a href="#write_cantera_yaml_thermo_NASA9-107"><span class="linenos">107</span></a><span class="sd">    - TypeError: If any of the input parameters do not match their expected types.</span>
+</span><span id="write_cantera_yaml_thermo_NASA9-108"><a href="#write_cantera_yaml_thermo_NASA9-108"><span class="linenos">108</span></a><span class="sd">    - ValueError: If the length of nasa9_parameters is not 14 or 15, or if T_range does not contain</span>
 </span><span id="write_cantera_yaml_thermo_NASA9-109"><a href="#write_cantera_yaml_thermo_NASA9-109"><span class="linenos">109</span></a><span class="sd">    exactly three elements.</span>
 </span><span id="write_cantera_yaml_thermo_NASA9-110"><a href="#write_cantera_yaml_thermo_NASA9-110"><span class="linenos">110</span></a>
 </span><span id="write_cantera_yaml_thermo_NASA9-111"><a href="#write_cantera_yaml_thermo_NASA9-111"><span class="linenos">111</span></a><span class="sd">    Notes:</span>
@@ -458,7 +470,7 @@ None: This function does not return any value. It writes the output to a file.</
 </span><span id="write_cantera_yaml_thermo_NASA9-114"><a href="#write_cantera_yaml_thermo_NASA9-114"><span class="linenos">114</span></a><span class="sd">    - The output file will be named as `&lt;specie_name&gt;.yaml` and placed in the `root_path`.</span>
 </span><span id="write_cantera_yaml_thermo_NASA9-115"><a href="#write_cantera_yaml_thermo_NASA9-115"><span class="linenos">115</span></a><span class="sd">    - No checks are performed on the validity of the NASA9 coefficients or the temperature range.</span>
 </span><span id="write_cantera_yaml_thermo_NASA9-116"><a href="#write_cantera_yaml_thermo_NASA9-116"><span class="linenos">116</span></a><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="write_cantera_yaml_thermo_NASA9-117"><a href="#write_cantera_yaml_thermo_NASA9-117"><span class="linenos">117</span></a>    <span class="n">yaml_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">root_path</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">specie_name</span><span class="si">}</span><span class="s1">.yaml&#39;</span><span class="p">)</span>
+</span><span id="write_cantera_yaml_thermo_NASA9-117"><a href="#write_cantera_yaml_thermo_NASA9-117"><span class="linenos">117</span></a>    <span class="n">yaml_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">root_path</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">specie_name</span><span class="si">}</span><span class="s1">_thermo.yaml&#39;</span><span class="p">)</span>
 </span><span id="write_cantera_yaml_thermo_NASA9-118"><a href="#write_cantera_yaml_thermo_NASA9-118"><span class="linenos">118</span></a>    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">yaml_path</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
 </span><span id="write_cantera_yaml_thermo_NASA9-119"><a href="#write_cantera_yaml_thermo_NASA9-119"><span class="linenos">119</span></a>        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;  thermo:</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
 </span><span id="write_cantera_yaml_thermo_NASA9-120"><a href="#write_cantera_yaml_thermo_NASA9-120"><span class="linenos">120</span></a>        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;   model: NASA9</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
@@ -476,23 +488,29 @@ None: This function does not return any value. It writes the output to a file.</
 defined by the NASA9 polynomial. The file is saved in the specified root directory with the
 species name as the filename.</p>
 
-<p>Parameters:
-specie_name (str): The name of the species to write the thermodynamic data for.
-T_range (Tuple[float, float, float]): A tuple containing three temperature points that define
-the temperature ranges over which the NASA9 polynomials are valid.
-nasa9_parameters (List[float]): A list of 14 or 15 NASA9 polynomial coefficients.
-reference_p (float, optional): The reference pressure in bar. Defaults to 1 bar.
-root_path (str, optional): The directory where the YAML file will be saved. Defaults to the
-current working directory.</p>
+<p>Parameters:</p>
+
+<ul>
+<li>specie_name (str): The name of the species to write the thermodynamic data for.</li>
+<li>T_range (Tuple[float, float, float]): A tuple containing three temperature points that define
+the temperature ranges over which the NASA9 polynomials are valid.</li>
+<li>nasa9_parameters (List[float]): A list of 14 or 15 NASA9 polynomial coefficients.</li>
+<li>reference_p (float, optional): The reference pressure in bar. Defaults to 1 bar.</li>
+<li>root_path (str, optional): The directory where the YAML file will be saved. Defaults to the
+current working directory.</li>
+</ul>
 
 <p>Returns:
 None</p>
 
-<p>Raises:
-FileNotFoundError: If the specified root path does not exist or is not writable.
-TypeError: If any of the input parameters do not match their expected types.
-ValueError: If the length of nasa9_parameters is not 14 or 15, or if T_range does not contain
-exactly three elements.</p>
+<p>Raises:</p>
+
+<ul>
+<li>FileNotFoundError: If the specified root path does not exist or is not writable.</li>
+<li>TypeError: If any of the input parameters do not match their expected types.</li>
+<li>ValueError: If the length of nasa9_parameters is not 14 or 15, or if T_range does not contain
+exactly three elements.</li>
+</ul>
 
 <p>Notes:</p>
 
@@ -529,26 +547,26 @@ appropriate for the species in question.</li>
 </span><span id="write_cantera_yaml_thermo_Shomate-137"><a href="#write_cantera_yaml_thermo_Shomate-137"><span class="linenos">137</span></a><span class="sd">    kinetics and thermodynamics simulations with Cantera.</span>
 </span><span id="write_cantera_yaml_thermo_Shomate-138"><a href="#write_cantera_yaml_thermo_Shomate-138"><span class="linenos">138</span></a>
 </span><span id="write_cantera_yaml_thermo_Shomate-139"><a href="#write_cantera_yaml_thermo_Shomate-139"><span class="linenos">139</span></a><span class="sd">    Parameters:</span>
-</span><span id="write_cantera_yaml_thermo_Shomate-140"><a href="#write_cantera_yaml_thermo_Shomate-140"><span class="linenos">140</span></a><span class="sd">    specie_name (str): Name of the species for which the thermodynamic data is being</span>
+</span><span id="write_cantera_yaml_thermo_Shomate-140"><a href="#write_cantera_yaml_thermo_Shomate-140"><span class="linenos">140</span></a><span class="sd">    - specie_name (str): Name of the species for which the thermodynamic data is being</span>
 </span><span id="write_cantera_yaml_thermo_Shomate-141"><a href="#write_cantera_yaml_thermo_Shomate-141"><span class="linenos">141</span></a><span class="sd">                       written.</span>
-</span><span id="write_cantera_yaml_thermo_Shomate-142"><a href="#write_cantera_yaml_thermo_Shomate-142"><span class="linenos">142</span></a><span class="sd">    T_range (tuple): A tuple specifying the temperature range over which the</span>
+</span><span id="write_cantera_yaml_thermo_Shomate-142"><a href="#write_cantera_yaml_thermo_Shomate-142"><span class="linenos">142</span></a><span class="sd">    - T_range (tuple): A tuple specifying the temperature range over which the</span>
 </span><span id="write_cantera_yaml_thermo_Shomate-143"><a href="#write_cantera_yaml_thermo_Shomate-143"><span class="linenos">143</span></a><span class="sd">                     Shomate parameters are valid.</span>
-</span><span id="write_cantera_yaml_thermo_Shomate-144"><a href="#write_cantera_yaml_thermo_Shomate-144"><span class="linenos">144</span></a><span class="sd">    Shomate_parameters (list): List of Shomate parameters used to define the</span>
+</span><span id="write_cantera_yaml_thermo_Shomate-144"><a href="#write_cantera_yaml_thermo_Shomate-144"><span class="linenos">144</span></a><span class="sd">    - Shomate_parameters (list): List of Shomate parameters used to define the</span>
 </span><span id="write_cantera_yaml_thermo_Shomate-145"><a href="#write_cantera_yaml_thermo_Shomate-145"><span class="linenos">145</span></a><span class="sd">                               thermodynamic properties.</span>
-</span><span id="write_cantera_yaml_thermo_Shomate-146"><a href="#write_cantera_yaml_thermo_Shomate-146"><span class="linenos">146</span></a><span class="sd">    reference_p (float, optional): Reference pressure in bar. Default is 1 bar.</span>
-</span><span id="write_cantera_yaml_thermo_Shomate-147"><a href="#write_cantera_yaml_thermo_Shomate-147"><span class="linenos">147</span></a><span class="sd">    root_path (str, optional): Root directory where the YAML file will be saved.</span>
+</span><span id="write_cantera_yaml_thermo_Shomate-146"><a href="#write_cantera_yaml_thermo_Shomate-146"><span class="linenos">146</span></a><span class="sd">    - reference_p (float, optional): Reference pressure in bar. Default is 1 bar.</span>
+</span><span id="write_cantera_yaml_thermo_Shomate-147"><a href="#write_cantera_yaml_thermo_Shomate-147"><span class="linenos">147</span></a><span class="sd">    - root_path (str, optional): Root directory where the YAML file will be saved.</span>
 </span><span id="write_cantera_yaml_thermo_Shomate-148"><a href="#write_cantera_yaml_thermo_Shomate-148"><span class="linenos">148</span></a><span class="sd">                               Default is the current working directory.</span>
 </span><span id="write_cantera_yaml_thermo_Shomate-149"><a href="#write_cantera_yaml_thermo_Shomate-149"><span class="linenos">149</span></a>
 </span><span id="write_cantera_yaml_thermo_Shomate-150"><a href="#write_cantera_yaml_thermo_Shomate-150"><span class="linenos">150</span></a><span class="sd">    Returns:</span>
 </span><span id="write_cantera_yaml_thermo_Shomate-151"><a href="#write_cantera_yaml_thermo_Shomate-151"><span class="linenos">151</span></a><span class="sd">    None</span>
 </span><span id="write_cantera_yaml_thermo_Shomate-152"><a href="#write_cantera_yaml_thermo_Shomate-152"><span class="linenos">152</span></a>
 </span><span id="write_cantera_yaml_thermo_Shomate-153"><a href="#write_cantera_yaml_thermo_Shomate-153"><span class="linenos">153</span></a><span class="sd">    Raises:</span>
-</span><span id="write_cantera_yaml_thermo_Shomate-154"><a href="#write_cantera_yaml_thermo_Shomate-154"><span class="linenos">154</span></a><span class="sd">    FileNotFoundError: If the specified root path does not exist.</span>
-</span><span id="write_cantera_yaml_thermo_Shomate-155"><a href="#write_cantera_yaml_thermo_Shomate-155"><span class="linenos">155</span></a><span class="sd">    TypeError: If `specie_name` is not a string or if `T_range` or</span>
+</span><span id="write_cantera_yaml_thermo_Shomate-154"><a href="#write_cantera_yaml_thermo_Shomate-154"><span class="linenos">154</span></a><span class="sd">    - FileNotFoundError: If the specified root path does not exist.</span>
+</span><span id="write_cantera_yaml_thermo_Shomate-155"><a href="#write_cantera_yaml_thermo_Shomate-155"><span class="linenos">155</span></a><span class="sd">    - TypeError: If `specie_name` is not a string or if `T_range` or</span>
 </span><span id="write_cantera_yaml_thermo_Shomate-156"><a href="#write_cantera_yaml_thermo_Shomate-156"><span class="linenos">156</span></a><span class="sd">               `Shomate_parameters` are not provided as expected types.</span>
-</span><span id="write_cantera_yaml_thermo_Shomate-157"><a href="#write_cantera_yaml_thermo_Shomate-157"><span class="linenos">157</span></a><span class="sd">    ValueError: If `T_range` does not contain exactly two elements.</span>
+</span><span id="write_cantera_yaml_thermo_Shomate-157"><a href="#write_cantera_yaml_thermo_Shomate-157"><span class="linenos">157</span></a><span class="sd">    - ValueError: If `T_range` does not contain exactly two elements.</span>
 </span><span id="write_cantera_yaml_thermo_Shomate-158"><a href="#write_cantera_yaml_thermo_Shomate-158"><span class="linenos">158</span></a><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="write_cantera_yaml_thermo_Shomate-159"><a href="#write_cantera_yaml_thermo_Shomate-159"><span class="linenos">159</span></a>    <span class="n">yaml_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">root_path</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">specie_name</span><span class="si">}</span><span class="s1">.yaml&#39;</span><span class="p">)</span>
+</span><span id="write_cantera_yaml_thermo_Shomate-159"><a href="#write_cantera_yaml_thermo_Shomate-159"><span class="linenos">159</span></a>    <span class="n">yaml_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">root_path</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">specie_name</span><span class="si">}</span><span class="s1">_thermo.yaml&#39;</span><span class="p">)</span>
 </span><span id="write_cantera_yaml_thermo_Shomate-160"><a href="#write_cantera_yaml_thermo_Shomate-160"><span class="linenos">160</span></a>    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">yaml_path</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
 </span><span id="write_cantera_yaml_thermo_Shomate-161"><a href="#write_cantera_yaml_thermo_Shomate-161"><span class="linenos">161</span></a>        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;  thermo:</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
 </span><span id="write_cantera_yaml_thermo_Shomate-162"><a href="#write_cantera_yaml_thermo_Shomate-162"><span class="linenos">162</span></a>        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;   model: NASA9</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
@@ -568,25 +586,31 @@ data based on the provided Shomate parameters. The generated file includes
 temperature ranges and reference pressure, suitable for use in chemical
 kinetics and thermodynamics simulations with Cantera.</p>
 
-<p>Parameters:
-specie_name (str): Name of the species for which the thermodynamic data is being
-                   written.
-T_range (tuple): A tuple specifying the temperature range over which the
-                 Shomate parameters are valid.
-Shomate_parameters (list): List of Shomate parameters used to define the
-                           thermodynamic properties.
-reference_p (float, optional): Reference pressure in bar. Default is 1 bar.
-root_path (str, optional): Root directory where the YAML file will be saved.
-                           Default is the current working directory.</p>
+<p>Parameters:</p>
+
+<ul>
+<li>specie_name (str): Name of the species for which the thermodynamic data is being
+written.</li>
+<li>T_range (tuple): A tuple specifying the temperature range over which the
+Shomate parameters are valid.</li>
+<li>Shomate_parameters (list): List of Shomate parameters used to define the
+thermodynamic properties.</li>
+<li>reference_p (float, optional): Reference pressure in bar. Default is 1 bar.</li>
+<li>root_path (str, optional): Root directory where the YAML file will be saved.
+Default is the current working directory.</li>
+</ul>
 
 <p>Returns:
 None</p>
 
-<p>Raises:
-FileNotFoundError: If the specified root path does not exist.
-TypeError: If <code>specie_name</code> is not a string or if <code>T_range</code> or
-           <code>Shomate_parameters</code> are not provided as expected types.
-ValueError: If <code>T_range</code> does not contain exactly two elements.</p>
+<p>Raises:</p>
+
+<ul>
+<li>FileNotFoundError: If the specified root path does not exist.</li>
+<li>TypeError: If <code>specie_name</code> is not a string or if <code>T_range</code> or
+<code>Shomate_parameters</code> are not provided as expected types.</li>
+<li>ValueError: If <code>T_range</code> does not contain exactly two elements.</li>
+</ul>
 </div>
 
 

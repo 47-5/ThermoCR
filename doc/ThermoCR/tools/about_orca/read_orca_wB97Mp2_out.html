@@ -74,14 +74,14 @@
 </span><span id="L-15"><a href="#L-15"><span class="linenos">15</span></a><span class="sd">    targets energies calculated using the wB97M-V functional.</span>
 </span><span id="L-16"><a href="#L-16"><span class="linenos">16</span></a>
 </span><span id="L-17"><a href="#L-17"><span class="linenos">17</span></a><span class="sd">    Parameters:</span>
-</span><span id="L-18"><a href="#L-18"><span class="linenos">18</span></a><span class="sd">        orca_out_file_path (str): Path to the ORCA output file.</span>
+</span><span id="L-18"><a href="#L-18"><span class="linenos">18</span></a><span class="sd">    - orca_out_file_path (str): Path to the ORCA output file.</span>
 </span><span id="L-19"><a href="#L-19"><span class="linenos">19</span></a>
 </span><span id="L-20"><a href="#L-20"><span class="linenos">20</span></a><span class="sd">    Returns:</span>
 </span><span id="L-21"><a href="#L-21"><span class="linenos">21</span></a><span class="sd">        float: The final single point energy found in the ORCA output file.</span>
 </span><span id="L-22"><a href="#L-22"><span class="linenos">22</span></a>
 </span><span id="L-23"><a href="#L-23"><span class="linenos">23</span></a><span class="sd">    Raises:</span>
-</span><span id="L-24"><a href="#L-24"><span class="linenos">24</span></a><span class="sd">        FileNotFoundError: If the provided file path does not exist.</span>
-</span><span id="L-25"><a href="#L-25"><span class="linenos">25</span></a><span class="sd">        IndexError: If no matches are found for the final single point energy pattern.</span>
+</span><span id="L-24"><a href="#L-24"><span class="linenos">24</span></a><span class="sd">    - FileNotFoundError: If the provided file path does not exist.</span>
+</span><span id="L-25"><a href="#L-25"><span class="linenos">25</span></a><span class="sd">    - IndexError: If no matches are found for the final single point energy pattern.</span>
 </span><span id="L-26"><a href="#L-26"><span class="linenos">26</span></a><span class="sd">    &quot;&quot;&quot;</span>
 </span><span id="L-27"><a href="#L-27"><span class="linenos">27</span></a>    <span class="n">pattern</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;FINAL SINGLE POINT ENERGY\s+([-+]?\d+\.\d+)&#39;</span><span class="p">)</span>
 </span><span id="L-28"><a href="#L-28"><span class="linenos">28</span></a>
@@ -156,14 +156,14 @@
 </span><span id="read_orca_wB97Mp2_out-16"><a href="#read_orca_wB97Mp2_out-16"><span class="linenos">16</span></a><span class="sd">    targets energies calculated using the wB97M-V functional.</span>
 </span><span id="read_orca_wB97Mp2_out-17"><a href="#read_orca_wB97Mp2_out-17"><span class="linenos">17</span></a>
 </span><span id="read_orca_wB97Mp2_out-18"><a href="#read_orca_wB97Mp2_out-18"><span class="linenos">18</span></a><span class="sd">    Parameters:</span>
-</span><span id="read_orca_wB97Mp2_out-19"><a href="#read_orca_wB97Mp2_out-19"><span class="linenos">19</span></a><span class="sd">        orca_out_file_path (str): Path to the ORCA output file.</span>
+</span><span id="read_orca_wB97Mp2_out-19"><a href="#read_orca_wB97Mp2_out-19"><span class="linenos">19</span></a><span class="sd">    - orca_out_file_path (str): Path to the ORCA output file.</span>
 </span><span id="read_orca_wB97Mp2_out-20"><a href="#read_orca_wB97Mp2_out-20"><span class="linenos">20</span></a>
 </span><span id="read_orca_wB97Mp2_out-21"><a href="#read_orca_wB97Mp2_out-21"><span class="linenos">21</span></a><span class="sd">    Returns:</span>
 </span><span id="read_orca_wB97Mp2_out-22"><a href="#read_orca_wB97Mp2_out-22"><span class="linenos">22</span></a><span class="sd">        float: The final single point energy found in the ORCA output file.</span>
 </span><span id="read_orca_wB97Mp2_out-23"><a href="#read_orca_wB97Mp2_out-23"><span class="linenos">23</span></a>
 </span><span id="read_orca_wB97Mp2_out-24"><a href="#read_orca_wB97Mp2_out-24"><span class="linenos">24</span></a><span class="sd">    Raises:</span>
-</span><span id="read_orca_wB97Mp2_out-25"><a href="#read_orca_wB97Mp2_out-25"><span class="linenos">25</span></a><span class="sd">        FileNotFoundError: If the provided file path does not exist.</span>
-</span><span id="read_orca_wB97Mp2_out-26"><a href="#read_orca_wB97Mp2_out-26"><span class="linenos">26</span></a><span class="sd">        IndexError: If no matches are found for the final single point energy pattern.</span>
+</span><span id="read_orca_wB97Mp2_out-25"><a href="#read_orca_wB97Mp2_out-25"><span class="linenos">25</span></a><span class="sd">    - FileNotFoundError: If the provided file path does not exist.</span>
+</span><span id="read_orca_wB97Mp2_out-26"><a href="#read_orca_wB97Mp2_out-26"><span class="linenos">26</span></a><span class="sd">    - IndexError: If no matches are found for the final single point energy pattern.</span>
 </span><span id="read_orca_wB97Mp2_out-27"><a href="#read_orca_wB97Mp2_out-27"><span class="linenos">27</span></a><span class="sd">    &quot;&quot;&quot;</span>
 </span><span id="read_orca_wB97Mp2_out-28"><a href="#read_orca_wB97Mp2_out-28"><span class="linenos">28</span></a>    <span class="n">pattern</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;FINAL SINGLE POINT ENERGY\s+([-+]?\d+\.\d+)&#39;</span><span class="p">)</span>
 </span><span id="read_orca_wB97Mp2_out-29"><a href="#read_orca_wB97Mp2_out-29"><span class="linenos">29</span></a>
@@ -181,15 +181,21 @@ This function reads an ORCA output file, searches for the line containing
 the final single point energy, and returns this value as a float. It specifically
 targets energies calculated using the wB97M-V functional.</p>
 
-<p>Parameters:
-    orca_out_file_path (str): Path to the ORCA output file.</p>
+<p>Parameters:</p>
+
+<ul>
+<li>orca_out_file_path (str): Path to the ORCA output file.</li>
+</ul>
 
 <p>Returns:
     float: The final single point energy found in the ORCA output file.</p>
 
-<p>Raises:
-    FileNotFoundError: If the provided file path does not exist.
-    IndexError: If no matches are found for the final single point energy pattern.</p>
+<p>Raises:</p>
+
+<ul>
+<li>FileNotFoundError: If the provided file path does not exist.</li>
+<li>IndexError: If no matches are found for the final single point energy pattern.</li>
+</ul>
 </div>
 
 
