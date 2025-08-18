@@ -28,6 +28,7 @@ ThermoCR/tools/read_qm_out.py
 ThermoCR/tools/utils.py
 ThermoCR/tools/about_cantera/__init__.py
 ThermoCR/tools/about_cantera/export_cantera_kinetics_yaml.py
+ThermoCR/tools/about_cantera/export_cantera_specie_name_yaml.py
 ThermoCR/tools/about_cantera/export_cantera_thermo_yaml.py
 ThermoCR/tools/about_gaussian/__init__.py
 ThermoCR/tools/about_gaussian/calculate_solvent_energy.py
