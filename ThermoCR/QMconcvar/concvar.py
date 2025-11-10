@@ -16,6 +16,7 @@ class ChemicalKineticsSimulator:
         self.system_config = self.config['system']
         self.T = self.system_config['T']
         self.P = self.system_config['P']
+        self.R = 8.314462618  # J/(mol·K)
 
         self.species_config = self.config['species']
         self.species = list(self.species_config.keys())  # 物种ID列表
@@ -51,7 +52,6 @@ class ChemicalKineticsSimulator:
         self.parsed_reactions = []
 
         for i, reaction in enumerate(self.config['reactions']):
-            print(i, reaction)
             equation = reaction['equation']
             rate_type = reaction.get('rate_type')
 
@@ -66,15 +66,22 @@ class ChemicalKineticsSimulator:
                     reaction_parts['forward'], TST_params
                 )
 
-                # 计算逆向反应速率常数
+                # 计算逆向反应速率常数 - 基于平衡常数而不是TST
                 if reaction_parts['reverse'] is not None:
-                    k_reverse = self.calculate_TST_rate_constants(
-                        reaction_parts['reverse'], TST_params
+                    # 计算平衡常数
+                    K_eq = self.calculate_equilibrium_constant(
+                        reaction_parts['forward']['reactants'],
+                        reaction_parts['forward']['products']
                     )
+
+                    # 根据平衡常数计算逆反应速率常数
+                    k_reverse = k_forward / K_eq
+
+                    print(
+                        f"Reaction {i + 1}: k_forward = {k_forward:.2e}, k_reverse = {k_reverse:.2e}, K_eq = {K_eq:.2e}")
                 else:
                     k_reverse = 0.0  # 不可逆反应
-
-                print(f"Reaction {i + 1}: k_forward = {k_forward:.2e}, k_reverse = {k_reverse:.2e}")
+                    print(f"Reaction {i + 1}: k_forward = {k_forward:.2e} (irreversible)")
 
                 # 存储正向反应
                 self.parsed_reactions.append({
@@ -124,21 +131,6 @@ class ChemicalKineticsSimulator:
 
         return species_dict
 
-    def calculate_reaction_delta_G(self, reactants, products):         # todo 这里是错的，应该是反应和过渡态的热力学量
-        """计算反应的ΔG"""
-        delta_G = 0.0
-
-        # 产物 - 反应物
-        for species, coeff in products.items():
-            if species in self.thermo_data:
-                delta_G += coeff * self.thermo_data[species]['G/(J/mol)']
-
-        for species, coeff in reactants.items():
-            if species in self.thermo_data:
-                delta_G -= coeff * self.thermo_data[species]['G/(J/mol)']
-
-        return delta_G
-
     def thermo_on_the_fly(self, on_the_fly_params):
         thermo_result = qm_thermo(
             atom_coord_path=on_the_fly_params.get('atom_coord_path', None),
@@ -166,18 +158,16 @@ class ChemicalKineticsSimulator:
 
         return thermo_result
 
-
-    def calculate_TST_rate_constants(self, reaction_info, TST_params):   # todo 无法识别两个反应物相同的双分子反应
+    def calculate_TST_rate_constants(self, reaction_info, TST_params):
         """基于TST计算速率常数"""
         reactants = self.parse_chemical_species(reaction_info['reactants'])
         products = self.parse_chemical_species(reaction_info['products'])
-        print(f'r:{reactants} | p:{products}')
+        # print(f'r:{reactants} | p:{products}')
 
         # 计算Δn（气相分子数变化）
         n_reactants = sum(reactants.values())
         n_products = sum(products.values())
-        delta_n = n_products - n_reactants
-        print(delta_n)
+        delta_n = n_reactants - n_products
 
         # 计算自由能垒
         if TST_params.get('TS_on_the_fly_params'):
@@ -194,18 +184,11 @@ class ChemicalKineticsSimulator:
         else:
             delta_G = TST_params.get('delta_G')
 
-        # 如果既没有过渡态数据也没有提供delta_G，则从反应物和产物计算
-        if delta_G is None:
-            delta_G = self.calculate_reaction_delta_G(reactants, products)
-            # 对于TST，我们需要的是活化自由能，这里简单假设为反应自由能的一半
-            # 这是一个近似，实际应该使用过渡态数据
-            delta_G = delta_G * 0.5
-
-        # 调用你的k_TST函数
+        # 调用k_TST函数
         k_forward = k_TST(
             delta_G=delta_G,
             delta_n=delta_n,
-            T=TST_params.get('T', 298.15),
+            T=TST_params.get('T', self.T),
             P0=TST_params.get('P0', 100000),
             sigma=TST_params.get('sigma', 1),
             liquid=TST_params.get('liquid', False),
@@ -215,7 +198,41 @@ class ChemicalKineticsSimulator:
             delta_H_barrier_r_0K=TST_params.get('delta_H_barrier_r_0K')
         )
 
+        # 单位换算：确保速率常数使用 mol/m³ 作为浓度单位
+        liquid = TST_params.get('liquid', False)
+        if not liquid:
+            # 对于气相反应，k_TST 返回的单位是 (molecule/m³)^(-delta_n) * s^-1
+            # 需要转换为 (mol/m³)^(-delta_n) * s^-1
+            avogadro = 6.02214076e23  # 阿伏伽德罗常数
+            k_forward = k_forward * (avogadro ** delta_n)
+
+        # 注意：现在 k_forward 的单位是 (mol/m³)^(-delta_n) * s^-1
+        # 如果你希望使用 mol/L (M) 作为浓度单位，需要进一步转换：
+        k_forward = k_forward * (1000 ** delta_n)  # 从 mol/m³ 转换为 mol/L
+
         return k_forward
+
+    def calculate_equilibrium_constant(self, reactants_str, products_str):
+        """计算反应的平衡常数"""
+        reactants = self.parse_chemical_species(reactants_str)
+        products = self.parse_chemical_species(products_str)
+
+        # 计算反应的ΔG
+        delta_G = 0.0
+
+        # 产物 - 反应物
+        for species, coeff in products.items():
+            if species in self.thermo_data:
+                delta_G += coeff * self.thermo_data[species]['G/(J/mol)']
+
+        for species, coeff in reactants.items():
+            if species in self.thermo_data:
+                delta_G -= coeff * self.thermo_data[species]['G/(J/mol)']
+
+        # 计算平衡常数 K = exp(-ΔG/RT)
+        K_eq = np.exp(-delta_G / (self.R * self.T))
+
+        return K_eq
 
     def reaction_rate(self, concentrations, reaction):
         """计算单个反应的反应速率"""
@@ -251,11 +268,11 @@ class ChemicalKineticsSimulator:
     def simulate(self, method='BDF', rtol=1e-6, atol=1e-8):
         """执行模拟"""
         # 初始条件
-        y0 = np.array([self.config['initial_concentrations'][species]
+        y0 = np.array([self.config['system']['initial_concentrations'][species]
                        for species in self.species])
 
         # 时间范围
-        t_span = (self.config['time_span']['start'], self.config['time_span']['end'])
+        t_span = (self.config['system']['time_span']['start'], self.config['system']['time_span']['end'])
 
         # 求解微分方程
         solution = solve_ivp(
@@ -273,8 +290,8 @@ class ChemicalKineticsSimulator:
             print("请先运行模拟!")
             return
 
-        t_eval = np.linspace(self.config['time_span']['start'],
-                             self.config['time_span']['end'], 1000)
+        t_eval = np.linspace(self.config['system']['time_span']['start'],
+                             self.config['system']['time_span']['end'], 1000)
         concentrations = self.solution.sol(t_eval)
 
         plt.figure(figsize=(10, 6))
@@ -282,9 +299,8 @@ class ChemicalKineticsSimulator:
             species_name = self.species_config[species_id]['name']
             plt.plot(t_eval, concentrations[i], label=species_name, linewidth=2)
 
-        plt.xlabel('时间')
-        plt.ylabel('浓度')
-        plt.title('化学物种浓度随时间变化')
+        plt.xlabel('time')
+        plt.ylabel('C')
         plt.legend()
         plt.grid(True, alpha=0.3)
 
@@ -319,9 +335,9 @@ class ChemicalKineticsSimulator:
 # 使用示例
 if __name__ == "__main__":
     simulator = ChemicalKineticsSimulator('reaction_system.yaml')
-    # simulator.generate_report()
-    # results = simulator.simulate()
-    # simulator.plot_results('kinetics_simulation.png')
+    simulator.generate_report()
+    results = simulator.simulate()
+    simulator.plot_results('kinetics_simulation.png')
 
     # from ThermoCR.tools import read_atom_coord, read_vib
     # print(read_atom_coord('01.out'))

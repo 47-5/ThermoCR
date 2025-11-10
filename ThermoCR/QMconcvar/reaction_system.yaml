@@ -1,7 +1,7 @@
 # reaction_system.yaml
 # species: ["A", "B", "C", "D"]
 system:
-  T: 298.15
+  T: 450
   P: 101325
   time_span:
     start: 0
@@ -85,7 +85,7 @@ species:
       c: null
 
 reactions:
-  - equation: "S01 + S01 <-> S02"
+  - equation: "2S01 <-> S02"
     rate_type: 'TST'
     TST_params:
       delta_G: null
@@ -118,7 +118,7 @@ reactions:
         c: null
 
     
-  - equation: "S01 + S01 <-> S03"
+  - equation: "2S01 <-> S03"
     rate_type: 'TST'
     TST_params:
       delta_G: null
