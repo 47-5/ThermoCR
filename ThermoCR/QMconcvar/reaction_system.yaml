@@ -1,7 +1,7 @@
 # reaction_system.yaml
 # species: ["A", "B", "C", "D"]
 system:
-  T: 450
+  T: 453
   P: 101325
   time_span:
     start: 0
@@ -92,7 +92,7 @@ reactions:
       delta_n: null
       sigma: 1
       liquid: False
-      tunnelling_effect: null
+      tunnelling_effect: 'eckart'
       imaginary_freq: null
       delta_H_barrier_f_0K: null
       delta_H_barrier_r_0K: null
@@ -125,7 +125,7 @@ reactions:
       delta_n: null
       sigma: 1
       liquid: False
-      tunnelling_effect: null
+      tunnelling_effect: 'eckart'
       imaginary_freq: null
       delta_H_barrier_f_0K: null
       delta_H_barrier_r_0K: null

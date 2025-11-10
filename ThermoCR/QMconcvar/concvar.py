@@ -7,6 +7,7 @@ import re
 
 from ThermoCR.QMthermo import qm_thermo
 from ThermoCR.QMkinetics import k_TST
+from ThermoCR.tools import read_atom_coord, read_vib, read_imaginary_vib
 
 
 class ChemicalKineticsSimulator:
@@ -184,18 +185,37 @@ class ChemicalKineticsSimulator:
         else:
             delta_G = TST_params.get('delta_G')
 
+        # 给隧道效应的计算提供必要输入
+        if TST_params.get('tunnelling_effect'):
+            imaginary_freq = read_imaginary_vib(filepath=TST_params['TS_on_the_fly_params']['vib_path'])
+            H_0K_TS = TS_thermo['ee/(J/mol)'] + TS_thermo['zpe/(J/mol)']
+            H_0K_R = sum(coeff * (self.thermo_data[species]['ee/(J/mol)'] + self.thermo_data[species]['zpe/(J/mol)'])
+                                  for species, coeff in reactants.items()
+                                  if species in self.thermo_data)
+            H_0K_P = sum(coeff * (self.thermo_data[species]['ee/(J/mol)'] + self.thermo_data[species]['zpe/(J/mol)'])
+                         for species, coeff in products.items()
+                         if species in self.thermo_data)
+            delta_H_barrier_f_0K = H_0K_TS - H_0K_R
+            delta_H_barrier_r_0K = H_0K_TS - H_0K_P
+
+
+        else:
+            imaginary_freq = None
+            delta_H_barrier_f_0K = None
+            delta_H_barrier_r_0K = None
+
         # 调用k_TST函数
         k_forward = k_TST(
-            delta_G=delta_G,
-            delta_n=delta_n,
+            delta_G=TST_params.get('delta_G', None) if TST_params.get('delta_G', None) else delta_G,
+            delta_n=TST_params.get('delta_n', None) if TST_params.get('delta_n', None) else delta_n,
             T=TST_params.get('T', self.T),
             P0=TST_params.get('P0', 100000),
             sigma=TST_params.get('sigma', 1),
             liquid=TST_params.get('liquid', False),
             tunnelling_effect=TST_params.get('tunnelling_effect'),
-            imaginary_freq=TST_params.get('imaginary_freq'),
-            delta_H_barrier_f_0K=TST_params.get('delta_H_barrier_f_0K'),
-            delta_H_barrier_r_0K=TST_params.get('delta_H_barrier_r_0K')
+            imaginary_freq=TST_params.get('imaginary_freq', None) if TST_params.get('imaginary_freq', None) else imaginary_freq,  # 如果输入文件里写了就优先用输入文件里的
+            delta_H_barrier_f_0K=TST_params.get('delta_H_barrier_f_0K', None) if TST_params.get('delta_H_barrier_f_0K', None) else delta_H_barrier_f_0K,
+            delta_H_barrier_r_0K=TST_params.get('delta_H_barrier_r_0K', None) if TST_params.get('delta_H_barrier_r_0K', None) else delta_H_barrier_r_0K,
         )
 
         # 单位换算：确保速率常数使用 mol/m³ 作为浓度单位
@@ -350,3 +370,5 @@ if __name__ == "__main__":
     # print(simulator.thermo_data)
     # print(simulator.system_config)
     # print(simulator.parsed_reactions)
+    print('='*50)
+    print(simulator.solution)
