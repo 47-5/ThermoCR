@@ -1,5 +1,16 @@
 # reaction_system.yaml
 # species: ["A", "B", "C", "D"]
+system:
+  T: 298.15
+  P: 101325
+  time_span:
+    start: 0
+    end: 10
+  initial_concentrations:
+    S01: 0
+    S02: 0.2
+    S03: 0.8
+
 species:
   S01:
     name: 'CPD'
@@ -12,8 +23,6 @@ species:
       vibfreqs: null
       ee_path: null
       ee: null
-      T: 298.15
-      P: 101325
       sclZPE: 1.0
       sclU: 1.0
       sclCv: 1.0
@@ -38,8 +47,6 @@ species:
       vibfreqs: null
       ee_path: null
       ee: null
-      T: 298.15
-      P: 101325
       sclZPE: 1.0
       sclU: 1.0
       sclCv: 1.0
@@ -64,8 +71,6 @@ species:
       vibfreqs: null
       ee_path: null
       ee: null
-      T: 298.15
-      P: 101325
       sclZPE: 1.0
       sclU: 1.0
       sclCv: 1.0
@@ -79,25 +84,12 @@ species:
       ignore_trans_and_rot: False
       c: null
 
-
-initial_concentrations:
-  S01: 0
-  S02: 0.2
-  S03: 0.8
-
-
-time_span:
-  start: 0
-  end: 10
-
 reactions:
   - equation: "S01 + S01 <-> S02"
     rate_type: 'TST'
     TST_params:
       delta_G: null
       delta_n: null
-      T: 298.15
-      P0: 100000
       sigma: 1
       liquid: False
       tunnelling_effect: null
@@ -112,8 +104,6 @@ reactions:
         vibfreqs: null
         ee_path: null
         ee: null
-        T: 298.15
-        P: 101325
         sclZPE: 1.0
         sclU: 1.0
         sclCv: 1.0
@@ -133,8 +123,6 @@ reactions:
     TST_params:
       delta_G: null
       delta_n: null
-      T: 298.15
-      P0: 100000
       sigma: 1
       liquid: False
       tunnelling_effect: null
@@ -149,8 +137,6 @@ reactions:
         vibfreqs: null
         ee_path: null
         ee: null
-        T: 298.15
-        P: 101325
         sclZPE: 1.0
         sclU: 1.0
         sclCv: 1.0

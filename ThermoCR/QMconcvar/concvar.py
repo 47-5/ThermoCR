@@ -5,20 +5,25 @@ import matplotlib.pyplot as plt
 from collections import defaultdict
 import re
 
-
 from ThermoCR.QMthermo import qm_thermo
 from ThermoCR.QMkinetics import k_TST
 
-class AdvancedChemicalKineticsSimulator:
+
+class ChemicalKineticsSimulator:
     def __init__(self, config_file):
         self.config = self.load_config(config_file)
+
+        self.system_config = self.config['system']
+        self.T = self.system_config['T']
+        self.P = self.system_config['P']
+
         self.species_config = self.config['species']
         self.species = list(self.species_config.keys())  # 物种ID列表
-        self.thermo_data = {}  # 存储所有物种的热力学数据
+        self.thermo_data = self.calculate_thermodynamic_data()
+
         self.reaction_data = {}  # 存储反应数据
 
-        # 加载热力学数据和反应数据
-        self.load_thermodynamic_data()
+        # 加载反应数据
         self.parse_reactions()
 
     def load_config(self, config_file):
@@ -26,54 +31,71 @@ class AdvancedChemicalKineticsSimulator:
         with open(config_file, 'r') as file:
             return yaml.safe_load(file)
 
-    def load_thermodynamic_data(self):
+    def calculate_thermodynamic_data(self):
         """为每个物种计算热力学数据"""
-        print("Loading thermodynamic data...")
-
+        all_thermo_data = {}
         for species_id, species_info in self.species_config.items():
-            print(species_id, species_info)
-            thermo_type = species_info.get('thermo_type', 'constant')
+            # print(species_id, species_info)
+            thermo_type = species_info.get('thermo_type')
 
             if thermo_type == 'on_the_fly':
-                print(f"Calculating thermo for {species_info['name']}...")
+                # print(f"Calculating thermo for {species_info['name']}...")
                 params = species_info['on_the_fly_params']
+                thermo_result = self.thermo_on_the_fly(on_the_fly_params=params)
+                all_thermo_data[species_id] = thermo_result
+                # print(f"  G = {thermo_result['G/(J/mol)']:.2f} J/mol")
+        return all_thermo_data
 
-                # 调用你的qm_thermo函数
-                thermo_result = qm_thermo(
-                    atom_coord_path=params.get('atom_coord_path'),
-                    atom_numbers=params.get('atom_numbers'),
-                    coords=params.get('coords'),
-                    vib_path=params.get('vib_path'),
-                    vibfreqs=params.get('vibfreqs'),
-                    ee_path=params.get('ee_path'),
-                    ee=params.get('ee'),
-                    T=params.get('T', 298.15),
-                    P=params.get('P', 101325),
-                    sclZPE=params.get('sclZPE', 1.0),
-                    sclU=params.get('sclU', 1.0),
-                    sclCv=params.get('sclCv', 1.0),
-                    sclS=params.get('sclS', 1.0),
-                    U_Minenkov=params.get('U_Minenkov', False),
-                    S_Grimme=params.get('S_Grimme', True),
-                    verbose=params.get('verbose', False),
-                    read_ee_index=params.get('read_ee_index', -1),
-                    E_list=params.get('E_list'),
-                    g_list=params.get('g_list'),
-                    ignore_trans_and_rot=params.get('ignore_trans_and_rot', False),
-                    c=params.get('c')
+    def parse_reactions(self):
+        """解析所有反应，包括可逆反应"""
+        self.parsed_reactions = []
+
+        for i, reaction in enumerate(self.config['reactions']):
+            print(i, reaction)
+            equation = reaction['equation']
+            rate_type = reaction.get('rate_type')
+
+            # 解析可逆反应
+            reaction_parts = self.parse_reaction_equation(equation)
+
+            if rate_type == 'TST':
+                TST_params = reaction.get('TST_params', {})
+
+                # 计算正向反应速率常数
+                k_forward = self.calculate_TST_rate_constants(
+                    reaction_parts['forward'], TST_params
                 )
 
-                self.thermo_data[species_id] = thermo_result
-                print(f"  G = {thermo_result['G/(J/mol)']:.2f} J/mol")
+                # 计算逆向反应速率常数
+                if reaction_parts['reverse'] is not None:
+                    k_reverse = self.calculate_TST_rate_constants(
+                        reaction_parts['reverse'], TST_params
+                    )
+                else:
+                    k_reverse = 0.0  # 不可逆反应
 
-            elif thermo_type == 'constant':
-                # 对于恒定浓度的物种，只需要存储基本信息
-                self.thermo_data[species_id] = {
-                    'name': species_info['name'],
-                    'concentration': species_info.get('concentration', 0.0)
-                }
+                print(f"Reaction {i + 1}: k_forward = {k_forward:.2e}, k_reverse = {k_reverse:.2e}")
 
-    def parse_reversible_reaction(self, equation):
+                # 存储正向反应
+                self.parsed_reactions.append({
+                    'reaction_id': f"R{i + 1}_forward",
+                    'reactants': self.parse_chemical_species(reaction_parts['forward']['reactants']),
+                    'products': self.parse_chemical_species(reaction_parts['forward']['products']),
+                    'rate_constant': k_forward,
+                    'is_reversible': (reaction_parts['reverse'] is not None)
+                })
+
+                # 如果是可逆反应，也存储逆向反应
+                if reaction_parts['reverse'] is not None:
+                    self.parsed_reactions.append({
+                        'reaction_id': f"R{i + 1}_reverse",
+                        'reactants': self.parse_chemical_species(reaction_parts['reverse']['reactants']),
+                        'products': self.parse_chemical_species(reaction_parts['reverse']['products']),
+                        'rate_constant': k_reverse,
+                        'is_reversible': True
+                    })
+
+    def parse_reaction_equation(self, equation):
         """解析可逆反应方程式，返回正向和逆向反应"""
         if '<->' in equation:
             reactants_str, products_str = equation.split('<->')
@@ -117,52 +139,50 @@ class AdvancedChemicalKineticsSimulator:
 
         return delta_G
 
-    def calculate_TS_thermo(self, TS_params):
-        """计算过渡态的热力学数据"""
-        if TS_params is None:
-            return None
-
-        print("Calculating transition state thermodynamics...")
+    def thermo_on_the_fly(self, on_the_fly_params):
         thermo_result = qm_thermo(
-            atom_coord_path=TS_params.get('atom_coord_path'),
-            atom_numbers=TS_params.get('atom_numbers'),
-            coords=TS_params.get('coords'),
-            vib_path=TS_params.get('vib_path'),
-            vibfreqs=TS_params.get('vibfreqs'),
-            ee_path=TS_params.get('ee_path'),
-            ee=TS_params.get('ee'),
-            T=TS_params.get('T', 298.15),
-            P=TS_params.get('P', 101325),
-            sclZPE=TS_params.get('sclZPE', 1.0),
-            sclU=TS_params.get('sclU', 1.0),
-            sclCv=TS_params.get('sclCv', 1.0),
-            sclS=TS_params.get('sclS', 1.0),
-            U_Minenkov=TS_params.get('U_Minenkov', False),
-            S_Grimme=TS_params.get('S_Grimme', True),
-            verbose=TS_params.get('verbose', False),
-            read_ee_index=TS_params.get('read_ee_index', -1),
-            E_list=TS_params.get('E_list'),
-            g_list=TS_params.get('g_list'),
-            ignore_trans_and_rot=TS_params.get('ignore_trans_and_rot', False),
-            c=TS_params.get('c')
+            atom_coord_path=on_the_fly_params.get('atom_coord_path', None),
+            atom_numbers=on_the_fly_params.get('atom_numbers', None),
+            coords=on_the_fly_params.get('coords', None),
+            vib_path=on_the_fly_params.get('vib_path', None),
+            vibfreqs=on_the_fly_params.get('vibfreqs', None),
+            ee_path=on_the_fly_params.get('ee_path', None),
+            ee=on_the_fly_params.get('ee', None),
+            T=self.T,
+            P=self.P,
+            sclZPE=on_the_fly_params.get('sclZPE', 1.0),
+            sclU=on_the_fly_params.get('sclU', 1.0),
+            sclCv=on_the_fly_params.get('sclCv', 1.0),
+            sclS=on_the_fly_params.get('sclS', 1.0),
+            U_Minenkov=on_the_fly_params.get('U_Minenkov', False),
+            S_Grimme=on_the_fly_params.get('S_Grimme', True),
+            verbose=on_the_fly_params.get('verbose', False),
+            read_ee_index=on_the_fly_params.get('read_ee_index', -1),
+            E_list=on_the_fly_params.get('E_list', None),
+            g_list=on_the_fly_params.get('g_list', None),
+            ignore_trans_and_rot=on_the_fly_params.get('ignore_trans_and_rot', False),
+            c=on_the_fly_params.get('c', None)
         )
 
         return thermo_result
 
-    def calculate_TST_rate_constants(self, reaction_info, TST_params):
+
+    def calculate_TST_rate_constants(self, reaction_info, TST_params):   # todo 无法识别两个反应物相同的双分子反应
         """基于TST计算速率常数"""
         reactants = self.parse_chemical_species(reaction_info['reactants'])
         products = self.parse_chemical_species(reaction_info['products'])
+        print(f'r:{reactants} | p:{products}')
 
         # 计算Δn（气相分子数变化）
         n_reactants = sum(reactants.values())
         n_products = sum(products.values())
         delta_n = n_products - n_reactants
+        print(delta_n)
 
         # 计算自由能垒
         if TST_params.get('TS_on_the_fly_params'):
             # 如果有过渡态数据，计算实际的自由能垒
-            TS_thermo = self.calculate_TS_thermo(TST_params['TS_on_the_fly_params'])
+            TS_thermo = self.thermo_on_the_fly(TST_params['TS_on_the_fly_params'])
             if TS_thermo:
                 G_TS = TS_thermo['G/(J/mol)']
                 G_reactants = sum(coeff * self.thermo_data[species]['G/(J/mol)']
@@ -196,76 +216,6 @@ class AdvancedChemicalKineticsSimulator:
         )
 
         return k_forward
-
-    def parse_reactions(self):
-        """解析所有反应，包括可逆反应"""
-        self.parsed_reactions = []
-
-        for i, reaction in enumerate(self.config['reactions']):
-            equation = reaction['equation']
-            rate_type = reaction.get('rate_type', 'constant')
-
-            # 解析可逆反应
-            reaction_parts = self.parse_reversible_reaction(equation)
-
-            if rate_type == 'TST':
-                TST_params = reaction.get('TST_params', {})
-
-                # 计算正向反应速率常数
-                k_forward = self.calculate_TST_rate_constants(
-                    reaction_parts['forward'], TST_params
-                )
-
-                # 计算逆向反应速率常数
-                if reaction_parts['reverse'] is not None:
-                    k_reverse = self.calculate_TST_rate_constants(
-                        reaction_parts['reverse'], TST_params
-                    )
-                else:
-                    k_reverse = 0.0  # 不可逆反应
-
-                print(f"Reaction {i + 1}: k_forward = {k_forward:.2e}, k_reverse = {k_reverse:.2e}")
-
-                # 存储正向反应
-                self.parsed_reactions.append({
-                    'reaction_id': f"R{i + 1}_forward",
-                    'reactants': self.parse_chemical_species(reaction_parts['forward']['reactants']),
-                    'products': self.parse_chemical_species(reaction_parts['forward']['products']),
-                    'rate_constant': k_forward,
-                    'is_reversible': (reaction_parts['reverse'] is not None)
-                })
-
-                # 如果是可逆反应，也存储逆向反应
-                if reaction_parts['reverse'] is not None:
-                    self.parsed_reactions.append({
-                        'reaction_id': f"R{i + 1}_reverse",
-                        'reactants': self.parse_chemical_species(reaction_parts['reverse']['reactants']),
-                        'products': self.parse_chemical_species(reaction_parts['reverse']['products']),
-                        'rate_constant': k_reverse,
-                        'is_reversible': True
-                    })
-
-            elif rate_type == 'constant':
-                # 处理常数速率常数的反应
-                k_forward = reaction.get('rate_constant', 0.0)
-                k_reverse = reaction.get('reverse_rate_constant', 0.0)
-
-                self.parsed_reactions.append({
-                    'reaction_id': f"R{i + 1}_forward",
-                    'reactants': self.parse_chemical_species(reaction_parts['forward']['reactants']),
-                    'products': self.parse_chemical_species(reaction_parts['forward']['products']),
-                    'rate_constant': k_forward,
-                    'is_reversible': (k_reverse > 0)
-                })
-
-                if k_reverse > 0:
-                    self.parsed_reactions.append({
-                        'reaction_id': f"R{i + 1}_reverse",
-                        'reactants': self.parse_chemical_species(reaction_parts['reverse']['reactants']),
-                        'products': self.parse_chemical_species(reaction_parts['reverse']['products']),
-                        'rate_constant': k_reverse,
-                        'is_reversible': True
-                    })
 
     def reaction_rate(self, concentrations, reaction):
         """计算单个反应的反应速率"""
@@ -368,13 +318,19 @@ class AdvancedChemicalKineticsSimulator:
 
 # 使用示例
 if __name__ == "__main__":
-    simulator = AdvancedChemicalKineticsSimulator('reaction_system.yaml')
-    simulator.generate_report()
-    results = simulator.simulate()
-    simulator.plot_results('kinetics_simulation.png')
+    simulator = ChemicalKineticsSimulator('reaction_system.yaml')
+    # simulator.generate_report()
+    # results = simulator.simulate()
+    # simulator.plot_results('kinetics_simulation.png')
 
     # from ThermoCR.tools import read_atom_coord, read_vib
     # print(read_atom_coord('01.out'))
 
     # qm_thermo(atom_coord_path='01.out', vib_path='01.out')
     # print(read_vib(filepath='01.out'))
+    # print(simulator.config)
+    # print(simulator.species_config)
+    # print(simulator.species)
+    # print(simulator.thermo_data)
+    # print(simulator.system_config)
+    # print(simulator.parsed_reactions)
