@@ -163,7 +163,3 @@ def read_ee(filepath, ee_index=-1, return_Hartree=True):
 
 
 
-# if __name__ == "__main__":
-#
-#     vib = read_imaginary_vib(filepath=None, vibfreqs=[-200, 100, 300])
-#     print(vib)

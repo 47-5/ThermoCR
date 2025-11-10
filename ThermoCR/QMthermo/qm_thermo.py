@@ -83,7 +83,7 @@ def qm_thermo(atom_coord_path=None, atom_numbers=None, coords=None,
     """
     # load data
     # 如果提供了atom_numbers和coords，则不需要从atom_coord_path读取
-    if atom_numbers is None or coords is None:
+    if (atom_numbers is None) or (coords is None):
         if atom_coord_path is None:
             raise ValueError("Either atom_coord_path or (atom_numbers and coords) must be provided.")
         atom_numbers, coords = read_atom_coord(atom_coord_path)

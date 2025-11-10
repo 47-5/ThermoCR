@@ -1,0 +1,166 @@
+# reaction_system.yaml
+# species: ["A", "B", "C", "D"]
+species:
+  S01:
+    name: 'CPD'
+    thermo_type: 'on_the_fly'
+    on_the_fly_params:
+      atom_coord_path: '01.out'
+      atom_numbers: null
+      coords: null
+      vib_path: '01.out'
+      vibfreqs: null
+      ee_path: null
+      ee: null
+      T: 298.15
+      P: 101325
+      sclZPE: 1.0
+      sclU: 1.0
+      sclCv: 1.0
+      sclS: 1.0
+      U_Minenkov: False
+      S_Grimme: True
+      verbose: False
+      read_ee_index: -1
+      E_list: null
+      g_list: null
+      ignore_trans_and_rot: False
+      c: null
+
+  S02:
+    name: 'DCPD_1'
+    thermo_type: 'on_the_fly'
+    on_the_fly_params:
+      atom_coord_path: '02.out'
+      atom_numbers: null
+      coords: null
+      vib_path: '02.out'
+      vibfreqs: null
+      ee_path: null
+      ee: null
+      T: 298.15
+      P: 101325
+      sclZPE: 1.0
+      sclU: 1.0
+      sclCv: 1.0
+      sclS: 1.0
+      U_Minenkov: False
+      S_Grimme: True
+      verbose: False
+      read_ee_index: -1
+      E_list: null
+      g_list: null
+      ignore_trans_and_rot: False
+      c: null
+
+  S03:
+    name: 'DCPD_2'
+    thermo_type: 'on_the_fly'
+    on_the_fly_params:
+      atom_coord_path: '03.out'
+      atom_numbers: null
+      coords: null
+      vib_path: '03.out'
+      vibfreqs: null
+      ee_path: null
+      ee: null
+      T: 298.15
+      P: 101325
+      sclZPE: 1.0
+      sclU: 1.0
+      sclCv: 1.0
+      sclS: 1.0
+      U_Minenkov: False
+      S_Grimme: True
+      verbose: False
+      read_ee_index: -1
+      E_list: null
+      g_list: null
+      ignore_trans_and_rot: False
+      c: null
+
+
+initial_concentrations:
+  S01: 0
+  S02: 0.2
+  S03: 0.8
+
+
+time_span:
+  start: 0
+  end: 10
+
+reactions:
+  - equation: "S01 + S01 <-> S02"
+    rate_type: 'TST'
+    TST_params:
+      delta_G: null
+      delta_n: null
+      T: 298.15
+      P0: 100000
+      sigma: 1
+      liquid: False
+      tunnelling_effect: null
+      imaginary_freq: null
+      delta_H_barrier_f_0K: null
+      delta_H_barrier_r_0K: null
+      TS_on_the_fly_params:
+        atom_coord_path: '01_02.out'
+        atom_numbers: null
+        coords: null
+        vib_path: '01_02.out'
+        vibfreqs: null
+        ee_path: null
+        ee: null
+        T: 298.15
+        P: 101325
+        sclZPE: 1.0
+        sclU: 1.0
+        sclCv: 1.0
+        sclS: 1.0
+        U_Minenkov: False
+        S_Grimme: True
+        verbose: False
+        read_ee_index: -1
+        E_list: null
+        g_list: null
+        ignore_trans_and_rot: False
+        c: null
+
+    
+  - equation: "S01 + S01 <-> S03"
+    rate_type: 'TST'
+    TST_params:
+      delta_G: null
+      delta_n: null
+      T: 298.15
+      P0: 100000
+      sigma: 1
+      liquid: False
+      tunnelling_effect: null
+      imaginary_freq: null
+      delta_H_barrier_f_0K: null
+      delta_H_barrier_r_0K: null
+      TS_on_the_fly_params:
+        atom_coord_path: '01_03.out'
+        atom_numbers: null
+        coords: null
+        vib_path: '01_03.out'
+        vibfreqs: null
+        ee_path: null
+        ee: null
+        T: 298.15
+        P: 101325
+        sclZPE: 1.0
+        sclU: 1.0
+        sclCv: 1.0
+        sclS: 1.0
+        U_Minenkov: False
+        S_Grimme: True
+        verbose: False
+        read_ee_index: -1
+        E_list: null
+        g_list: null
+        ignore_trans_and_rot: False
+        c: null
+    
