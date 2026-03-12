@@ -6,7 +6,7 @@ ThermoCR: A Python program for calculating molecular thermochemistry properties 
 # Install
 Download the source code:
 
-`git clone https://github.com/47-5/Groupy.git` or Click directly to download the compressed file
+`git clone https://github.com/47-5/ThermoCR.git` or Click directly to download the compressed file
 
 One may create an environment using Anaconda:
 
