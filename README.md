@@ -33,3 +33,7 @@ All the necessary input files for "examples.ipynb" are also stored in the "examp
 Users do not need to make any additional preparations.
 
 The documents are saved in the "doc" directory. Users can view them to obtain the API descriptions of all the functions in ThermoCR.
+
+# Note
+If you encounter such an error message: "ModuleNotFoundError: No module named 'pointgroup'", maybe you have to put the `pointgroup` in you working directory.
+`pointgroup`can be downloaded at https://github.com/abelcarreras/pointgroup or you can find in `ThremoCR`
