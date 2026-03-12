@@ -7,6 +7,8 @@ ThermoCR.egg-info/SOURCES.txt
 ThermoCR.egg-info/dependency_links.txt
 ThermoCR.egg-info/requires.txt
 ThermoCR.egg-info/top_level.txt
+ThermoCR/QMconcvar/__init__.py
+ThermoCR/QMconcvar/concvar.py
 ThermoCR/QMkinetics/__init__.py
 ThermoCR/QMkinetics/equilibrium_constants.py
 ThermoCR/QMkinetics/fit_kinetics.py
