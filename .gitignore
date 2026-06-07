@@ -215,3 +215,7 @@ dist/
 /reaction_system*.yaml
 /small*.yaml
 /t_y_T.*
+# ThermoCR QMconcvar local simulation outputs
+/ThermoCR/QMconcvar/*.out
+/ThermoCR/QMconcvar/*.csv
+/ThermoCR/QMconcvar/*.png
