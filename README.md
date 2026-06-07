@@ -22,6 +22,10 @@ Then:
 
 `pip install .`
 
+For development, install the package in editable mode:
+
+`pip install -e .`
+
 
 At this point, ThermoCR has been installed successfully.
 
@@ -35,5 +39,9 @@ Users do not need to make any additional preparations.
 The documents are saved in the "doc" directory. Users can view them to obtain the API descriptions of all the functions in ThermoCR.
 
 # Note
-If you encounter such an error message: "ModuleNotFoundError: No module named 'pointgroup'", maybe you have to put the `pointgroup` in you working directory.
-`pointgroup`can be downloaded at https://github.com/abelcarreras/pointgroup or you can find in `ThremoCR`
+The point group implementation is bundled under `ThermoCR.pointgroup`.
+
+# Development
+Run the test suite from the repository root:
+
+`python -m unittest discover -s tests`

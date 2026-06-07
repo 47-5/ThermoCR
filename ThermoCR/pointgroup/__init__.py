@@ -207,7 +207,7 @@ class PointGroup:
         :return:
         """
 
-        from pointgroup.grid import get_cubed_sphere_grid_points
+        from ThermoCR.pointgroup.grid import get_cubed_sphere_grid_points
 
         main_axis = None
         while main_axis is None:

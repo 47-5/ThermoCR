@@ -1,0 +1,40 @@
+[build-system]
+requires = ["setuptools>=61", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ThermoCR"
+version = "1.0"
+description = "A tool for calculating thermodynamic quantities and reaction rate constants from quantum chemical calculations"
+readme = "README.md"
+requires-python = ">=3.8"
+license = { text = "MIT" }
+authors = [
+    { name = "Ruichen Liu", email = "1197748182@qq.com" },
+]
+keywords = ["thermochemistry", "kinetics", "quantum chemistry", "Cantera"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering :: Chemistry",
+]
+dependencies = [
+    "ase",
+    "cclib",
+    "matplotlib",
+    "numpy",
+    "openpyxl",
+    "pandas",
+    "PyYAML",
+    "scikit-learn",
+    "scipy",
+]
+
+[project.urls]
+Homepage = "https://github.com/47-5/ThermoCR"
+Repository = "https://github.com/47-5/ThermoCR"
+
+[tool.setuptools.packages.find]
+include = ["ThermoCR*"]
