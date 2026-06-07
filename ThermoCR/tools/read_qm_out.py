@@ -1,8 +1,13 @@
 import cclib
 from ase.units import Hartree
 
+from ThermoCR.tools.about_gaussian.link1 import (
+    is_gaussian_link1_output,
+    read_gaussian_link1_job,
+)
 
-def read_qm_out(filepath):
+
+def read_qm_out(filepath, gaussian_job_index=None, prefer_link1_split=True):
     """
     Reads and parses a quantum mechanics output file.
 
@@ -15,6 +20,13 @@ def read_qm_out(filepath):
     Parameters:
     - filepath: (str)
             The path to the QM software output file to be read and parsed.
+    - gaussian_job_index: (int, optional)
+            Gaussian Link1 job section to read. Positive values are 1-based;
+            negative values follow Python indexing. By default, Link1 outputs
+            use the last normally terminated job.
+    - prefer_link1_split: (bool, default True)
+            If True, Gaussian Link1 outputs are split into single-job sections
+            before being passed to cclib.
 
     Returns:
         (cclib.parser.data.ccData)
@@ -24,11 +36,21 @@ def read_qm_out(filepath):
     - IOError: If there is an issue with reading the file.
     - cclib.parser.ParseError: If there is an error in parsing the file content.
     """
-    data = cclib.io.ccread(filepath)
+    if prefer_link1_split and is_gaussian_link1_output(filepath):
+        job_index = -1 if gaussian_job_index is None else gaussian_job_index
+        return read_gaussian_link1_job(filepath, job_index=job_index)
+
+    try:
+        data = cclib.io.ccread(filepath)
+    except Exception:
+        if prefer_link1_split:
+            job_index = -1 if gaussian_job_index is None else gaussian_job_index
+            return read_gaussian_link1_job(filepath, job_index=job_index)
+        raise
     return data
 
 
-def read_atom_coord(filepath, coord_index=-1):
+def read_atom_coord(filepath, coord_index=-1, gaussian_job_index=None):
     """
 
     Reads atomic coordinates from a computational chemistry output file.
@@ -43,6 +65,7 @@ def read_atom_coord(filepath, coord_index=-1):
     - filepath (str): Path to the computational chemistry output file.
     - coord_index (int, optional): Index of the coordinate set to read,
                                  default is -1 which selects the last set.
+    - gaussian_job_index (int, optional): Gaussian Link1 job section to read.
 
     Returns:
     tuple: A tuple containing two elements:
@@ -55,13 +78,13 @@ def read_atom_coord(filepath, coord_index=-1):
                 is out of range for the number of geometries in the file.
 
     """
-    data = cclib.io.ccread(filepath)
+    data = read_qm_out(filepath, gaussian_job_index=gaussian_job_index)
     atom_numbers = data.atomnos
     coords = data.atomcoords[coord_index]
     return atom_numbers, coords
 
 
-def read_vib(filepath):
+def read_vib(filepath, gaussian_job_index=None):
     """
     Reads and returns vibrational frequencies from a computational chemistry output file.
 
@@ -73,6 +96,7 @@ def read_vib(filepath):
 
     Parameters:
     - filepath (str): The path to the computational chemistry output file to be read.
+    - gaussian_job_index (int, optional): Gaussian Link1 job section to read.
 
     Returns:
         (List[float]): A list containing the vibrational frequencies extracted from the file.
@@ -82,14 +106,14 @@ def read_vib(filepath):
     - IOError: If there is an issue reading the file at the provided filepath.
     - ValueError: If the data does not contain expected attributes like 'vibfreqs' or 'atomnos'.
     """
-    data = cclib.io.ccread(filepath)
+    data = read_qm_out(filepath, gaussian_job_index=gaussian_job_index)
     if len(data.atomnos) <= 1:
         return []
     vibfreqs = data.vibfreqs
     return vibfreqs
 
 
-def read_imaginary_vib(filepath, vibfreqs=None):
+def read_imaginary_vib(filepath, vibfreqs=None, gaussian_job_index=None):
     """
     Reads and processes vibration frequencies from a given file, focusing on identifying the most significant imaginary (negative) frequency.
 
@@ -101,6 +125,7 @@ def read_imaginary_vib(filepath, vibfreqs=None):
     Parameters:
     - filepath (str): Path to the file containing vibration frequencies.
     - vibfreqs (Optional[List[Union[int, float, str]]]): A list of vibration frequencies. If not provided, they will be read from `filepath`.
+    - gaussian_job_index (int, optional): Gaussian Link1 job section to read.
 
     Returns:
         Optional[float]: The selected imaginary frequency with the largest absolute value, or None if no imaginary frequencies were found.
@@ -110,7 +135,7 @@ def read_imaginary_vib(filepath, vibfreqs=None):
     - ValueError: If the file contains non-convertible elements when trying to convert to float.
     """
     if vibfreqs is None:
-        vibfreqs = read_vib(filepath=filepath)
+        vibfreqs = read_vib(filepath=filepath, gaussian_job_index=gaussian_job_index)
 
     # 将所有元素转换为浮点数
     vibfreqs_float = [float(freq) for freq in vibfreqs]
@@ -133,7 +158,7 @@ def read_imaginary_vib(filepath, vibfreqs=None):
     return selected_freq
 
 
-def read_ee(filepath, ee_index=-1, return_Hartree=True):
+def read_ee(filepath, ee_index=-1, return_Hartree=True, gaussian_job_index=None):
     """
     Reads the electronic energy from a computational chemistry output file.
 
@@ -147,6 +172,7 @@ def read_ee(filepath, ee_index=-1, return_Hartree=True):
             which corresponds to the last electronic energy in the file.
     - return_Hartree (bool, optional): If True, the electronic energy is returned in Hartree units.
             If False, the energy is returned in the original units of the file. Defaults to True.
+    - gaussian_job_index (int, optional): Gaussian Link1 job section to read.
 
     Returns:
         float: The electronic energy. The unit depends on the `return_Hartree` parameter.
@@ -155,11 +181,8 @@ def read_ee(filepath, ee_index=-1, return_Hartree=True):
     - FileNotFoundError: If the file at `filepath` does not exist.
     - ValueError: If `ee_index` is out of range for the number of electronic energies in the file.
     """
-    data = cclib.io.ccread(filepath)
+    data = read_qm_out(filepath, gaussian_job_index=gaussian_job_index)
     ee = data.scfenergies[ee_index]
     if return_Hartree:
         ee /= Hartree
     return ee
-
-
-
