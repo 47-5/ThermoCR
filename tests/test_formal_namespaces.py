@@ -29,8 +29,11 @@ from ThermoCR.QMkinetics.tunnelling_effect import (
     wigner_correction as legacy_wigner_correction,
 )
 from ThermoCR.QMthermo import (
+    NASA7 as legacy_package_NASA7,
     S_trans as legacy_package_S_trans,
     ZPE as legacy_package_ZPE,
+    fit_thermo_model as legacy_package_fit_thermo_model,
+    nasa7 as legacy_package_nasa7,
     q_trans as legacy_package_q_trans,
 )
 from ThermoCR.QMthermo.calc_q import (
@@ -42,6 +45,11 @@ from ThermoCR.QMthermo.calc_thermo_corr import (
     S_trans as legacy_S_trans,
     S_vib_RRHO_vec as legacy_S_vib_RRHO_vec,
     ZPE as legacy_ZPE,
+)
+from ThermoCR.QMthermo.fit_thermo import (
+    NASA7 as legacy_NASA7,
+    fit_thermo_model as legacy_fit_thermo_model,
+    nasa7 as legacy_nasa7,
 )
 from ThermoCR.kinetics import (
     Arrhenius,
@@ -78,9 +86,12 @@ from ThermoCR.kinetics.tunneling import (
     wigner_correction as namespaced_wigner_correction,
 )
 from ThermoCR.thermo import (
+    NASA7,
     S_trans,
     S_vib_RRHO_vec,
     ZPE,
+    fit_thermo_model,
+    nasa7,
     q_rot_single_atom,
     q_trans,
     q_vib_V0,
@@ -91,6 +102,11 @@ from ThermoCR.thermo.corrections import (
     S_trans as namespaced_S_trans,
     S_vib_RRHO_vec as namespaced_S_vib_RRHO_vec,
     ZPE as namespaced_ZPE,
+)
+from ThermoCR.thermo.fitting import (
+    NASA7 as namespaced_NASA7,
+    fit_thermo_model as namespaced_fit_thermo_model,
+    nasa7 as namespaced_nasa7,
 )
 from ThermoCR.thermo.partition import (
     q_rot_single_atom as namespaced_q_rot_single_atom,
@@ -116,10 +132,23 @@ class FormalNamespaceApiTests(unittest.TestCase):
         self.assertIs(ZPE, namespaced_ZPE)
         self.assertIs(S_vib_RRHO_vec, legacy_S_vib_RRHO_vec)
         self.assertIs(S_vib_RRHO_vec, namespaced_S_vib_RRHO_vec)
+        self.assertIs(NASA7, legacy_NASA7)
+        self.assertIs(NASA7, legacy_package_NASA7)
+        self.assertIs(NASA7, namespaced_NASA7)
+        self.assertIs(nasa7, legacy_nasa7)
+        self.assertIs(nasa7, legacy_package_nasa7)
+        self.assertIs(nasa7, namespaced_nasa7)
+        self.assertIs(fit_thermo_model, legacy_fit_thermo_model)
+        self.assertIs(fit_thermo_model, legacy_package_fit_thermo_model)
+        self.assertIs(fit_thermo_model, namespaced_fit_thermo_model)
         self.assertIs(qm_thermo, namespaced_qm_thermo)
         self.assertGreater(q_trans(M=28.0, T=298.15, P=101325.0), 0.0)
         self.assertEqual(q_rot_single_atom(), 1.0)
         self.assertGreater(ZPE([1000.0, 1500.0]), 0.0)
+        cp, h, s = nasa7(300.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+        self.assertAlmostEqual(cp, 8.314)
+        self.assertAlmostEqual(h, 8.314 * 300.0)
+        self.assertAlmostEqual(s, 8.314 * math.log(300.0))
 
     def test_kinetics_namespace_reexports_legacy_functions(self):
         self.assertIs(k_TST, legacy_k_TST)
