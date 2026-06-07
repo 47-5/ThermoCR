@@ -1,5 +1,7 @@
-from ThermoCR.QMconcvar.constant_temperature_simulator import ChemicalKineticsSimulator
-from ThermoCR.QMconcvar.temperature_program_simulator import (
+"""Backward-compatible reaction simulation namespace."""
+
+from ThermoCR.simulation.reaction import ChemicalKineticsSimulator
+from ThermoCR.simulation.temperature_program import (
     export_t_y_T,
     load_config,
     parser_T_program,

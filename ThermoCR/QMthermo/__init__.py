@@ -1,17 +1,16 @@
 """Backward-compatible thermochemistry namespace."""
 
-from ThermoCR.QMthermo.calc_q import (
-    q,
-    q_ele,
-    q_rot,
-    q_rot_linear,
-    q_rot_nonlinear,
-    q_rot_single_atom,
-    q_trans,
-    q_vib_V0,
-    q_vib_bot,
+from ThermoCR.thermo.calculators import (
+    calculate_conformation_weighting,
+    contribution_ele,
+    contribution_rot,
+    contribution_trans,
+    contribution_vib,
+    qm_thermo,
+    qm_thermo_conformation_weighting,
+    qm_thermo_scan,
 )
-from ThermoCR.QMthermo.calc_thermo_corr import (
+from ThermoCR.thermo.corrections import (
     Cp_ele,
     Cp_rot_linear,
     Cp_rot_nonlinear,
@@ -47,7 +46,7 @@ from ThermoCR.QMthermo.calc_thermo_corr import (
     ZPE_one_mode,
     w_vec,
 )
-from ThermoCR.QMthermo.fit_thermo import (
+from ThermoCR.thermo.fitting import (
     NASA7,
     NASA9,
     Shomate,
@@ -63,15 +62,16 @@ from ThermoCR.QMthermo.fit_thermo import (
     shomate,
     shomate_for_fit,
 )
-from ThermoCR.QMthermo.qm_thermo import (
-    calculate_conformation_weighting,
-    contribution_ele,
-    contribution_rot,
-    contribution_trans,
-    contribution_vib,
-    qm_thermo,
-    qm_thermo_conformation_weighting,
-    qm_thermo_scan,
+from ThermoCR.thermo.partition import (
+    q,
+    q_ele,
+    q_rot,
+    q_rot_linear,
+    q_rot_nonlinear,
+    q_rot_single_atom,
+    q_trans,
+    q_vib_V0,
+    q_vib_bot,
 )
 
 __all__ = [

@@ -1,7 +1,7 @@
 """Backward-compatible kinetics namespace."""
 
-from ThermoCR.QMkinetics.equilibrium_constants import k_equilibrium_constants
-from ThermoCR.QMkinetics.fit_kinetics import (
+from ThermoCR.kinetics.equilibrium import k_equilibrium_constants
+from ThermoCR.kinetics.fitting import (
     A_nplus1,
     Arrhenius,
     Arrhenius2Piecewise,
@@ -14,8 +14,8 @@ from ThermoCR.QMkinetics.fit_kinetics import (
     fit_kinetics_model,
     plot_fit,
 )
-from ThermoCR.QMkinetics.qm_kinetics import k_TST, k_TST_scan, k_VTST, k_VTST_scan
-from ThermoCR.QMkinetics.tunnelling_effect import (
+from ThermoCR.kinetics.rate_constants import k_TST, k_TST_scan, k_VTST, k_VTST_scan
+from ThermoCR.kinetics.tunneling import (
     eckart_correction,
     skodje_truhlar,
     wigner_correction,
