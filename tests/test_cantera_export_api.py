@@ -7,6 +7,11 @@ from ThermoCR.export import (
     make_cantera_specie_name_yaml,
     write_cantera_yaml_thermo_NASA7,
 )
+from ThermoCR.tools.about_cantera import (
+    make_cantera_reaction_yaml as package_make_cantera_reaction_yaml,
+    make_cantera_specie_name_yaml as package_make_cantera_specie_name_yaml,
+    write_cantera_yaml_thermo_NASA7 as package_write_cantera_yaml_thermo_NASA7,
+)
 from ThermoCR.tools.about_cantera.export_cantera_kinetics_yaml import (
     make_cantera_reaction_yaml as legacy_make_cantera_reaction_yaml,
 )
@@ -36,6 +41,7 @@ class CanteraExportApiTests(unittest.TestCase):
         self.assertIn("C:5", yaml_text)
         self.assertIn("H:6", yaml_text)
         self.assertIs(make_cantera_specie_name_yaml, legacy_make_cantera_specie_name_yaml)
+        self.assertIs(make_cantera_specie_name_yaml, package_make_cantera_specie_name_yaml)
 
     def test_reaction_export_does_not_mutate_reaction_lists(self):
         reactants = ["A", "B"]
@@ -59,6 +65,7 @@ class CanteraExportApiTests(unittest.TestCase):
         self.assertIn("- equation: A + B => C", yaml_text)
         self.assertIn("rate-constant: {A: 1.2, b: 0.5, Ea: 10.0 }", yaml_text)
         self.assertIs(make_cantera_reaction_yaml, legacy_make_cantera_reaction_yaml)
+        self.assertIs(make_cantera_reaction_yaml, package_make_cantera_reaction_yaml)
 
     def test_thermo_writer_legacy_import_points_to_new_api(self):
         with TemporaryDirectory() as tmpdir:
@@ -73,6 +80,7 @@ class CanteraExportApiTests(unittest.TestCase):
         self.assertIn("model: NASA7", yaml_text)
         self.assertIn("temperature-ranges: [300.0, 1000.0]", yaml_text)
         self.assertIs(write_cantera_yaml_thermo_NASA7, legacy_write_cantera_yaml_thermo_NASA7)
+        self.assertIs(write_cantera_yaml_thermo_NASA7, package_write_cantera_yaml_thermo_NASA7)
 
 
 if __name__ == "__main__":

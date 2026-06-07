@@ -1,16 +1,45 @@
 import numpy as np
 
 from ThermoCR.QMthermo.calc_q import q_trans, q_rot_single_atom, q_rot_linear, q_rot_nonlinear, q_vib_V0, q_vib_bot, q_ele, q
-from ThermoCR.QMthermo.calc_thermo_corr import *
+from ThermoCR.QMthermo.calc_thermo_corr import (
+    Cp_ele,
+    Cp_rot_linear,
+    Cp_rot_nonlinear,
+    Cp_trans,
+    Cp_vib,
+    Cv_ele,
+    Cv_rot_linear,
+    Cv_rot_nonlinear,
+    Cv_trans,
+    Cv_vib,
+    H_ele,
+    H_rot_linear,
+    H_rot_nonlinear,
+    H_trans,
+    H_vib_0_T,
+    H_vib_T,
+    S_ele,
+    S_rot_linear,
+    S_rot_nonlinear,
+    S_trans,
+    S_vib,
+    U_ele,
+    U_rot_linear,
+    U_rot_nonlinear,
+    U_trans,
+    U_vib_0_T,
+    U_vib_T,
+    ZPE,
+)
 from ThermoCR.io import read_atom_coord, read_ee, read_qm_out, read_vib
-from ThermoCR.pointgroup.element_data import atom_data
+from ThermoCR.elements import atomic_masses
 from ThermoCR.symmetry import (
     detect_point_group as get_point_group,
     is_linear as check_linear,
     principal_moments as get_I,
     rotational_symmetry_number as get_rotational_symmetry_number,
 )
-from ThermoCR.constants import convert_I, au2j_mol
+from ThermoCR.constants import R, au2j_mol, convert_I
 from typing import List
 import pandas as pd
 
@@ -92,7 +121,7 @@ def qm_thermo(atom_coord_path=None, atom_numbers=None, coords=None,
         if atom_coord_path is None:
             raise ValueError("Either atom_coord_path or (atom_numbers and coords) must be provided.")
         atom_numbers, coords = read_atom_coord(atom_coord_path)
-    atom_masses = np.array([atom_data[i][3] for i in atom_numbers])
+    atom_masses = np.array(atomic_masses(atom_numbers))
     M = np.sum(atom_masses)
 
     # 处理振动频率输入

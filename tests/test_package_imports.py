@@ -2,6 +2,7 @@ import unittest
 
 from ThermoCR import (
     __version__,
+    atomic_mass,
     get_point_group as top_level_get_point_group,
     get_rotational_symmetry_number as top_level_get_rotational_symmetry_number,
     k_TST,
@@ -39,6 +40,7 @@ class PackageImportTests(unittest.TestCase):
         self.assertGreater(q_trans(M=28.0, T=298.15, P=101325.0), 0.0)
         self.assertGreater(k_TST(delta_G=0.0, delta_n=0, T=298.15), 0.0)
         self.assertTrue(callable(read_qm_out))
+        self.assertAlmostEqual(atomic_mass(6), 12.0107, places=4)
 
 
 if __name__ == "__main__":

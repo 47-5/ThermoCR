@@ -4,6 +4,11 @@ import unittest
 
 from ThermoCR.io import read_orca_final_single_point_energy
 from ThermoCR.io.orca import sort_key
+from ThermoCR.tools.about_orca import (
+    read_orca_final_single_point_energy as package_read_orca_final_single_point_energy,
+    read_orca_wB97Mp2_out as package_read_orca_wB97Mp2_out,
+    sort_key as package_sort_key,
+)
 from ThermoCR.tools.about_orca.read_orca_wB97Mp2_out import (
     read_orca_final_single_point_energy as legacy_read_orca_final_single_point_energy,
     read_orca_wB97Mp2_out,
@@ -18,6 +23,9 @@ class OrcaApiTests(unittest.TestCase):
             legacy_read_orca_final_single_point_energy,
         )
         self.assertIs(sort_key, legacy_sort_key)
+        self.assertIs(read_orca_final_single_point_energy, package_read_orca_final_single_point_energy)
+        self.assertIs(read_orca_wB97Mp2_out, package_read_orca_wB97Mp2_out)
+        self.assertIs(sort_key, package_sort_key)
 
     def test_orca_reader_returns_last_final_single_point_energy(self):
         text = """

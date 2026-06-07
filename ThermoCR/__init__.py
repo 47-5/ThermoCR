@@ -2,6 +2,7 @@
 
 from ThermoCR._version import __version__
 from ThermoCR.constants import *
+from ThermoCR.elements import *
 from ThermoCR.export import *
 from ThermoCR.io import *
 from ThermoCR.kinetics import *

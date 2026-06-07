@@ -33,6 +33,7 @@ For development, install the package in editable mode:
 ThermoCR now provides modern, lower-case namespaces for common workflows:
 
 ```python
+from ThermoCR.elements import atomic_mass, atomic_masses
 from ThermoCR.io import read_qm_output, read_atom_coordinates, read_vibrational_frequencies
 from ThermoCR.thermo import qm_thermo, qm_thermo_scan, q_trans
 from ThermoCR.kinetics import k_TST, k_VTST

@@ -3,6 +3,11 @@ from tempfile import TemporaryDirectory
 import unittest
 
 from ThermoCR.io import select_gaussian_output
+from ThermoCR.tools.about_gaussian import (
+    select_gaussian_link1_text as package_select_gaussian_link1_text,
+    select_gaussian_out as package_select_gaussian_out,
+    split_gaussian_link1_output as package_split_gaussian_link1_output,
+)
 from ThermoCR.tools.about_gaussian.link1 import (
     select_gaussian_link1_text,
     split_gaussian_link1_output,
@@ -46,6 +51,7 @@ class GaussianLink1Tests(unittest.TestCase):
 
         self.assertIn("second job body", second_job)
         self.assertNotIn("first job body", second_job)
+        self.assertIs(select_gaussian_link1_text, package_select_gaussian_link1_text)
 
     def test_select_supports_last_job_index(self):
         second_job = select_gaussian_link1_text(LINK1_TEXT, job_index=-1)
@@ -64,6 +70,7 @@ class GaussianLink1Tests(unittest.TestCase):
 
             output_paths = split_gaussian_link1_output(input_path, output_dir)
 
+            self.assertIs(split_gaussian_link1_output, package_split_gaussian_link1_output)
             self.assertEqual(len(output_paths), 2)
             self.assertIn("first job body", output_paths[0].read_text())
             self.assertIn("second job body", output_paths[1].read_text())
@@ -92,6 +99,7 @@ class GaussianLink1Tests(unittest.TestCase):
             output_path = Path(tmpdir) / "job2.out"
             input_path.write_text(LINK1_TEXT)
 
+            self.assertIs(select_gaussian_out, package_select_gaussian_out)
             select_gaussian_out(
                 input_path,
                 output_path,
