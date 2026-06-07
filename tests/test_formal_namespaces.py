@@ -32,9 +32,13 @@ from ThermoCR.QMthermo import (
     NASA7 as legacy_package_NASA7,
     S_trans as legacy_package_S_trans,
     ZPE as legacy_package_ZPE,
+    calculate_conformation_weighting as legacy_package_calculate_conformation_weighting,
+    contribution_trans as legacy_package_contribution_trans,
     fit_thermo_model as legacy_package_fit_thermo_model,
     nasa7 as legacy_package_nasa7,
     q_trans as legacy_package_q_trans,
+    qm_thermo as legacy_package_qm_thermo,
+    qm_thermo_scan as legacy_package_qm_thermo_scan,
 )
 from ThermoCR.QMthermo.calc_q import (
     q_rot_single_atom as legacy_q_rot_single_atom,
@@ -50,6 +54,16 @@ from ThermoCR.QMthermo.fit_thermo import (
     NASA7 as legacy_NASA7,
     fit_thermo_model as legacy_fit_thermo_model,
     nasa7 as legacy_nasa7,
+)
+from ThermoCR.QMthermo.qm_thermo import (
+    calculate_conformation_weighting as legacy_calculate_conformation_weighting,
+    contribution_ele as legacy_contribution_ele,
+    contribution_rot as legacy_contribution_rot,
+    contribution_trans as legacy_contribution_trans,
+    contribution_vib as legacy_contribution_vib,
+    qm_thermo as legacy_qm_thermo,
+    qm_thermo_conformation_weighting as legacy_qm_thermo_conformation_weighting,
+    qm_thermo_scan as legacy_qm_thermo_scan,
 )
 from ThermoCR.kinetics import (
     Arrhenius,
@@ -90,14 +104,30 @@ from ThermoCR.thermo import (
     S_trans,
     S_vib_RRHO_vec,
     ZPE,
+    calculate_conformation_weighting,
+    contribution_ele,
+    contribution_rot,
+    contribution_trans,
+    contribution_vib,
     fit_thermo_model,
     nasa7,
     q_rot_single_atom,
     q_trans,
     q_vib_V0,
     qm_thermo,
+    qm_thermo_conformation_weighting,
+    qm_thermo_scan,
 )
-from ThermoCR.thermo.calculators import qm_thermo as namespaced_qm_thermo
+from ThermoCR.thermo.calculators import (
+    calculate_conformation_weighting as namespaced_calculate_conformation_weighting,
+    contribution_ele as namespaced_contribution_ele,
+    contribution_rot as namespaced_contribution_rot,
+    contribution_trans as namespaced_contribution_trans,
+    contribution_vib as namespaced_contribution_vib,
+    qm_thermo as namespaced_qm_thermo,
+    qm_thermo_conformation_weighting as namespaced_qm_thermo_conformation_weighting,
+    qm_thermo_scan as namespaced_qm_thermo_scan,
+)
 from ThermoCR.thermo.corrections import (
     S_trans as namespaced_S_trans,
     S_vib_RRHO_vec as namespaced_S_vib_RRHO_vec,
@@ -141,7 +171,26 @@ class FormalNamespaceApiTests(unittest.TestCase):
         self.assertIs(fit_thermo_model, legacy_fit_thermo_model)
         self.assertIs(fit_thermo_model, legacy_package_fit_thermo_model)
         self.assertIs(fit_thermo_model, namespaced_fit_thermo_model)
+        self.assertIs(qm_thermo, legacy_qm_thermo)
+        self.assertIs(qm_thermo, legacy_package_qm_thermo)
         self.assertIs(qm_thermo, namespaced_qm_thermo)
+        self.assertIs(qm_thermo_scan, legacy_qm_thermo_scan)
+        self.assertIs(qm_thermo_scan, legacy_package_qm_thermo_scan)
+        self.assertIs(qm_thermo_scan, namespaced_qm_thermo_scan)
+        self.assertIs(qm_thermo_conformation_weighting, legacy_qm_thermo_conformation_weighting)
+        self.assertIs(qm_thermo_conformation_weighting, namespaced_qm_thermo_conformation_weighting)
+        self.assertIs(contribution_trans, legacy_contribution_trans)
+        self.assertIs(contribution_trans, legacy_package_contribution_trans)
+        self.assertIs(contribution_trans, namespaced_contribution_trans)
+        self.assertIs(contribution_rot, legacy_contribution_rot)
+        self.assertIs(contribution_rot, namespaced_contribution_rot)
+        self.assertIs(contribution_vib, legacy_contribution_vib)
+        self.assertIs(contribution_vib, namespaced_contribution_vib)
+        self.assertIs(contribution_ele, legacy_contribution_ele)
+        self.assertIs(contribution_ele, namespaced_contribution_ele)
+        self.assertIs(calculate_conformation_weighting, legacy_calculate_conformation_weighting)
+        self.assertIs(calculate_conformation_weighting, legacy_package_calculate_conformation_weighting)
+        self.assertIs(calculate_conformation_weighting, namespaced_calculate_conformation_weighting)
         self.assertGreater(q_trans(M=28.0, T=298.15, P=101325.0), 0.0)
         self.assertEqual(q_rot_single_atom(), 1.0)
         self.assertGreater(ZPE([1000.0, 1500.0]), 0.0)
@@ -149,6 +198,9 @@ class FormalNamespaceApiTests(unittest.TestCase):
         self.assertAlmostEqual(cp, 8.314)
         self.assertAlmostEqual(h, 8.314 * 300.0)
         self.assertAlmostEqual(s, 8.314 * math.log(300.0))
+        weights = calculate_conformation_weighting([0.0, 1000.0], T=298.15)
+        self.assertAlmostEqual(float(weights.sum()), 1.0)
+        self.assertGreater(weights[0], weights[1])
 
     def test_kinetics_namespace_reexports_legacy_functions(self):
         self.assertIs(k_TST, legacy_k_TST)
