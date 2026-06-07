@@ -1,5 +1,95 @@
-from ThermoCR.tools.constant import *
-from ThermoCR.tools.read_qm_out import *
-from ThermoCR.tools.utils import *
-from ThermoCR.tools.about_gaussian import *
-from ThermoCR.tools.about_orca import *
+"""Compatibility namespace for legacy ThermoCR tools."""
+
+from ThermoCR.tools.constant import (
+    Bohr,
+    Eh,
+    Hartree,
+    Na,
+    R,
+    amu2kg,
+    atomic_number_map,
+    au2cm_1,
+    au2eV,
+    au2j_mol,
+    au2kj_mol,
+    cm_1_to_s_1,
+    convert_I,
+    h,
+    k_b,
+    wave2freq,
+)
+from ThermoCR.tools.read_qm_out import (
+    read_atom_coord,
+    read_ee,
+    read_imaginary_vib,
+    read_qm_out,
+    read_vib,
+)
+from ThermoCR.tools.utils import (
+    check_linear,
+    get_I,
+    get_point_group,
+    get_rotational_symmetry_number,
+)
+from ThermoCR.tools.about_gaussian import (
+    LINK1_MARKER,
+    NORMAL_TERMINATION_MARKER,
+    calculate_solvent_energy,
+    is_gaussian_link1_output,
+    read_gaussian_link1_job,
+    select_gaussian_link1_text,
+    select_gaussian_out,
+    select_gaussian_output,
+    sort_key as gaussian_sort_key,
+    split_gaussian_link1_output,
+    split_gaussian_link1_text,
+    standard_state_energy,
+)
+from ThermoCR.tools.about_orca import (
+    read_orca_final_single_point_energy,
+    read_orca_wB97Mp2_out,
+    sort_key,
+)
+
+__all__ = [
+    "Bohr",
+    "Eh",
+    "Hartree",
+    "LINK1_MARKER",
+    "NORMAL_TERMINATION_MARKER",
+    "Na",
+    "R",
+    "amu2kg",
+    "atomic_number_map",
+    "au2cm_1",
+    "au2eV",
+    "au2j_mol",
+    "au2kj_mol",
+    "calculate_solvent_energy",
+    "check_linear",
+    "cm_1_to_s_1",
+    "convert_I",
+    "gaussian_sort_key",
+    "get_I",
+    "get_point_group",
+    "get_rotational_symmetry_number",
+    "h",
+    "is_gaussian_link1_output",
+    "k_b",
+    "read_atom_coord",
+    "read_ee",
+    "read_gaussian_link1_job",
+    "read_imaginary_vib",
+    "read_orca_final_single_point_energy",
+    "read_orca_wB97Mp2_out",
+    "read_qm_out",
+    "read_vib",
+    "select_gaussian_link1_text",
+    "select_gaussian_out",
+    "select_gaussian_output",
+    "sort_key",
+    "split_gaussian_link1_output",
+    "split_gaussian_link1_text",
+    "standard_state_energy",
+    "wave2freq",
+]
