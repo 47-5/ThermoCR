@@ -14,11 +14,20 @@ from ThermoCR.QMkinetics.tunnelling_effect import (
     skodje_truhlar as legacy_skodje_truhlar,
     wigner_correction as legacy_wigner_correction,
 )
-from ThermoCR.QMthermo import q_trans as legacy_package_q_trans
+from ThermoCR.QMthermo import (
+    S_trans as legacy_package_S_trans,
+    ZPE as legacy_package_ZPE,
+    q_trans as legacy_package_q_trans,
+)
 from ThermoCR.QMthermo.calc_q import (
     q_rot_single_atom as legacy_q_rot_single_atom,
     q_trans as legacy_q_trans,
     q_vib_V0 as legacy_q_vib_V0,
+)
+from ThermoCR.QMthermo.calc_thermo_corr import (
+    S_trans as legacy_S_trans,
+    S_vib_RRHO_vec as legacy_S_vib_RRHO_vec,
+    ZPE as legacy_ZPE,
 )
 from ThermoCR.kinetics import (
     eckart_correction,
@@ -36,8 +45,21 @@ from ThermoCR.kinetics.tunneling import (
     skodje_truhlar as namespaced_skodje_truhlar,
     wigner_correction as namespaced_wigner_correction,
 )
-from ThermoCR.thermo import q_rot_single_atom, q_trans, q_vib_V0, qm_thermo
+from ThermoCR.thermo import (
+    S_trans,
+    S_vib_RRHO_vec,
+    ZPE,
+    q_rot_single_atom,
+    q_trans,
+    q_vib_V0,
+    qm_thermo,
+)
 from ThermoCR.thermo.calculators import qm_thermo as namespaced_qm_thermo
+from ThermoCR.thermo.corrections import (
+    S_trans as namespaced_S_trans,
+    S_vib_RRHO_vec as namespaced_S_vib_RRHO_vec,
+    ZPE as namespaced_ZPE,
+)
 from ThermoCR.thermo.partition import (
     q_rot_single_atom as namespaced_q_rot_single_atom,
     q_trans as namespaced_q_trans,
@@ -54,9 +76,18 @@ class FormalNamespaceApiTests(unittest.TestCase):
         self.assertIs(q_rot_single_atom, namespaced_q_rot_single_atom)
         self.assertIs(q_vib_V0, legacy_q_vib_V0)
         self.assertIs(q_vib_V0, namespaced_q_vib_V0)
+        self.assertIs(S_trans, legacy_S_trans)
+        self.assertIs(S_trans, legacy_package_S_trans)
+        self.assertIs(S_trans, namespaced_S_trans)
+        self.assertIs(ZPE, legacy_ZPE)
+        self.assertIs(ZPE, legacy_package_ZPE)
+        self.assertIs(ZPE, namespaced_ZPE)
+        self.assertIs(S_vib_RRHO_vec, legacy_S_vib_RRHO_vec)
+        self.assertIs(S_vib_RRHO_vec, namespaced_S_vib_RRHO_vec)
         self.assertIs(qm_thermo, namespaced_qm_thermo)
         self.assertGreater(q_trans(M=28.0, T=298.15, P=101325.0), 0.0)
         self.assertEqual(q_rot_single_atom(), 1.0)
+        self.assertGreater(ZPE([1000.0, 1500.0]), 0.0)
 
     def test_kinetics_namespace_reexports_legacy_functions(self):
         self.assertIs(k_TST, legacy_k_TST)
