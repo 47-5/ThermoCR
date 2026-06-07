@@ -5,6 +5,7 @@ from ThermoCR import ChemicalKineticsSimulator as top_level_ChemicalKineticsSimu
 from ThermoCR.QMconcvar import ChemicalKineticsSimulator as legacy_ChemicalKineticsSimulator
 from ThermoCR.QMconcvar.temperature_program_simulator import (
     parser_T_program as legacy_parser_T_program,
+    run_temperature_simulation as legacy_run_temperature_simulation,
 )
 from ThermoCR.simulation import (
     ChemicalKineticsSimulator,
@@ -28,6 +29,7 @@ class SimulationApiTests(unittest.TestCase):
     def test_new_and_legacy_temperature_program_helpers_match(self):
         self.assertIs(parser_T_program, legacy_parser_T_program)
         self.assertIs(namespaced_parser_T_program, legacy_parser_T_program)
+        self.assertIs(run_temperature_simulation, legacy_run_temperature_simulation)
         self.assertTrue(callable(run_temperature_simulation))
 
     def test_temperature_program_parser_handles_constant_and_linear_segments(self):
@@ -46,6 +48,25 @@ class SimulationApiTests(unittest.TestCase):
         self.assertEqual(T_list, [300.0, 300.0, 500.0])
         self.assertEqual(t_start_list, [0.0, 10.0, 20.0])
         self.assertEqual(t_end_list, [10.0, 20.0, 30.0])
+
+    def test_temperature_program_parser_rejects_unknown_segments(self):
+        with self.assertRaisesRegex(ValueError, "Unsupported temperature-program segment type"):
+            parser_T_program([
+                {"type": "step", "T_start": 300.0, "t_start": 0.0, "t_end": 10.0},
+            ])
+
+    def test_temperature_program_parser_rejects_empty_linear_segment(self):
+        with self.assertRaisesRegex(ValueError, "segments must be >= 1"):
+            parser_T_program([
+                {
+                    "type": "linear",
+                    "T_start": 300.0,
+                    "T_end": 500.0,
+                    "segments": 0,
+                    "t_start": 10.0,
+                    "t_end": 30.0,
+                },
+            ])
 
     def test_modern_simulation_class_resolves_relative_paths(self):
         simulator = ChemicalKineticsSimulator.__new__(ChemicalKineticsSimulator)
