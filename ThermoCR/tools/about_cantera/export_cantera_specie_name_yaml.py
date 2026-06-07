@@ -1,7 +1,7 @@
 import os.path
-import cclib
 from collections import Counter
 
+from ThermoCR.io import read_qm_output
 from ThermoCR.tools.constant import atomic_number_map
 
 
@@ -17,7 +17,7 @@ def make_cantera_specie_name_yaml(specie_name, composition_dict=None, read_file_
     - composition_dict: (Optional[Dict[str, int]])
             A dictionary where keys are element symbols (e.g., 'C', 'H') and values are the number of atoms of each element in the species. If not provided, it will be inferred from the `read_file_path` if available.
     - read_file_path: (Optional[str])
-            Path to a computational chemistry output file (supported by cclib) from which the elemental composition of the species can be extracted. If provided, overrides `composition_dict`.
+            Path to a computational chemistry output file supported by ThermoCR.io/cclib. If provided, overrides `composition_dict`.
     - root_path: (str, default='.')
             The directory where the generated YAML file will be saved. Defaults to the current working directory.
 
@@ -31,11 +31,10 @@ def make_cantera_specie_name_yaml(specie_name, composition_dict=None, read_file_
     yaml_path = os.path.join(root_path, f'{specie_name}_head.yaml')
 
     if read_file_path is not None:
-        data = cclib.io.ccread(read_file_path)
+        data = read_qm_output(read_file_path)
         atom_numbers = data.atomnos
         count_dict = Counter(atom_numbers)
         composition_dict = {atomic_number_map[key - 1]: value for key, value in count_dict.items()}
-        print(composition_dict)
 
     formatted_string = '{' + ', '.join(f'{key}:{value}' for key, value in composition_dict.items()) + '}'
 
