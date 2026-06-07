@@ -507,7 +507,7 @@ def contribution_rot(atom_numbers, coords, T, convert_unit=True):
             H_r = H_rot_linear(T=T)
             Cv_r = Cv_rot_linear()
             Cp_r = Cp_rot_linear()
-            S_r = S_rot_linear(q_r=q_r, T=T)
+            S_r = S_rot_linear(q_r=q_r)
         else:
             IA, IB, IC = I[0], I[1], I[2]
             q_r = q_rot_nonlinear(sigma=sigma, IA=IA, IB=IB, IC=IC, T=T)
