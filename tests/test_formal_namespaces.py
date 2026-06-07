@@ -2,11 +2,20 @@ import math
 import unittest
 
 from ThermoCR.QMkinetics import (
+    Arrhenius as legacy_package_Arrhenius,
+    arrhenius as legacy_package_arrhenius,
+    fit_kinetics_model as legacy_package_fit_kinetics_model,
     k_TST as legacy_package_k_TST,
     k_equilibrium_constants as legacy_package_k_equilibrium_constants,
 )
 from ThermoCR.QMkinetics.equilibrium_constants import (
     k_equilibrium_constants as legacy_k_equilibrium_constants,
+)
+from ThermoCR.QMkinetics.fit_kinetics import (
+    Arrhenius as legacy_Arrhenius,
+    arrhenius as legacy_arrhenius,
+    convert_k_unit_from_ThermoCR_to_Cantera as legacy_convert_k_unit,
+    fit_kinetics_model as legacy_fit_kinetics_model,
 )
 from ThermoCR.QMkinetics.qm_kinetics import (
     k_TST as legacy_k_TST,
@@ -35,7 +44,11 @@ from ThermoCR.QMthermo.calc_thermo_corr import (
     ZPE as legacy_ZPE,
 )
 from ThermoCR.kinetics import (
+    Arrhenius,
+    arrhenius,
+    convert_k_unit_from_ThermoCR_to_Cantera,
     eckart_correction,
+    fit_kinetics_model,
     k_TST,
     k_TST_scan,
     k_VTST,
@@ -46,6 +59,12 @@ from ThermoCR.kinetics import (
 )
 from ThermoCR.kinetics.equilibrium import (
     k_equilibrium_constants as namespaced_k_equilibrium_constants,
+)
+from ThermoCR.kinetics.fitting import (
+    Arrhenius as namespaced_Arrhenius,
+    arrhenius as namespaced_arrhenius,
+    convert_k_unit_from_ThermoCR_to_Cantera as namespaced_convert_k_unit,
+    fit_kinetics_model as namespaced_fit_kinetics_model,
 )
 from ThermoCR.kinetics.rate_constants import (
     k_TST as namespaced_k_TST,
@@ -121,12 +140,25 @@ class FormalNamespaceApiTests(unittest.TestCase):
         self.assertIs(eckart_correction, namespaced_eckart_correction)
         self.assertIs(skodje_truhlar, legacy_skodje_truhlar)
         self.assertIs(skodje_truhlar, namespaced_skodje_truhlar)
+        self.assertIs(Arrhenius, legacy_Arrhenius)
+        self.assertIs(Arrhenius, legacy_package_Arrhenius)
+        self.assertIs(Arrhenius, namespaced_Arrhenius)
+        self.assertIs(arrhenius, legacy_arrhenius)
+        self.assertIs(arrhenius, legacy_package_arrhenius)
+        self.assertIs(arrhenius, namespaced_arrhenius)
+        self.assertIs(fit_kinetics_model, legacy_fit_kinetics_model)
+        self.assertIs(fit_kinetics_model, legacy_package_fit_kinetics_model)
+        self.assertIs(fit_kinetics_model, namespaced_fit_kinetics_model)
+        self.assertIs(convert_k_unit_from_ThermoCR_to_Cantera, legacy_convert_k_unit)
+        self.assertIs(convert_k_unit_from_ThermoCR_to_Cantera, namespaced_convert_k_unit)
         rate_constant = k_TST(delta_G=0.0, delta_n=0, T=298.15)
         self.assertTrue(math.isfinite(rate_constant))
         self.assertGreater(rate_constant, 0.0)
         self.assertGreater(wigner_correction(imaginary_freq=500.0, T=298.15), 1.0)
         self.assertAlmostEqual(k_equilibrium_constants(delta_G=0.0, T=298.15), 1.0)
-        self.assertAlmostEqual(k_VTST(delta_G_list=[0.0, 1000.0], delta_n=0, T=298.15), rate_constant * math.exp(-1000.0 / (8.3144648 * 298.15)))
+        expected_vtst = rate_constant * math.exp(-1000.0 / (8.3144648 * 298.15))
+        self.assertAlmostEqual(k_VTST(delta_G_list=[0.0, 1000.0], delta_n=0, T=298.15), expected_vtst)
+        self.assertAlmostEqual(arrhenius(T=300.0, A=1.0, Ea=0.0), 300.0)
 
 
 if __name__ == "__main__":
