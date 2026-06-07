@@ -7,9 +7,9 @@ from collections import defaultdict
 import re
 from pathlib import Path
 
-from ThermoCR.QMthermo import qm_thermo
-from ThermoCR.QMkinetics import k_TST
-from ThermoCR.tools import read_atom_coord, read_vib, read_imaginary_vib
+from ThermoCR.thermo import qm_thermo
+from ThermoCR.kinetics import k_TST
+from ThermoCR.io import read_atom_coord, read_imaginary_vib, read_vib
 
 
 class ChemicalKineticsSimulator:

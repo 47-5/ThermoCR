@@ -16,6 +16,8 @@ __all__ = [
     "is_gaussian_link1_output",
     "read_gaussian_link1_job",
     "select_gaussian_link1_text",
+    "select_gaussian_out",
+    "select_gaussian_output",
     "split_gaussian_link1_output",
     "split_gaussian_link1_text",
 ]
@@ -98,6 +100,53 @@ def select_gaussian_link1_text(text, job_index=-1):
     sections = split_gaussian_link1_text(text)
     normalized = _normalize_job_index(job_index, len(sections))
     return sections[normalized]
+
+
+def select_gaussian_output(input_path, output_path, task_id=2, select_mode="cut"):
+    """Write a selected Gaussian Link1 job or prefix to an output file.
+
+    ``task_id`` follows the legacy one-based Gaussian job numbering used by
+    ``select_gaussian_out``. In ``select`` mode, only the selected Link1 job is
+    written. In ``cut`` mode, the output is truncated through the selected
+    normal termination.
+    """
+    if select_mode not in {"cut", "select"}:
+        raise ValueError("select_mode must be 'cut' or 'select'")
+
+    text = Path(input_path).read_text(errors="replace")
+
+    if task_id == 1:
+        select_mode = "cut"
+
+    if select_mode == "select":
+        output_text = select_gaussian_link1_text(text, job_index=task_id)
+    else:
+        lines = text.splitlines(keepends=True)
+        end_line_indices = [
+            line_index + 1
+            for line_index, line in enumerate(lines)
+            if "Normal termination" in line
+        ]
+        task_index = task_id - 1
+        if task_index < 0 or task_index >= len(end_line_indices):
+            raise ValueError(
+                f"task_id {task_id} is out of range for "
+                f"{len(end_line_indices)} Gaussian job section(s)."
+            )
+        output_text = "".join(lines[: end_line_indices[task_index]])
+
+    Path(output_path).write_text(output_text)
+    return None
+
+
+# Backward-compatible name.
+def select_gaussian_out(input_path, output_path, task_id=2, select_mode="cut"):
+    return select_gaussian_output(
+        input_path=input_path,
+        output_path=output_path,
+        task_id=task_id,
+        select_mode=select_mode,
+    )
 
 
 def is_gaussian_link1_output(filepath):

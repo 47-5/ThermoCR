@@ -2,6 +2,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 import unittest
 
+from ThermoCR.io import select_gaussian_output
 from ThermoCR.tools.about_gaussian.link1 import (
     select_gaussian_link1_text,
     split_gaussian_link1_output,
@@ -66,6 +67,24 @@ class GaussianLink1Tests(unittest.TestCase):
             self.assertEqual(len(output_paths), 2)
             self.assertIn("first job body", output_paths[0].read_text())
             self.assertIn("second job body", output_paths[1].read_text())
+
+    def test_formal_select_gaussian_output_selects_readable_link1_job(self):
+        with TemporaryDirectory() as tmpdir:
+            input_path = Path(tmpdir) / "link1.out"
+            output_path = Path(tmpdir) / "job2.out"
+            input_path.write_text(LINK1_TEXT)
+
+            select_gaussian_output(
+                input_path,
+                output_path,
+                task_id=2,
+                select_mode="select",
+            )
+
+            selected_text = output_path.read_text()
+            self.assertTrue(selected_text.startswith(" Entering Gaussian System"))
+            self.assertIn("second job body", selected_text)
+            self.assertNotIn("first job body", selected_text)
 
     def test_legacy_select_gaussian_out_selects_readable_link1_job(self):
         with TemporaryDirectory() as tmpdir:

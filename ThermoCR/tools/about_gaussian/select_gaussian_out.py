@@ -1,52 +1,5 @@
-"""
-截取gaussian的输出文件中关于frequency计算的部分，作为KisTheIP的输入
-"""
+"""Compatibility wrappers for legacy Gaussian output selection helpers."""
 
-from ThermoCR.tools.about_gaussian.link1 import select_gaussian_link1_text
+from ThermoCR.io.gaussian import select_gaussian_out, select_gaussian_output
 
-
-def select_gaussian_out(input_path, output_path, task_id=2, select_mode='cut'):
-    """
-    Selects or cuts a specific part of a Gaussian output file based on the task ID and the selected mode.
-
-    Summary:
-    This function reads a Gaussian output file, identifies sections based on 'Normal termination' strings, and then
-    either selects or cuts a specified section to write into a new file. The selection or cut is determined by the
-    provided task ID and the select_mode which can be either 'cut' or 'select'.
-
-    Parameters:
-    - input_path (str): Path to the input Gaussian output file.
-    - output_path (str): Path where the processed output will be saved.
-    - task_id (int, optional): The ID of the task to process. Defaults to 2.
-    - select_mode (str, optional): Mode of operation, either 'cut' or 'select'. Defaults to 'cut'.
-
-    Returns:
-    - None
-
-    Raises:
-    - AssertionError: If select_mode is not 'cut' or 'select'.
-    - NotImplementedError: If an unsupported select_mode is provided.
-    """
-    assert select_mode in ['cut', 'select']
-    with open(input_path, 'r') as file_obj:
-        lines = file_obj.readlines()
-
-    end_line_index = []
-    for line_index, line in enumerate(lines):
-        if 'Normal termination' in line:
-            end_line_index.append(line_index + 1)
-
-    if task_id == 1:
-        select_mode = 'cut'
-    task_index = task_id - 1
-    if select_mode == 'select':
-        out = select_gaussian_link1_text(''.join(lines), job_index=task_id)
-    elif select_mode == 'cut':
-        out = ''.join(lines[:end_line_index[task_index]])
-    else:
-        raise NotImplementedError('select_mode must be cut or select')
-
-    with open(output_path, 'w') as file_obj:
-        file_obj.write(out)
-
-    return None
+__all__ = ["select_gaussian_out", "select_gaussian_output"]

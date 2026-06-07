@@ -69,6 +69,11 @@ from ThermoCR.thermo.partition import (
     q_vib_V0,
     q_vib_bot,
 )
+from ThermoCR.thermo.solvation import (
+    calculate_solvent_energy,
+    sort_key,
+    standard_state_energy,
+)
 
 __all__ = [
     "Cp_ele",
@@ -108,6 +113,7 @@ __all__ = [
     "ZPE",
     "ZPE_one_mode",
     "calculate_conformation_weighting",
+    "calculate_solvent_energy",
     "contribution_ele",
     "contribution_rot",
     "contribution_trans",
@@ -131,5 +137,7 @@ __all__ = [
     "qm_thermo_scan",
     "shomate",
     "shomate_for_fit",
+    "sort_key",
+    "standard_state_energy",
     "w_vec",
 ]

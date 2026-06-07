@@ -2,9 +2,14 @@ import numpy as np
 
 from ThermoCR.QMthermo.calc_q import q_trans, q_rot_single_atom, q_rot_linear, q_rot_nonlinear, q_vib_V0, q_vib_bot, q_ele, q
 from ThermoCR.QMthermo.calc_thermo_corr import *
-from ThermoCR.tools.read_qm_out import read_qm_out, read_atom_coord, read_vib, read_ee
+from ThermoCR.io import read_atom_coord, read_ee, read_qm_out, read_vib
 from ThermoCR.pointgroup.element_data import atom_data
-from ThermoCR.tools.utils import get_I, check_linear, get_rotational_symmetry_number, get_point_group
+from ThermoCR.symmetry import (
+    detect_point_group as get_point_group,
+    is_linear as check_linear,
+    principal_moments as get_I,
+    rotational_symmetry_number as get_rotational_symmetry_number,
+)
 from ThermoCR.constants import convert_I, au2j_mol
 from typing import List
 import pandas as pd
