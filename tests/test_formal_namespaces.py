@@ -8,7 +8,12 @@ from ThermoCR.QMkinetics import (
 from ThermoCR.QMkinetics.equilibrium_constants import (
     k_equilibrium_constants as legacy_k_equilibrium_constants,
 )
-from ThermoCR.QMkinetics.qm_kinetics import k_TST as legacy_k_TST
+from ThermoCR.QMkinetics.qm_kinetics import (
+    k_TST as legacy_k_TST,
+    k_TST_scan as legacy_k_TST_scan,
+    k_VTST as legacy_k_VTST,
+    k_VTST_scan as legacy_k_VTST_scan,
+)
 from ThermoCR.QMkinetics.tunnelling_effect import (
     eckart_correction as legacy_eckart_correction,
     skodje_truhlar as legacy_skodje_truhlar,
@@ -32,6 +37,9 @@ from ThermoCR.QMthermo.calc_thermo_corr import (
 from ThermoCR.kinetics import (
     eckart_correction,
     k_TST,
+    k_TST_scan,
+    k_VTST,
+    k_VTST_scan,
     k_equilibrium_constants,
     skodje_truhlar,
     wigner_correction,
@@ -39,7 +47,12 @@ from ThermoCR.kinetics import (
 from ThermoCR.kinetics.equilibrium import (
     k_equilibrium_constants as namespaced_k_equilibrium_constants,
 )
-from ThermoCR.kinetics.rate_constants import k_TST as namespaced_k_TST
+from ThermoCR.kinetics.rate_constants import (
+    k_TST as namespaced_k_TST,
+    k_TST_scan as namespaced_k_TST_scan,
+    k_VTST as namespaced_k_VTST,
+    k_VTST_scan as namespaced_k_VTST_scan,
+)
 from ThermoCR.kinetics.tunneling import (
     eckart_correction as namespaced_eckart_correction,
     skodje_truhlar as namespaced_skodje_truhlar,
@@ -93,6 +106,12 @@ class FormalNamespaceApiTests(unittest.TestCase):
         self.assertIs(k_TST, legacy_k_TST)
         self.assertIs(k_TST, legacy_package_k_TST)
         self.assertIs(namespaced_k_TST, legacy_k_TST)
+        self.assertIs(k_TST_scan, legacy_k_TST_scan)
+        self.assertIs(k_TST_scan, namespaced_k_TST_scan)
+        self.assertIs(k_VTST, legacy_k_VTST)
+        self.assertIs(k_VTST, namespaced_k_VTST)
+        self.assertIs(k_VTST_scan, legacy_k_VTST_scan)
+        self.assertIs(k_VTST_scan, namespaced_k_VTST_scan)
         self.assertIs(k_equilibrium_constants, legacy_k_equilibrium_constants)
         self.assertIs(k_equilibrium_constants, legacy_package_k_equilibrium_constants)
         self.assertIs(namespaced_k_equilibrium_constants, legacy_k_equilibrium_constants)
@@ -107,6 +126,7 @@ class FormalNamespaceApiTests(unittest.TestCase):
         self.assertGreater(rate_constant, 0.0)
         self.assertGreater(wigner_correction(imaginary_freq=500.0, T=298.15), 1.0)
         self.assertAlmostEqual(k_equilibrium_constants(delta_G=0.0, T=298.15), 1.0)
+        self.assertAlmostEqual(k_VTST(delta_G_list=[0.0, 1000.0], delta_n=0, T=298.15), rate_constant * math.exp(-1000.0 / (8.3144648 * 298.15)))
 
 
 if __name__ == "__main__":
