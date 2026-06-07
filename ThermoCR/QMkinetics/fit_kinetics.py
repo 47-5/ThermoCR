@@ -8,7 +8,7 @@ from matplotlib import rcParams
 import matplotlib.pyplot as plt
 
 from ThermoCR.tools.constant import R
-from ThermoCR.tools.about_cantera.export_cantera_kinetics_yaml import make_cantera_reaction_yaml
+from ThermoCR.export.cantera import make_cantera_reaction_yaml
 
 
 class Arrhenius:
