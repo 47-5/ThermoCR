@@ -1,6 +1,7 @@
 import unittest
 
 from ThermoCR import (
+    __version__,
     get_point_group as top_level_get_point_group,
     get_rotational_symmetry_number as top_level_get_rotational_symmetry_number,
     k_TST,
@@ -26,6 +27,9 @@ class PackageImportTests(unittest.TestCase):
 
         self.assertEqual(point_group, "Td")
         self.assertEqual(get_rotational_symmetry_number(point_group), 12)
+
+    def test_top_level_exposes_package_version(self):
+        self.assertEqual(__version__, "1.0")
 
     def test_top_level_exports_formal_api_and_legacy_aliases(self):
         point_group = top_level_get_point_group(self.coords, symbols=self.symbols)

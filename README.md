@@ -29,6 +29,19 @@ For development, install the package in editable mode:
 
 `pip install -e .`
 
+# Public API
+ThermoCR now provides modern, lower-case namespaces for common workflows:
+
+```python
+from ThermoCR.io import read_qm_output, read_atom_coordinates, read_vibrational_frequencies
+from ThermoCR.thermo import qm_thermo, qm_thermo_scan, q_trans
+from ThermoCR.kinetics import k_TST, k_VTST
+from ThermoCR.simulation import ChemicalKineticsSimulator
+from ThermoCR.export import make_cantera_specie_name_yaml
+```
+
+Legacy imports such as `ThermoCR.QMthermo`, `ThermoCR.QMkinetics`, `ThermoCR.QMconcvar`, and `ThermoCR.tools` remain available for existing scripts.
+
 # Get Started Quickly
 
 We have prepared some reference examples for new users. Users can view the `examples.ipynb` file stored in the `example` directory using Jupyter Notebook. All the necessary input files for `examples.ipynb` are also stored in the `example` directory.
@@ -36,7 +49,7 @@ We have prepared some reference examples for new users. Users can view the `exam
 The documents are saved in the `doc` directory. Users can view them to obtain the API descriptions of all the functions in ThermoCR.
 
 # Note
-The point group implementation is bundled under `ThermoCR.pointgroup`.
+The point group implementation is bundled under `ThermoCR.pointgroup`; the recommended public symmetry helpers are available from `ThermoCR.symmetry`.
 
 # Development
 Run the test suite from the repository root:

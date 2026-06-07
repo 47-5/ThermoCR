@@ -1,10 +1,12 @@
 """ThermoCR public API."""
 
+from ThermoCR._version import __version__
 from ThermoCR.constants import *
 from ThermoCR.export import *
 from ThermoCR.io import *
 from ThermoCR.kinetics import *
 from ThermoCR.pointgroup import *
+from ThermoCR.simulation import *
 from ThermoCR.symmetry import *
 from ThermoCR.thermo import *
 

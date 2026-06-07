@@ -1,13 +1,19 @@
 # QMconcvar Example
 
-This directory contains a minimal reaction-system example for the `ThermoCR.QMconcvar` reaction simulation module.
+This directory contains a minimal reaction-system example for the reaction simulation module.
+
+Recommended modern import:
 
 ```python
-from ThermoCR.QMconcvar import ChemicalKineticsSimulator
+from ThermoCR.simulation import ChemicalKineticsSimulator
 
 simulator = ChemicalKineticsSimulator("example/QMconcvar/reaction_system.yaml")
-results = simulator.simulate()
+result = simulator.simulate()
 simulator.export_result("qmconcvar_result.csv")
 ```
 
-Relative paths in `reaction_system.yaml` are resolved against this directory.
+The legacy import remains supported:
+
+```python
+from ThermoCR.QMconcvar import ChemicalKineticsSimulator
+```
