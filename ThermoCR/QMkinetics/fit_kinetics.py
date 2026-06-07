@@ -7,7 +7,7 @@ from sklearn.metrics import mean_squared_error, mean_absolute_error, mean_absolu
 from matplotlib import rcParams
 import matplotlib.pyplot as plt
 
-from ThermoCR.tools.constant import R
+from ThermoCR.constants import R
 from ThermoCR.export.cantera import make_cantera_reaction_yaml
 
 

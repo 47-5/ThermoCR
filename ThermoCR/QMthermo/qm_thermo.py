@@ -5,7 +5,7 @@ from ThermoCR.QMthermo.calc_thermo_corr import *
 from ThermoCR.tools.read_qm_out import read_qm_out, read_atom_coord, read_vib, read_ee
 from ThermoCR.pointgroup.element_data import atom_data
 from ThermoCR.tools.utils import get_I, check_linear, get_rotational_symmetry_number, get_point_group
-from ThermoCR.tools.constant import convert_I, au2j_mol
+from ThermoCR.constants import convert_I, au2j_mol
 from typing import List
 import pandas as pd
 

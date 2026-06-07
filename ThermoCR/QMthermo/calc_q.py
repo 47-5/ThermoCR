@@ -1,6 +1,6 @@
 import numpy as np
 
-from ThermoCR.tools.constant import k_b, h, R, amu2kg, convert_I, wave2freq, au2eV
+from ThermoCR.constants import k_b, h, R, amu2kg, convert_I, wave2freq, au2eV
 from ThermoCR.tools.utils import get_point_group, get_I, check_linear, get_rotational_symmetry_number
 
 

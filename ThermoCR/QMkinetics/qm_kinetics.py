@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-from ThermoCR.tools.constant import k_b, h, R
+from ThermoCR.constants import k_b, h, R
 from ThermoCR.QMkinetics.tunnelling_effect import wigner_correction, eckart_correction, skodje_truhlar
 from typing import List
 from os.path import basename

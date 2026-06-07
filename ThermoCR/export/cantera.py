@@ -4,7 +4,7 @@ from collections import Counter
 from pathlib import Path
 
 from ThermoCR.io import read_qm_output
-from ThermoCR.tools.constant import atomic_number_map
+from ThermoCR.constants import atomic_number_map
 
 au_to_kcal_per_mol = 627.51
 au_to_kJ_per_mol = 2625.5
