@@ -205,3 +205,13 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+# ThermoCR local build and run artifacts
+build/
+dist/
+*.egg-info/
+/*.out
+/*.csv
+/*.png
+/reaction_system*.yaml
+/small*.yaml
+/t_y_T.*
