@@ -32,6 +32,9 @@ dependencies = [
     "scipy",
 ]
 
+[project.scripts]
+thermocr = "ThermoCR.cli:main"
+
 [project.urls]
 Homepage = "https://github.com/47-5/ThermoCR"
 Repository = "https://github.com/47-5/ThermoCR"

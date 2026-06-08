@@ -43,6 +43,17 @@ from ThermoCR.export import make_cantera_specie_name_yaml
 
 Legacy imports such as `ThermoCR.QMthermo`, `ThermoCR.QMkinetics`, `ThermoCR.QMconcvar`, and `ThermoCR.tools` remain available for existing scripts.
 
+# Command Line
+After installation, ThermoCR provides a small command-line entry point for common file utilities:
+
+```bash
+thermocr split-link1 example/CPD.out split_jobs
+thermocr select-gaussian example/CPD.out selected.out --task-id 2 --mode select
+thermocr qm-energy example/CPD.out --gaussian-job-index -1
+thermocr orca-energy path/to/orca.out
+```
+
+The same commands are available through `python -m ThermoCR` before installing the console script.
 # Get Started Quickly
 
 We have prepared some reference examples for new users. Users can view the `examples.ipynb` file stored in the `example` directory using Jupyter Notebook. All the necessary input files for `examples.ipynb` are also stored in the `example` directory.
