@@ -8,7 +8,132 @@ from typing import List
 from os.path import basename
 
 
-__all__ = ['k_TST', 'k_VTST', 'k_TST_scan', 'k_VTST_scan']
+__all__ = ['calculate_tst_rate_frame', 'k_TST', 'k_VTST', 'k_TST_scan', 'k_VTST_scan']
+
+
+_STRUCTURED_THERMO_COLUMNS = {
+    "T": "temperature",
+    "G": "gibbs_free_energy",
+    "EE": "electronic_energy",
+    "ZPE": "zpe",
+}
+_LEGACY_THERMO_COLUMNS = {
+    "T": "T/K",
+    "G": "G/(J/mol)",
+    "EE": "ee/(J/mol)",
+    "ZPE": "zpe/(J/mol)",
+}
+
+
+def _as_frame(data):
+    return pd.DataFrame(data)
+
+
+def _as_frame_list(data, name):
+    if data is None:
+        return []
+    if isinstance(data, (pd.DataFrame, dict)):
+        return [_as_frame(data)]
+    frames = [_as_frame(item) for item in data]
+    if not frames:
+        raise ValueError(f"{name} must not be empty")
+    return frames
+
+
+def _resolve_thermo_columns(data_frame):
+    for columns in (_STRUCTURED_THERMO_COLUMNS, _LEGACY_THERMO_COLUMNS):
+        if all(column in data_frame.columns for column in columns.values()):
+            return columns
+    raise ValueError(
+        "could not infer thermo columns; expected structured or legacy thermo columns"
+    )
+
+
+def _thermo_values(data_frame, key):
+    columns = _resolve_thermo_columns(data_frame)
+    return data_frame[columns[key]].to_numpy(dtype=float)
+
+
+def _require_matching_temperatures(reference, frames):
+    for frame in frames:
+        values = _thermo_values(frame, "T")
+        if len(values) != len(reference) or not np.allclose(values, reference):
+            raise ValueError("all thermo frames must use the same temperature grid")
+
+
+def _sum_thermo_values(frames, key):
+    total = np.zeros(len(frames[0]), dtype=float)
+    for frame in frames:
+        total += _thermo_values(frame, key)
+    return total
+
+
+def calculate_tst_rate_frame(
+        transition_state_frame,
+        reactant_frames,
+        product_frames=None,
+        delta_n=None,
+        liquid=False,
+        tunnelling_effect=None,
+        imaginary_freq=None,
+        sigma=1,
+        reference_pressure=100000,
+):
+    """Calculate a TST rate scan from thermo tables without file I/O."""
+    ts_frame = _as_frame(transition_state_frame)
+    reactants = _as_frame_list(reactant_frames, "reactant_frames")
+    products = _as_frame_list(product_frames, "product_frames")
+    temperatures = _thermo_values(ts_frame, "T")
+    _require_matching_temperatures(temperatures, reactants)
+    _require_matching_temperatures(temperatures, products)
+
+    if delta_n is None:
+        delta_n = len(reactants) - 1
+    delta_g = _thermo_values(ts_frame, "G") - _sum_thermo_values(reactants, "G")
+
+    forward_barriers = None
+    reverse_barriers = None
+    if tunnelling_effect in {"eckart", "skodje_truhlar"}:
+        if not products:
+            raise ValueError(
+                "product_frames must be provided for eckart or skodje_truhlar tunnelling"
+            )
+        ts_h0 = _thermo_values(ts_frame, "EE") + _thermo_values(ts_frame, "ZPE")
+        reactant_h0 = _sum_thermo_values(reactants, "EE") + _sum_thermo_values(reactants, "ZPE")
+        product_h0 = _sum_thermo_values(products, "EE") + _sum_thermo_values(products, "ZPE")
+        forward_barriers = ts_h0 - reactant_h0
+        reverse_barriers = ts_h0 - product_h0
+
+    rate_constants = []
+    for index, (temperature, delta_g_value) in enumerate(zip(temperatures, delta_g)):
+        kwargs = {}
+        if forward_barriers is not None:
+            kwargs["delta_H_barrier_f_0K"] = forward_barriers[index]
+            kwargs["delta_H_barrier_r_0K"] = reverse_barriers[index]
+        rate_constants.append(
+            k_TST(
+                delta_G=delta_g_value,
+                delta_n=delta_n,
+                T=temperature,
+                P0=reference_pressure,
+                sigma=sigma,
+                liquid=liquid,
+                tunnelling_effect=tunnelling_effect,
+                imaginary_freq=imaginary_freq,
+                **kwargs,
+            )
+        )
+
+    data = {
+        "temperature": temperatures,
+        "rate_constant": np.asarray(rate_constants, dtype=float),
+        "delta_g": delta_g,
+        "delta_n": np.full(len(temperatures), delta_n, dtype=int),
+    }
+    if forward_barriers is not None:
+        data["delta_h_barrier_forward_0k"] = forward_barriers
+        data["delta_h_barrier_reverse_0k"] = reverse_barriers
+    return pd.DataFrame(data)
 
 
 def k_TST(delta_G, delta_n, T=298.15, P0=100000, sigma=1,

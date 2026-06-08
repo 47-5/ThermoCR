@@ -10,6 +10,7 @@ from ThermoCR.export import format_cantera_yaml_thermo
 from ThermoCR.io.gaussian import select_gaussian_output, split_gaussian_link1_output
 from ThermoCR.io.orca import read_orca_final_single_point_energy
 from ThermoCR.io.qm_output import read_electronic_energy, read_molecule_data
+from ThermoCR.kinetics import calculate_tst_rate_frame
 from ThermoCR.thermo import ThermoOptions, fit_thermo_frame, scan_thermo
 
 
@@ -166,6 +167,28 @@ def _cmd_thermo_fit(args):
     return 0
 
 
+def _cmd_kinetics_tst(args):
+    transition_state = _read_dataframe(args.input)
+    reactants = [_read_dataframe(path) for path in args.reactant]
+    products = None
+    if args.product is not None:
+        products = [_read_dataframe(path) for path in args.product]
+    df = calculate_tst_rate_frame(
+        transition_state,
+        reactants,
+        product_frames=products,
+        delta_n=args.delta_n,
+        liquid=args.liquid,
+        tunnelling_effect=args.tunnelling_effect,
+        imaginary_freq=args.imaginary_freq,
+        sigma=args.sigma,
+        reference_pressure=args.reference_pressure,
+    )
+    output_path = _write_dataframe(df, args.output)
+    print(output_path)
+    return 0
+
+
 def _add_thermo_commands(subparsers):
     thermo_parser = subparsers.add_parser(
         "thermo",
@@ -268,6 +291,68 @@ def _add_thermo_commands(subparsers):
     fit_parser.set_defaults(func=_cmd_thermo_fit)
 
 
+def _add_kinetics_commands(subparsers):
+    kinetics_parser = subparsers.add_parser(
+        "kinetics",
+        help="structured kinetics workflows",
+    )
+    kinetics_subparsers = kinetics_parser.add_subparsers(
+        dest="kinetics_command",
+        required=True,
+    )
+
+    tst_parser = kinetics_subparsers.add_parser(
+        "tst",
+        help="calculate a TST rate scan from thermo tables",
+    )
+    tst_parser.add_argument("input", help="CSV/XLSX transition-state thermo data")
+    tst_parser.add_argument("--output", required=True, help="CSV/XLSX output file")
+    tst_parser.add_argument(
+        "--reactant",
+        action="append",
+        required=True,
+        help="CSV/XLSX reactant thermo data; repeat for multiple reactants",
+    )
+    tst_parser.add_argument(
+        "--product",
+        action="append",
+        help="CSV/XLSX product thermo data; repeat for multiple products",
+    )
+    tst_parser.add_argument(
+        "--delta-n",
+        type=int,
+        help="gas molecule count change; default: number of reactants minus one",
+    )
+    tst_parser.add_argument(
+        "--liquid",
+        action="store_true",
+        help="use liquid-phase TST units",
+    )
+    tst_parser.add_argument(
+        "--tunnelling-effect",
+        choices=("wigner", "eckart", "skodje_truhlar"),
+        help="optional tunnelling correction",
+    )
+    tst_parser.add_argument(
+        "--imaginary-freq",
+        type=float,
+        help="transition-state imaginary frequency in cm^-1",
+    )
+    tst_parser.add_argument(
+        "--sigma",
+        type=float,
+        default=1.0,
+        help="reaction path degeneracy; default: 1",
+    )
+    tst_parser.add_argument(
+        "--reference-pressure",
+        type=float,
+        default=100000.0,
+        help="reference pressure in Pa; default: 100000",
+    )
+    tst_parser.set_defaults(func=_cmd_kinetics_tst)
+
+
 def build_parser():
     parser = argparse.ArgumentParser(
         prog="thermocr",
@@ -336,6 +421,7 @@ def build_parser():
     orca_energy_parser.set_defaults(func=_cmd_orca_energy)
 
     _add_thermo_commands(subparsers)
+    _add_kinetics_commands(subparsers)
 
     return parser
 

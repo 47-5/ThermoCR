@@ -48,6 +48,7 @@ class CliTests(unittest.TestCase):
         self.assertIn("qm-energy", help_text)
         self.assertIn("orca-energy", help_text)
         self.assertIn("thermo", help_text)
+        self.assertIn("kinetics", help_text)
 
     def test_split_link1_command_writes_job_files(self):
         with TemporaryDirectory() as tmpdir:
@@ -233,6 +234,50 @@ class CliTests(unittest.TestCase):
         self.assertIn(str(output_path), stdout)
         self.assertIn("model: NASA7", yaml_text)
         self.assertIn("temperature-ranges: [300.0, 1000.0]", yaml_text)
+
+    def test_kinetics_tst_command_writes_csv(self):
+        temperatures = [300.0, 400.0]
+        ts_frame = pd.DataFrame({
+            "temperature": temperatures,
+            "gibbs_free_energy": [20000.0, 22000.0],
+            "electronic_energy": [0.0, 0.0],
+            "zpe": [0.0, 0.0],
+        })
+        reactant_frame = pd.DataFrame({
+            "temperature": temperatures,
+            "gibbs_free_energy": [0.0, 0.0],
+            "electronic_energy": [0.0, 0.0],
+            "zpe": [0.0, 0.0],
+        })
+
+        with TemporaryDirectory() as tmpdir:
+            ts_path = Path(tmpdir) / "ts.csv"
+            r1_path = Path(tmpdir) / "r1.csv"
+            r2_path = Path(tmpdir) / "r2.csv"
+            output_path = Path(tmpdir) / "rates.csv"
+            ts_frame.to_csv(ts_path, index=False)
+            reactant_frame.to_csv(r1_path, index=False)
+            reactant_frame.to_csv(r2_path, index=False)
+
+            exit_code, stdout = self._run_cli([
+                "kinetics",
+                "tst",
+                str(ts_path),
+                "--reactant",
+                str(r1_path),
+                "--reactant",
+                str(r2_path),
+                "--output",
+                str(output_path),
+            ])
+            output = pd.read_csv(output_path)
+
+        self.assertEqual(exit_code, 0)
+        self.assertIn(str(output_path), stdout)
+        self.assertEqual(list(output["temperature"]), temperatures)
+        self.assertEqual(list(output["delta_n"]), [1, 1])
+        self.assertIn("rate_constant", output.columns)
+        self.assertGreater(float(output["rate_constant"].iloc[0]), 0.0)
 
 
 if __name__ == "__main__":

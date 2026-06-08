@@ -10,7 +10,13 @@ from ThermoCR.kinetics.fitting import (
     convert_k_unit_from_ThermoCR_to_Cantera,
     fit_kinetics_model,
 )
-from ThermoCR.kinetics.rate_constants import k_TST, k_TST_scan, k_VTST, k_VTST_scan
+from ThermoCR.kinetics.rate_constants import (
+    calculate_tst_rate_frame,
+    k_TST,
+    k_TST_scan,
+    k_VTST,
+    k_VTST_scan,
+)
 from ThermoCR.kinetics.tunneling import (
     eckart_correction,
     skodje_truhlar,
@@ -24,6 +30,7 @@ __all__ = [
     "arrhenius",
     "arrhenius_2piecewise",
     "convert_k_unit_from_ThermoCR_to_Cantera",
+    "calculate_tst_rate_frame",
     "eckart_correction",
     "fit_kinetics_model",
     "k_TST",
