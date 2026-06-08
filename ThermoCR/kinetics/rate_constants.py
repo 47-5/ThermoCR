@@ -8,7 +8,7 @@ from typing import List
 from os.path import basename
 
 
-__all__ = ['calculate_tst_rate_frame', 'k_TST', 'k_VTST', 'k_TST_scan', 'k_VTST_scan']
+__all__ = ['calculate_tst_rate_frame', 'calculate_vtst_rate_frame', 'k_TST', 'k_VTST', 'k_TST_scan', 'k_VTST_scan']
 
 
 _STRUCTURED_THERMO_COLUMNS = {
@@ -133,6 +133,69 @@ def calculate_tst_rate_frame(
     if forward_barriers is not None:
         data["delta_h_barrier_forward_0k"] = forward_barriers
         data["delta_h_barrier_reverse_0k"] = reverse_barriers
+    return pd.DataFrame(data)
+
+
+def calculate_vtst_rate_frame(
+        transition_state_frames,
+        reactant_frames,
+        product_frames=None,
+        delta_n=None,
+        liquid=False,
+        tunnelling_effect=None,
+        imaginary_freq=None,
+        sigma=1,
+        reference_pressure=100000,
+        path_names=None,
+        include_tst_rates=True,
+):
+    """Calculate a VTST rate scan from multiple thermo tables without file I/O."""
+    ts_frames = _as_frame_list(transition_state_frames, "transition_state_frames")
+    temperatures = _thermo_values(ts_frames[0], "T")
+    _require_matching_temperatures(temperatures, ts_frames[1:])
+
+    if path_names is None:
+        path_names = [f"path_{index + 1}" for index in range(len(ts_frames))]
+    else:
+        path_names = [str(name) for name in path_names]
+        if len(path_names) != len(ts_frames):
+            raise ValueError("path_names must have the same length as transition_state_frames")
+
+    tst_frames = [
+        calculate_tst_rate_frame(
+            ts_frame,
+            reactant_frames,
+            product_frames=product_frames,
+            delta_n=delta_n,
+            liquid=liquid,
+            tunnelling_effect=tunnelling_effect,
+            imaginary_freq=imaginary_freq,
+            sigma=sigma,
+            reference_pressure=reference_pressure,
+        )
+        for ts_frame in ts_frames
+    ]
+    for frame in tst_frames:
+        frame_temperatures = frame["temperature"].to_numpy(dtype=float)
+        if len(frame_temperatures) != len(temperatures) or not np.allclose(frame_temperatures, temperatures):
+            raise ValueError("all TST frames must use the same temperature grid")
+
+    rate_matrix = np.vstack([
+        frame["rate_constant"].to_numpy(dtype=float)
+        for frame in tst_frames
+    ])
+    limiting_indices = np.argmin(rate_matrix, axis=0)
+    selected_rates = rate_matrix[limiting_indices, np.arange(len(temperatures))]
+
+    data = {
+        "temperature": temperatures,
+        "rate_constant": selected_rates,
+        "limiting_path": [path_names[index] for index in limiting_indices],
+        "delta_n": tst_frames[0]["delta_n"].to_numpy(dtype=int),
+    }
+    if include_tst_rates:
+        for path_name, rates in zip(path_names, rate_matrix):
+            data[f"rate_constant_{path_name}"] = rates
     return pd.DataFrame(data)
 
 

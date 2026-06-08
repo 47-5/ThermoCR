@@ -5,7 +5,8 @@ import numpy as np
 import pandas as pd
 
 from ThermoCR import calculate_tst_rate_frame as top_level_calculate_tst_rate_frame
-from ThermoCR.kinetics import calculate_tst_rate_frame, k_TST_scan
+from ThermoCR import calculate_vtst_rate_frame as top_level_calculate_vtst_rate_frame
+from ThermoCR.kinetics import calculate_tst_rate_frame, calculate_vtst_rate_frame, k_TST_scan
 
 
 class StructuredKineticsApiTests(unittest.TestCase):
@@ -52,6 +53,35 @@ class StructuredKineticsApiTests(unittest.TestCase):
         self.assertIn("rate_constant", result.columns)
         self.assertGreater(float(result["rate_constant"].iloc[-1]), 0.0)
 
+    def test_calculate_vtst_rate_frame_selects_minimum_tst_rate(self):
+        ts1 = pd.read_excel(self.example_dir / "QMthermoScan_01_02_path1_1.xlsx")
+        ts2 = pd.read_excel(self.example_dir / "QMthermoScan_01_02_path2_1.xlsx")
+        reactant = pd.read_excel(self.example_dir / "QMthermoScan_CPD.xlsx")
+        tst1 = calculate_tst_rate_frame(ts1, [reactant, reactant])
+        tst2 = calculate_tst_rate_frame(ts2, [reactant, reactant])
+
+        result = calculate_vtst_rate_frame(
+            [ts1, ts2],
+            [reactant, reactant],
+            path_names=["path1", "path2"],
+        )
+
+        expected_rates = np.minimum(
+            tst1["rate_constant"].to_numpy(),
+            tst2["rate_constant"].to_numpy(),
+        )
+        np.testing.assert_allclose(result["rate_constant"], expected_rates, rtol=1e-12)
+        self.assertIn("limiting_path", result.columns)
+        self.assertIn("rate_constant_path1", result.columns)
+        self.assertIn("rate_constant_path2", result.columns)
+
+    def test_calculate_vtst_rate_frame_validates_path_names(self):
+        ts = pd.read_excel(self.example_dir / "QMthermoScan_TS.xlsx")
+        reactant = pd.read_excel(self.example_dir / "QMthermoScan_CPD.xlsx")
+
+        with self.assertRaises(ValueError):
+            calculate_vtst_rate_frame([ts, ts], [reactant, reactant], path_names=["only_one"])
+
     def test_calculate_tst_rate_frame_validates_temperature_grid(self):
         ts = pd.read_excel(self.example_dir / "QMthermoScan_TS.xlsx")
         reactant = pd.read_excel(self.example_dir / "QMthermoScan_CPD.xlsx")
@@ -63,6 +93,7 @@ class StructuredKineticsApiTests(unittest.TestCase):
 
     def test_top_level_exports_structured_kinetics_api(self):
         self.assertIs(top_level_calculate_tst_rate_frame, calculate_tst_rate_frame)
+        self.assertIs(top_level_calculate_vtst_rate_frame, calculate_vtst_rate_frame)
 
 
 if __name__ == "__main__":

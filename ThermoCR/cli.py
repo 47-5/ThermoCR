@@ -10,7 +10,11 @@ from ThermoCR.export import format_cantera_reaction_yaml, format_cantera_yaml_th
 from ThermoCR.io.gaussian import select_gaussian_output, split_gaussian_link1_output
 from ThermoCR.io.orca import read_orca_final_single_point_energy
 from ThermoCR.io.qm_output import read_electronic_energy, read_molecule_data
-from ThermoCR.kinetics import calculate_tst_rate_frame, fit_kinetics_frame
+from ThermoCR.kinetics import (
+    calculate_tst_rate_frame,
+    calculate_vtst_rate_frame,
+    fit_kinetics_frame,
+)
 from ThermoCR.thermo import ThermoOptions, fit_thermo_frame, scan_thermo
 
 
@@ -226,6 +230,33 @@ def _cmd_kinetics_tst(args):
     return 0
 
 
+def _cmd_kinetics_vtst(args):
+    transition_states = [_read_dataframe(path) for path in args.input]
+    reactants = [_read_dataframe(path) for path in args.reactant]
+    products = None
+    if args.product is not None:
+        products = [_read_dataframe(path) for path in args.product]
+    path_names = args.path_name
+    if path_names is None:
+        path_names = [Path(path).stem for path in args.input]
+    df = calculate_vtst_rate_frame(
+        transition_states,
+        reactants,
+        product_frames=products,
+        delta_n=args.delta_n,
+        liquid=args.liquid,
+        tunnelling_effect=args.tunnelling_effect,
+        imaginary_freq=args.imaginary_freq,
+        sigma=args.sigma,
+        reference_pressure=args.reference_pressure,
+        path_names=path_names,
+        include_tst_rates=not args.no_tst_columns,
+    )
+    output_path = _write_dataframe(df, args.output)
+    print(output_path)
+    return 0
+
+
 def _cmd_kinetics_fit(args):
     df = _read_dataframe(args.input)
     result = fit_kinetics_frame(
@@ -409,6 +440,67 @@ def _add_kinetics_commands(subparsers):
         help="reference pressure in Pa; default: 100000",
     )
     tst_parser.set_defaults(func=_cmd_kinetics_tst)
+
+    vtst_parser = kinetics_subparsers.add_parser(
+        "vtst",
+        help="calculate a VTST rate scan from multiple thermo tables",
+    )
+    vtst_parser.add_argument("input", nargs="+", help="CSV/XLSX transition-state or IRC thermo data")
+    vtst_parser.add_argument("--output", required=True, help="CSV/XLSX output file")
+    vtst_parser.add_argument(
+        "--reactant",
+        action="append",
+        required=True,
+        help="CSV/XLSX reactant thermo data; repeat for multiple reactants",
+    )
+    vtst_parser.add_argument(
+        "--product",
+        action="append",
+        help="CSV/XLSX product thermo data; repeat for multiple products",
+    )
+    vtst_parser.add_argument(
+        "--path-name",
+        action="append",
+        help="label for a path; repeat in the same order as input files",
+    )
+    vtst_parser.add_argument(
+        "--delta-n",
+        type=int,
+        help="gas molecule count change; default: number of reactants minus one",
+    )
+    vtst_parser.add_argument(
+        "--liquid",
+        action="store_true",
+        help="use liquid-phase TST units",
+    )
+    vtst_parser.add_argument(
+        "--tunnelling-effect",
+        choices=("wigner", "eckart", "skodje_truhlar"),
+        help="optional tunnelling correction",
+    )
+    vtst_parser.add_argument(
+        "--imaginary-freq",
+        type=float,
+        help="transition-state imaginary frequency in cm^-1",
+    )
+    vtst_parser.add_argument(
+        "--sigma",
+        type=float,
+        default=1.0,
+        help="reaction path degeneracy; default: 1",
+    )
+    vtst_parser.add_argument(
+        "--reference-pressure",
+        type=float,
+        default=100000.0,
+        help="reference pressure in Pa; default: 100000",
+    )
+    vtst_parser.add_argument(
+        "--no-tst-columns",
+        action="store_true",
+        help="omit per-path TST rate columns from the output",
+    )
+    vtst_parser.set_defaults(func=_cmd_kinetics_vtst)
 
     fit_parser = kinetics_subparsers.add_parser(
         "fit",

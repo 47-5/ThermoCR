@@ -280,6 +280,63 @@ class CliTests(unittest.TestCase):
         self.assertIn("rate_constant", output.columns)
         self.assertGreater(float(output["rate_constant"].iloc[0]), 0.0)
 
+    def test_kinetics_vtst_command_writes_csv(self):
+        temperatures = [300.0, 400.0]
+        ts1_frame = pd.DataFrame({
+            "temperature": temperatures,
+            "gibbs_free_energy": [20000.0, 24000.0],
+            "electronic_energy": [0.0, 0.0],
+            "zpe": [0.0, 0.0],
+        })
+        ts2_frame = pd.DataFrame({
+            "temperature": temperatures,
+            "gibbs_free_energy": [21000.0, 22000.0],
+            "electronic_energy": [0.0, 0.0],
+            "zpe": [0.0, 0.0],
+        })
+        reactant_frame = pd.DataFrame({
+            "temperature": temperatures,
+            "gibbs_free_energy": [0.0, 0.0],
+            "electronic_energy": [0.0, 0.0],
+            "zpe": [0.0, 0.0],
+        })
+
+        with TemporaryDirectory() as tmpdir:
+            ts1_path = Path(tmpdir) / "ts1.csv"
+            ts2_path = Path(tmpdir) / "ts2.csv"
+            r1_path = Path(tmpdir) / "r1.csv"
+            r2_path = Path(tmpdir) / "r2.csv"
+            output_path = Path(tmpdir) / "vtst.csv"
+            ts1_frame.to_csv(ts1_path, index=False)
+            ts2_frame.to_csv(ts2_path, index=False)
+            reactant_frame.to_csv(r1_path, index=False)
+            reactant_frame.to_csv(r2_path, index=False)
+
+            exit_code, stdout = self._run_cli([
+                "kinetics",
+                "vtst",
+                str(ts1_path),
+                str(ts2_path),
+                "--reactant",
+                str(r1_path),
+                "--reactant",
+                str(r2_path),
+                "--path-name",
+                "early",
+                "--path-name",
+                "late",
+                "--output",
+                str(output_path),
+            ])
+            output = pd.read_csv(output_path)
+
+        self.assertEqual(exit_code, 0)
+        self.assertIn(str(output_path), stdout)
+        self.assertEqual(list(output["temperature"]), temperatures)
+        self.assertEqual(list(output["limiting_path"]), ["late", "early"])
+        self.assertIn("rate_constant_early", output.columns)
+        self.assertIn("rate_constant_late", output.columns)
+
     def test_kinetics_fit_command_writes_json(self):
         temperatures = np.linspace(300.0, 1000.0, 12)
         parameters = [1.2e7, 35000.0, 0.5]

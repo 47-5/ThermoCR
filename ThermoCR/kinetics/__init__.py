@@ -14,6 +14,7 @@ from ThermoCR.kinetics.fitting import (
 )
 from ThermoCR.kinetics.rate_constants import (
     calculate_tst_rate_frame,
+    calculate_vtst_rate_frame,
     k_TST,
     k_TST_scan,
     k_VTST,
@@ -34,6 +35,7 @@ __all__ = [
     "arrhenius_2piecewise",
     "convert_k_unit_from_ThermoCR_to_Cantera",
     "calculate_tst_rate_frame",
+    "calculate_vtst_rate_frame",
     "eckart_correction",
     "fit_kinetics_frame",
     "fit_kinetics_model",
