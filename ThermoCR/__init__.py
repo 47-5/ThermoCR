@@ -14,6 +14,7 @@ _EXPORT_MODULES = (
     "ThermoCR.simulation",
     "ThermoCR.symmetry",
     "ThermoCR.thermo",
+    "ThermoCR.types",
 )
 
 __all__ = ["__version__"]

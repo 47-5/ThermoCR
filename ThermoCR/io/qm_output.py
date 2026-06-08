@@ -1,9 +1,12 @@
 """Quantum-chemistry output readers."""
 
 import cclib
+import numpy as np
 from ase.units import Hartree
 
+from ThermoCR.elements import atomic_symbol
 from ThermoCR.io.gaussian import is_gaussian_link1_output, read_gaussian_link1_job
+from ThermoCR.types import MoleculeData
 
 
 __all__ = [
@@ -13,6 +16,7 @@ __all__ = [
     "read_ee",
     "read_imaginary_frequency",
     "read_imaginary_vib",
+    "read_molecule_data",
     "read_qm_output",
     "read_qm_out",
     "read_vibrational_frequencies",
@@ -38,6 +42,57 @@ def read_qm_output(filepath, gaussian_job_index=None, prefer_link1_split=True):
             job_index = -1 if gaussian_job_index is None else gaussian_job_index
             return read_gaussian_link1_job(filepath, job_index=job_index)
         raise
+
+
+def _optional_array(values, dtype=float):
+    if values is None:
+        return None
+    return np.asarray(values, dtype=dtype)
+
+
+def read_molecule_data(
+    filepath,
+    coord_index=-1,
+    energy_index=-1,
+    gaussian_job_index=None,
+    prefer_link1_split=True,
+    return_hartree=True,
+):
+    """Read a QM output file into a structured :class:`MoleculeData` object."""
+    data = read_qm_output(
+        filepath,
+        gaussian_job_index=gaussian_job_index,
+        prefer_link1_split=prefer_link1_split,
+    )
+    atom_numbers = np.asarray(data.atomnos, dtype=int)
+    symbols = tuple(atomic_symbol(atomic_number) for atomic_number in atom_numbers)
+    coordinates = np.asarray(data.atomcoords[coord_index], dtype=float)
+
+    scfenergies = getattr(data, "scfenergies", None)
+    electronic_energy = None
+    electronic_energy_unit = "hartree" if return_hartree else "eV"
+    if scfenergies is not None and len(scfenergies) > 0:
+        electronic_energy = float(scfenergies[energy_index])
+        if return_hartree:
+            electronic_energy /= Hartree
+
+    vibfreqs = getattr(data, "vibfreqs", None)
+    frequencies = _optional_array(vibfreqs)
+    imaginary_frequencies = None
+    if frequencies is not None:
+        imaginary_frequencies = frequencies[frequencies < 0.0]
+
+    return MoleculeData(
+        atom_numbers=atom_numbers,
+        symbols=symbols,
+        coordinates=coordinates,
+        electronic_energy=electronic_energy,
+        frequencies=frequencies,
+        imaginary_frequencies=imaginary_frequencies,
+        charge=getattr(data, "charge", None),
+        multiplicity=getattr(data, "mult", None),
+        electronic_energy_unit=electronic_energy_unit,
+    )
 
 
 def read_atom_coordinates(filepath, coord_index=-1, gaussian_job_index=None):
