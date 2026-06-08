@@ -32,7 +32,7 @@ def _output_path(root_path, filename):
 
 
 def _clean_yaml_fragment(text):
-    lines = [line.rstrip() for line in str(text).strip().splitlines()]
+    lines = [line.rstrip() for line in str(text).strip("\r\n").splitlines()]
     return _normalize_composition_flow_mapping(
         "\n".join(line for line in lines if line.strip())
     )

@@ -43,6 +43,8 @@ from ThermoCR.export import format_cantera_mechanism_yaml, make_cantera_specie_n
 
 Legacy imports such as `ThermoCR.QMthermo`, `ThermoCR.QMkinetics`, `ThermoCR.QMconcvar`, and `ThermoCR.tools` remain available for existing scripts.
 
+The modern API manual is available at `doc/modern_api_manual.md`. Runnable examples based on the modern API are available in `examples/`.
+
 # Command Line
 After installation, ThermoCR provides a small command-line entry point for common file utilities:
 
@@ -63,7 +65,15 @@ thermocr orca-energy path/to/orca.out
 The same commands are available through `python -m ThermoCR` before installing the console script.
 # Get Started Quickly
 
-We have prepared some reference examples for new users. Users can view the `examples.ipynb` file stored in the `example` directory using Jupyter Notebook. All the necessary input files for `examples.ipynb` are also stored in the `example` directory.
+We have prepared reference examples for new users. The legacy notebook remains in `example/examples.ipynb`. New scripts based on the modern API are stored in `examples/` and can be run from the repository root:
+
+```bash
+python examples/01_read_qm_output.py
+python examples/02_thermo_scan_and_fit.py
+python examples/03_tst_vtst_rates.py
+python examples/04_kinetics_fit.py
+python examples/05_cantera_mechanism_export.py
+```
 
 The documents are saved in the `doc` directory. Users can view them to obtain the API descriptions of all the functions in ThermoCR.
 

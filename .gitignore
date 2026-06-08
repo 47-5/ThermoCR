@@ -219,3 +219,4 @@ dist/
 /ThermoCR/QMconcvar/*.out
 /ThermoCR/QMconcvar/*.csv
 /ThermoCR/QMconcvar/*.png
+/examples/output/

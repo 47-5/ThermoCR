@@ -157,6 +157,8 @@ class CanteraExportApiTests(unittest.TestCase):
         self.assertIn("- equation: CPD <=> CPD", yaml_text)
         payload = yaml.safe_load(yaml_text)
         self.assertEqual(payload["species"][0]["composition"], {"C": 5, "H": 6})
+        self.assertIn("thermo", payload["species"][0])
+        self.assertNotIn("thermo", payload)
         self.assertIs(format_cantera_mechanism_yaml, package_format_cantera_mechanism_yaml)
         self.assertIs(format_cantera_species_yaml, package_format_cantera_species_yaml)
 
