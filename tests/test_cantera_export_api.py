@@ -3,6 +3,7 @@ from tempfile import TemporaryDirectory
 import unittest
 
 from ThermoCR.export import (
+    format_cantera_yaml_thermo,
     make_cantera_reaction_yaml,
     make_cantera_specie_name_yaml,
     write_cantera_yaml_thermo_NASA7,
@@ -81,6 +82,23 @@ class CanteraExportApiTests(unittest.TestCase):
         self.assertIn("temperature-ranges: [300.0, 1000.0]", yaml_text)
         self.assertIs(write_cantera_yaml_thermo_NASA7, legacy_write_cantera_yaml_thermo_NASA7)
         self.assertIs(write_cantera_yaml_thermo_NASA7, package_write_cantera_yaml_thermo_NASA7)
+
+    def test_format_cantera_yaml_thermo_supports_common_models(self):
+        nasa9_text = format_cantera_yaml_thermo(
+            "nasa9",
+            T_range=(300.0, 2000.0),
+            parameters=[1, 2, 3, 4, 5, 6, 7, 8, 9],
+            reference_p=1,
+        )
+        shomate_text = format_cantera_yaml_thermo(
+            "Shomate",
+            T_range=(300.0, 2000.0),
+            parameters=[1, 2, 3, 4, 5, 6, 7],
+        )
+
+        self.assertIn("model: NASA9", nasa9_text)
+        self.assertIn("reference-pressure: 1 bar\n   data:", nasa9_text)
+        self.assertIn("model: Shomate", shomate_text)
 
 
 if __name__ == "__main__":

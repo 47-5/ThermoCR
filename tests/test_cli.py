@@ -1,13 +1,16 @@
 from contextlib import redirect_stdout
 from io import StringIO
+import json
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from unittest.mock import patch
 import unittest
 
+import numpy as np
 import pandas as pd
 
 from ThermoCR.cli import build_parser, main
+from ThermoCR.thermo import nasa7
 from ThermoCR.types import ThermoOptions
 
 
@@ -167,6 +170,69 @@ class CliTests(unittest.TestCase):
         self.assertEqual(call.kwargs["temperatures"], [300.0, 400.0])
         self.assertEqual(call.kwargs["pressure"], 100000.0)
         self.assertIsInstance(call.kwargs["options"], ThermoOptions)
+
+    def test_thermo_fit_command_writes_json(self):
+        temperatures = np.linspace(300.0, 1000.0, 12)
+        parameters = [3.5, 1.0e-3, -2.0e-6, 1.0e-9, -1.0e-13, -1000.0, 5.0]
+        heat_capacity, enthalpy, entropy = nasa7(temperatures, *parameters)
+
+        with TemporaryDirectory() as tmpdir:
+            input_path = Path(tmpdir) / "thermo.csv"
+            output_path = Path(tmpdir) / "fit.json"
+            pd.DataFrame({
+                "temperature": temperatures,
+                "heat_capacity_cp": heat_capacity,
+                "enthalpy": enthalpy,
+                "entropy": entropy,
+            }).to_csv(input_path, index=False)
+
+            exit_code, stdout = self._run_cli([
+                "thermo",
+                "fit",
+                str(input_path),
+                "--model",
+                "nasa7",
+                "--weight-strategy",
+                "uniform",
+                "--guess",
+                ",".join(str(parameter) for parameter in parameters),
+                "--output",
+                str(output_path),
+            ])
+            payload = json.loads(output_path.read_text(encoding="utf-8"))
+
+        self.assertEqual(exit_code, 0)
+        self.assertIn(str(output_path), stdout)
+        self.assertEqual(payload["model_type"], "NASA7")
+        self.assertEqual(payload["temperature_range"], [300.0, 1000.0])
+        self.assertGreater(payload["metrics"]["heat_capacity_cp"]["r2"], 0.999999)
+
+    def test_thermo_fit_command_writes_cantera_yaml(self):
+        temperatures = np.linspace(300.0, 1000.0, 12)
+        parameters = [3.5, 1.0e-3, -2.0e-6, 1.0e-9, -1.0e-13, -1000.0, 5.0]
+        heat_capacity, enthalpy, entropy = nasa7(temperatures, *parameters)
+
+        with TemporaryDirectory() as tmpdir:
+            input_path = Path(tmpdir) / "thermo.csv"
+            output_path = Path(tmpdir) / "fit.yaml"
+            pd.DataFrame({
+                "temperature": temperatures,
+                "heat_capacity_cp": heat_capacity,
+                "enthalpy": enthalpy,
+                "entropy": entropy,
+            }).to_csv(input_path, index=False)
+
+            exit_code, stdout = self._run_cli([
+                "thermo", "fit", str(input_path), "--guess",
+                ",".join(str(parameter) for parameter in parameters),
+                "--output", str(output_path),
+            ])
+            yaml_text = output_path.read_text(encoding="utf-8")
+
+        self.assertEqual(exit_code, 0)
+        self.assertIn(str(output_path), stdout)
+        self.assertIn("model: NASA7", yaml_text)
+        self.assertIn("temperature-ranges: [300.0, 1000.0]", yaml_text)
 
 
 if __name__ == "__main__":

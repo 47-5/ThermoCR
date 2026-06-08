@@ -1,12 +1,19 @@
 """Command-line interface for ThermoCR."""
 
 import argparse
+import json
 from pathlib import Path
 
+import pandas as pd
+
+from ThermoCR.export import format_cantera_yaml_thermo
 from ThermoCR.io.gaussian import select_gaussian_output, split_gaussian_link1_output
 from ThermoCR.io.orca import read_orca_final_single_point_energy
 from ThermoCR.io.qm_output import read_electronic_energy, read_molecule_data
-from ThermoCR.thermo import ThermoOptions, scan_thermo
+from ThermoCR.thermo import ThermoOptions, fit_thermo_frame, scan_thermo
+
+
+_THERMO_MODELS = ("NASA7", "NASA9", "Shomate")
 
 
 def _positive_or_negative_int(value):
@@ -24,6 +31,23 @@ def _positive_int(value):
     return parsed
 
 
+def _thermo_model_type(value):
+    for model_type in _THERMO_MODELS:
+        if str(value).lower() == model_type.lower():
+            return model_type
+    choices = ", ".join(_THERMO_MODELS)
+    raise argparse.ArgumentTypeError(f"expected one of: {choices}")
+
+
+def _float_sequence(value):
+    try:
+        return [float(item) for item in str(value).replace(",", " ").split()]
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError(
+            "expected comma- or space-separated floating-point values"
+        ) from exc
+
+
 def _temperature_grid(t_min, t_max, n_points):
     if n_points == 1:
         return [float(t_min)]
@@ -37,6 +61,31 @@ def _write_dataframe(df, output_path):
         df.to_excel(output_path, index=False)
     else:
         df.to_csv(output_path, index=False)
+    return output_path
+
+
+def _read_dataframe(input_path):
+    input_path = Path(input_path)
+    if input_path.suffix.lower() in {".xls", ".xlsx"}:
+        return pd.read_excel(input_path)
+    return pd.read_csv(input_path)
+
+
+def _write_thermo_fit_result(result, output_path):
+    output_path = Path(output_path)
+    suffix = output_path.suffix.lower()
+    if suffix in {".yaml", ".yml"}:
+        text = format_cantera_yaml_thermo(
+            result.model_type,
+            result.temperature_range,
+            result.parameters,
+        )
+        output_path.write_text(text, encoding="utf-8")
+    elif suffix == ".json":
+        text = json.dumps(result.as_dict(), indent=2)
+        output_path.write_text(text + "\n", encoding="utf-8")
+    else:
+        raise ValueError("thermo fit output must use .json, .yaml, or .yml")
     return output_path
 
 
@@ -100,6 +149,23 @@ def _cmd_thermo_scan(args):
     return 0
 
 
+def _cmd_thermo_fit(args):
+    df = _read_dataframe(args.input)
+    result = fit_thermo_frame(
+        df,
+        model_type=args.model,
+        start_index=args.start_index,
+        end_index=args.end_index,
+        weight_strategy=args.weight_strategy,
+        T_range=args.t_range,
+        guess=args.guess,
+        maxfev=args.maxfev,
+    )
+    output_path = _write_thermo_fit_result(result, args.output)
+    print(output_path)
+    return 0
+
+
 def _add_thermo_commands(subparsers):
     thermo_parser = subparsers.add_parser(
         "thermo",
@@ -151,6 +217,55 @@ def _add_thermo_commands(subparsers):
         help="ignore translational and rotational contributions",
     )
     scan_parser.set_defaults(func=_cmd_thermo_scan)
+
+    fit_parser = thermo_subparsers.add_parser(
+        "fit",
+        help="fit NASA/Shomate thermo parameters from scan data",
+    )
+    fit_parser.add_argument("input", help="CSV/XLSX thermo scan data")
+    fit_parser.add_argument("--output", required=True, help="JSON/YAML output file")
+    fit_parser.add_argument(
+        "--model",
+        type=_thermo_model_type,
+        default="NASA7",
+        help="thermo model to fit: NASA7, NASA9, or Shomate; default: NASA7",
+    )
+    fit_parser.add_argument(
+        "--start-index",
+        type=int,
+        default=0,
+        help="first row index included in the fit; default: 0",
+    )
+    fit_parser.add_argument(
+        "--end-index",
+        type=int,
+        help="row index after the last row included in the fit",
+    )
+    fit_parser.add_argument(
+        "--weight-strategy",
+        choices=("inverse_mean_abs", "uniform"),
+        default="inverse_mean_abs",
+        help="fit weighting strategy; default: inverse_mean_abs",
+    )
+    fit_parser.add_argument(
+        "--t-range",
+        nargs=2,
+        type=float,
+        metavar=("T_MIN", "T_MAX"),
+        help="temperature range written to the fitted model",
+    )
+    fit_parser.add_argument(
+        "--guess",
+        type=_float_sequence,
+        help="comma-separated initial model parameters for scipy curve_fit",
+    )
+    fit_parser.add_argument(
+        "--maxfev",
+        type=_positive_int,
+        default=100000,
+        help="maximum function evaluations for fitting; default: 100000",
+    )
+    fit_parser.set_defaults(func=_cmd_thermo_fit)
 
 
 def build_parser():

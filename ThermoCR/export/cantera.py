@@ -14,6 +14,31 @@ def _output_path(root_path, filename):
     return Path(root_path) / filename
 
 
+def format_cantera_yaml_thermo(model_type, T_range, parameters, reference_p=None):
+    """Return a Cantera YAML thermo block for fitted parameters."""
+    model_names = {
+        "nasa7": "NASA7",
+        "nasa9": "NASA9",
+        "shomate": "Shomate",
+    }
+    model = model_names.get(str(model_type).lower())
+    if model is None:
+        raise ValueError(f"unsupported thermo model type: {model_type}")
+
+    lines = [
+        "  thermo:",
+        f"   model: {model}",
+        f"   temperature-ranges: {list(T_range)}",
+    ]
+    if reference_p is not None:
+        lines.append(f"   reference-pressure: {reference_p} bar")
+    lines.extend([
+        "   data:",
+        f"   - {list(parameters)}",
+    ])
+    return "\n".join(lines) + "\n"
+
+
 def write_cantera_yaml_thermo_piecewise_Gibbs(
     specie_name,
     T=None,
@@ -39,11 +64,7 @@ def write_cantera_yaml_thermo_NASA7(specie_name, T_range, nasa7_parameters, root
     """Write NASA7 thermodynamic data in Cantera YAML format."""
     yaml_path = _output_path(root_path, f"{specie_name}_thermo.yaml")
     with yaml_path.open("w", encoding="utf-8") as f:
-        f.write("  thermo:\n")
-        f.write("   model: NASA7\n")
-        f.write(f"   temperature-ranges: {list(T_range)}\n")
-        f.write("   data:\n")
-        f.write(f"   - {list(nasa7_parameters)}\n")
+        f.write(format_cantera_yaml_thermo("NASA7", T_range, nasa7_parameters))
     return None
 
 
@@ -57,12 +78,12 @@ def write_cantera_yaml_thermo_NASA9(
     """Write NASA9 thermodynamic data in Cantera YAML format."""
     yaml_path = _output_path(root_path, f"{specie_name}_thermo.yaml")
     with yaml_path.open("w", encoding="utf-8") as f:
-        f.write("  thermo:\n")
-        f.write("   model: NASA9\n")
-        f.write(f"   temperature-ranges: {list(T_range)}\n")
-        f.write(f"   reference-pressure: {reference_p} bar")
-        f.write("   data:\n")
-        f.write(f"   - {list(nasa9_parameters)}\n")
+        f.write(format_cantera_yaml_thermo(
+            "NASA9",
+            T_range,
+            nasa9_parameters,
+            reference_p=reference_p,
+        ))
     return None
 
 
@@ -76,12 +97,12 @@ def write_cantera_yaml_thermo_Shomate(
     """Write Shomate thermodynamic data in Cantera YAML format."""
     yaml_path = _output_path(root_path, f"{specie_name}_thermo.yaml")
     with yaml_path.open("w", encoding="utf-8") as f:
-        f.write("  thermo:\n")
-        f.write("   model: NASA9\n")
-        f.write(f"   temperature-ranges: {list(T_range)}\n")
-        f.write(f"   reference-pressure: {reference_p} bar")
-        f.write("   data:\n")
-        f.write(f"   - {list(Shomate_parameters)}\n")
+        f.write(format_cantera_yaml_thermo(
+            "Shomate",
+            T_range,
+            Shomate_parameters,
+            reference_p=reference_p,
+        ))
     return None
 
 

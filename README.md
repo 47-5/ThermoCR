@@ -35,7 +35,7 @@ ThermoCR now provides modern, lower-case namespaces for common workflows:
 ```python
 from ThermoCR.elements import atomic_mass, atomic_masses
 from ThermoCR.io import read_qm_output, read_molecule_data, read_atom_coordinates
-from ThermoCR.thermo import calculate_thermo, scan_thermo, ThermoOptions
+from ThermoCR.thermo import calculate_thermo, scan_thermo, fit_thermo_frame, ThermoOptions
 from ThermoCR.kinetics import k_TST, k_VTST
 from ThermoCR.simulation import ChemicalKineticsSimulator
 from ThermoCR.export import make_cantera_specie_name_yaml
@@ -51,6 +51,7 @@ thermocr split-link1 example/CPD.out split_jobs
 thermocr select-gaussian example/CPD.out selected.out --task-id 2 --mode select
 thermocr qm-energy example/CPD.out --gaussian-job-index -1
 thermocr thermo scan example/CPD.out --t-min 300 --t-max 3000 --n-points 100 --output thermo.csv
+thermocr thermo fit thermo.csv --model NASA7 --output CPD_thermo.yaml
 thermocr orca-energy path/to/orca.out
 ```
 

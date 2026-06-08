@@ -1,5 +1,6 @@
 """Thermodynamic model fitting helpers."""
 
+from dataclasses import dataclass
 import os
 from os.path import join
 import numpy as np
@@ -144,6 +145,211 @@ def shomate_for_fit(T, A, B, C, D, E, F, G):
     Cp_T, H_T, S_T = shomate(T, A, B, C, D, E, F, G)
     out = np.hstack([Cp_T, H_T, S_T])
     return out
+
+_STRUCTURED_THERMO_COLUMNS = {
+    "T": "temperature",
+    "Cp": "heat_capacity_cp",
+    "H": "enthalpy",
+    "S": "entropy",
+}
+_LEGACY_THERMO_COLUMNS = {
+    "T": "T/K",
+    "Cp": "Cp/(J/mol/K)",
+    "H": "H/(J/mol)",
+    "S": "S/(J/mol/K)",
+}
+_THERMO_MODEL_INFO = {
+    "NASA7": {
+        "fit_func": nasa7_for_fit,
+        "model_class": NASA7,
+        "n_params": 7,
+        "yaml_writer": write_cantera_yaml_thermo_NASA7,
+    },
+    "NASA9": {
+        "fit_func": nasa9_for_fit,
+        "model_class": NASA9,
+        "n_params": 9,
+        "yaml_writer": write_cantera_yaml_thermo_NASA9,
+    },
+    "Shomate": {
+        "fit_func": shomate_for_fit,
+        "model_class": Shomate,
+        "n_params": 7,
+        "yaml_writer": write_cantera_yaml_thermo_Shomate,
+    },
+}
+
+
+@dataclass
+class ThermoFitResult:
+    """Structured thermodynamic model fit result."""
+
+    model_type: str
+    parameters: tuple
+    temperature_range: tuple
+    metrics: dict
+    covariance: np.ndarray = None
+
+    def __post_init__(self):
+        self.model_type = _canonical_model_type(self.model_type)
+        self.parameters = tuple(float(parameter) for parameter in self.parameters)
+        self.temperature_range = tuple(float(value) for value in self.temperature_range)
+        if self.covariance is not None:
+            self.covariance = np.asarray(self.covariance, dtype=float)
+
+    def model(self, return_mode="all"):
+        """Return a callable model object for the fitted parameters."""
+        model_class = _get_thermo_model_info(self.model_type)["model_class"]
+        return model_class(*self.parameters, return_mode=return_mode)
+
+    def predict(self, temperatures):
+        """Predict Cp, H, and S at the requested temperatures."""
+        return self.model(return_mode="all")(np.asarray(temperatures, dtype=float))
+
+    def as_dict(self):
+        covariance = None
+        if self.covariance is not None:
+            covariance = self.covariance.tolist()
+        return {
+            "model_type": self.model_type,
+            "parameters": list(self.parameters),
+            "temperature_range": list(self.temperature_range),
+            "metrics": self.metrics,
+            "covariance": covariance,
+        }
+
+
+def _canonical_model_type(model_type):
+    for candidate in _THERMO_MODEL_INFO:
+        if str(model_type).lower() == candidate.lower():
+            return candidate
+    raise ValueError(f"unsupported thermo model type: {model_type}")
+
+
+def _get_thermo_model_info(model_type):
+    return _THERMO_MODEL_INFO[_canonical_model_type(model_type)]
+
+
+def _resolve_thermo_columns(data_frame, data_columns):
+    if data_columns is not None:
+        required = {"T", "Cp", "H", "S"}
+        missing_keys = required.difference(data_columns)
+        if missing_keys:
+            missing = ", ".join(sorted(missing_keys))
+            raise ValueError(f"data_columns is missing keys: {missing}")
+        return data_columns
+
+    for columns in (_STRUCTURED_THERMO_COLUMNS, _LEGACY_THERMO_COLUMNS):
+        if all(column in data_frame.columns for column in columns.values()):
+            return columns
+
+    raise ValueError(
+        "could not infer thermo columns; provide data_columns with T, Cp, H, and S"
+    )
+
+
+def _extract_thermo_fit_arrays(data_frame, data_columns, start_index, end_index):
+    columns = _resolve_thermo_columns(data_frame, data_columns)
+    selected = data_frame.iloc[start_index:end_index]
+    arrays = tuple(
+        selected[columns[key]].to_numpy(dtype=float)
+        for key in ("T", "Cp", "H", "S")
+    )
+
+    if len(arrays[0]) == 0:
+        raise ValueError("no thermo rows were selected for fitting")
+    if not all(np.all(np.isfinite(array)) for array in arrays):
+        raise ValueError("thermo fitting data must contain only finite numbers")
+    return arrays
+
+
+def _build_fit_sigma(Cp_T, H_T, S_T, weight_strategy):
+    if weight_strategy == "uniform":
+        return None
+    if weight_strategy != "inverse_mean_abs":
+        raise ValueError(
+            "weight_strategy must be 'inverse_mean_abs' or 'uniform'"
+        )
+
+    sigma_parts = []
+    for values in (Cp_T, H_T, S_T):
+        scale = float(np.mean(np.abs(values)))
+        if not np.isfinite(scale) or scale <= 0.0:
+            scale = 1.0
+        sigma_parts.append(np.full(len(values), scale))
+    return np.concatenate(sigma_parts)
+
+
+def _fit_metrics(y_true, y_pred):
+    return {
+        "r2": float(r2_score(y_true, y_pred)),
+        "mse": float(mean_squared_error(y_true, y_pred)),
+        "mae": float(mean_absolute_error(y_true, y_pred)),
+        "mape": float(mean_absolute_percentage_error(y_true, y_pred)),
+    }
+
+
+def fit_thermo_frame(
+        data_frame,
+        model_type: str = "NASA7",
+        data_columns=None,
+        start_index: int = 0,
+        end_index: int = None,
+        weight_strategy: str = "inverse_mean_abs",
+        T_range: list = None,
+        guess: list = None,
+        bounds: tuple = None,
+        maxfev: int = 100000,
+):
+    """Fit NASA/Shomate thermo parameters from a table without file I/O.
+
+    By default this accepts the snake_case columns returned by ``scan_thermo``:
+    ``temperature``, ``heat_capacity_cp``, ``enthalpy``, and ``entropy``. It
+    also accepts the legacy Excel column names used by ``fit_thermo_model``.
+    """
+    df = pd.DataFrame(data_frame)
+    T, Cp_T, H_T, S_T = _extract_thermo_fit_arrays(
+        df,
+        data_columns=data_columns,
+        start_index=start_index,
+        end_index=end_index,
+    )
+    if T_range is None:
+        T_range = [float(np.min(T)), float(np.max(T))]
+
+    model = _get_thermo_model_info(model_type)
+    n_params = model["n_params"]
+    if bounds is None:
+        bounds = ([-np.inf] * n_params, [np.inf] * n_params)
+
+    y_data = np.hstack([Cp_T, H_T, S_T])
+    sigma = _build_fit_sigma(Cp_T, H_T, S_T, weight_strategy)
+    popt, pcov = curve_fit(
+        f=model["fit_func"],
+        xdata=T,
+        ydata=y_data,
+        sigma=sigma,
+        p0=guess,
+        bounds=bounds,
+        maxfev=maxfev,
+    )
+
+    fitted_model = model["model_class"](*popt, return_mode="all")
+    Cp_T_pre, H_T_pre, S_T_pre = fitted_model(T)
+    metrics = {
+        "heat_capacity_cp": _fit_metrics(Cp_T, Cp_T_pre),
+        "enthalpy": _fit_metrics(H_T, H_T_pre),
+        "entropy": _fit_metrics(S_T, S_T_pre),
+    }
+
+    return ThermoFitResult(
+        model_type=_canonical_model_type(model_type),
+        parameters=tuple(float(parameter) for parameter in popt),
+        temperature_range=tuple(float(value) for value in T_range),
+        metrics=metrics,
+        covariance=pcov,
+    )
+
 
 
 def fit(fun, xdata, ydata, sigma, p0, bounds, maxfev=10000):
@@ -311,31 +517,8 @@ def fit_thermo_model(
     Y = np.hstack([Cp_T, H_T, S_T])
 
     # 选择模型函数
-    model_info = {
-        "NASA7": {
-            "fit_func": nasa7_for_fit,
-            "model_class": NASA7,
-            "n_params": 7,
-            "yaml_writer": write_cantera_yaml_thermo_NASA7,
-        },
-        "NASA9": {
-            "fit_func": nasa9_for_fit,
-            "model_class": NASA9,
-            "n_params": 9,
-            "yaml_writer": write_cantera_yaml_thermo_NASA9,
-        },
-        "Shomate": {
-            "fit_func": shomate_for_fit,
-            "model_class": Shomate,
-            "n_params": 7,
-            "yaml_writer": write_cantera_yaml_thermo_Shomate,
-        },
-    }
-
-    if model_type not in model_info:
-        raise ValueError(f"不支持的模型类型: {model_type}")
-
-    model = model_info[model_type]
+    model_type = _canonical_model_type(model_type)
+    model = _get_thermo_model_info(model_type)
     FUN = model["fit_func"]
     FUN_CLASS = model["model_class"]
     n_params = model["n_params"]
@@ -437,6 +620,8 @@ __all__ = [
     'cal_metric',
     'export_data',
     'fit',
+    'ThermoFitResult',
+    'fit_thermo_frame',
     'fit_thermo_model',
     'nasa7',
     'nasa7_for_fit',
