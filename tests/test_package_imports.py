@@ -8,11 +8,17 @@ from ThermoCR import (
     atomic_mass,
     get_point_group as top_level_get_point_group,
     get_rotational_symmetry_number as top_level_get_rotational_symmetry_number,
+    calculate_solvent_energy as top_level_calculate_solvent_energy,
     k_TST,
     q_trans,
     read_qm_out,
+    select_gaussian_out as top_level_select_gaussian_out,
     sort_key as top_level_sort_key,
+    sort_orca_path_key as top_level_sort_orca_path_key,
 )
+from ThermoCR.io import select_gaussian_out as io_select_gaussian_out
+from ThermoCR.io import sort_orca_path_key
+from ThermoCR.thermo import calculate_solvent_energy
 from ThermoCR.tools.about_orca import sort_key as orca_sort_key
 from ThermoCR.tools.utils import get_point_group, get_rotational_symmetry_number
 
@@ -58,6 +64,12 @@ class PackageImportTests(unittest.TestCase):
 
     def test_top_level_sort_key_keeps_legacy_orca_precedence(self):
         self.assertIs(top_level_sort_key, orca_sort_key)
+        self.assertIs(top_level_sort_key, sort_orca_path_key)
+        self.assertIs(top_level_sort_key, top_level_sort_orca_path_key)
+
+    def test_top_level_file_helpers_use_formal_modules(self):
+        self.assertIs(top_level_select_gaussian_out, io_select_gaussian_out)
+        self.assertIs(top_level_calculate_solvent_energy, calculate_solvent_energy)
 
 
 if __name__ == "__main__":

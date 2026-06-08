@@ -14,8 +14,6 @@ _EXPORT_MODULES = (
     "ThermoCR.simulation",
     "ThermoCR.symmetry",
     "ThermoCR.thermo",
-    "ThermoCR.tools.about_gaussian",
-    "ThermoCR.tools.about_orca",
 )
 
 __all__ = ["__version__"]
@@ -41,12 +39,14 @@ get_point_group = detect_point_group
 get_I = principal_moments
 check_linear = is_linear
 get_rotational_symmetry_number = rotational_symmetry_number
+sort_key = sort_orca_path_key
 
 for _alias_name in (
     "get_point_group",
     "get_I",
     "check_linear",
     "get_rotational_symmetry_number",
+    "sort_key",
 ):
     if _alias_name not in __all__:
         __all__.append(_alias_name)
