@@ -1,6 +1,6 @@
 """Compatibility namespace for legacy ThermoCR tools."""
 
-from ThermoCR.tools.constant import (
+from ThermoCR.constants import (
     Bohr,
     Eh,
     Hartree,
@@ -18,6 +18,22 @@ from ThermoCR.tools.constant import (
     k_b,
     wave2freq,
 )
+from ThermoCR.io.gaussian import (
+    LINK1_MARKER,
+    NORMAL_TERMINATION_MARKER,
+    is_gaussian_link1_output,
+    read_gaussian_link1_job,
+    select_gaussian_link1_text,
+    select_gaussian_out,
+    select_gaussian_output,
+    split_gaussian_link1_output,
+    split_gaussian_link1_text,
+)
+from ThermoCR.io.orca import (
+    read_orca_final_single_point_energy,
+    read_orca_wB97Mp2_out,
+    sort_key,
+)
 from ThermoCR.tools.read_qm_out import (
     read_atom_coord,
     read_ee,
@@ -25,30 +41,16 @@ from ThermoCR.tools.read_qm_out import (
     read_qm_out,
     read_vib,
 )
+from ThermoCR.thermo.solvation import (
+    calculate_solvent_energy,
+    sort_key as gaussian_sort_key,
+    standard_state_energy,
+)
 from ThermoCR.tools.utils import (
     check_linear,
     get_I,
     get_point_group,
     get_rotational_symmetry_number,
-)
-from ThermoCR.tools.about_gaussian import (
-    LINK1_MARKER,
-    NORMAL_TERMINATION_MARKER,
-    calculate_solvent_energy,
-    is_gaussian_link1_output,
-    read_gaussian_link1_job,
-    select_gaussian_link1_text,
-    select_gaussian_out,
-    select_gaussian_output,
-    sort_key as gaussian_sort_key,
-    split_gaussian_link1_output,
-    split_gaussian_link1_text,
-    standard_state_energy,
-)
-from ThermoCR.tools.about_orca import (
-    read_orca_final_single_point_energy,
-    read_orca_wB97Mp2_out,
-    sort_key,
 )
 
 __all__ = [
