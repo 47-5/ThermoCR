@@ -5,7 +5,10 @@ from tempfile import TemporaryDirectory
 from unittest.mock import patch
 import unittest
 
+import pandas as pd
+
 from ThermoCR.cli import build_parser, main
+from ThermoCR.types import ThermoOptions
 
 
 LINK1_TEXT = """ Entering Gaussian System, Link 0=g16
@@ -41,12 +44,13 @@ class CliTests(unittest.TestCase):
         self.assertIn("select-gaussian", help_text)
         self.assertIn("qm-energy", help_text)
         self.assertIn("orca-energy", help_text)
+        self.assertIn("thermo", help_text)
 
     def test_split_link1_command_writes_job_files(self):
         with TemporaryDirectory() as tmpdir:
             input_path = Path(tmpdir) / "link1.out"
             output_dir = Path(tmpdir) / "jobs"
-            input_path.write_text(LINK1_TEXT)
+            input_path.write_text(LINK1_TEXT, encoding="utf-8")
 
             exit_code, stdout = self._run_cli([
                 "split-link1",
@@ -59,14 +63,14 @@ class CliTests(unittest.TestCase):
             self.assertEqual(exit_code, 0)
             self.assertIn("case_job01.out", stdout)
             self.assertIn("case_job02.out", stdout)
-            self.assertIn("first job body", (output_dir / "case_job01.out").read_text())
-            self.assertIn("second job body", (output_dir / "case_job02.out").read_text())
+            self.assertIn("first job body", (output_dir / "case_job01.out").read_text(encoding="utf-8"))
+            self.assertIn("second job body", (output_dir / "case_job02.out").read_text(encoding="utf-8"))
 
     def test_select_gaussian_command_writes_selected_job(self):
         with TemporaryDirectory() as tmpdir:
             input_path = Path(tmpdir) / "link1.out"
             output_path = Path(tmpdir) / "selected.out"
-            input_path.write_text(LINK1_TEXT)
+            input_path.write_text(LINK1_TEXT, encoding="utf-8")
 
             exit_code, stdout = self._run_cli([
                 "select-gaussian",
@@ -78,11 +82,12 @@ class CliTests(unittest.TestCase):
                 "select",
             ])
 
-            selected_text = output_path.read_text()
+            selected_text = output_path.read_text(encoding="utf-8")
             self.assertEqual(exit_code, 0)
             self.assertIn(str(output_path), stdout)
             self.assertIn("second job body", selected_text)
             self.assertNotIn("first job body", selected_text)
+
     @patch("ThermoCR.cli.read_electronic_energy")
     def test_qm_energy_command_dispatches_to_reader(self, read_electronic_energy):
         read_electronic_energy.return_value = -40.5
@@ -114,12 +119,54 @@ class CliTests(unittest.TestCase):
         """
         with TemporaryDirectory() as tmpdir:
             output_path = Path(tmpdir) / "orca.out"
-            output_path.write_text(text)
+            output_path.write_text(text, encoding="utf-8")
 
             exit_code, stdout = self._run_cli(["orca-energy", str(output_path)])
 
         self.assertEqual(exit_code, 0)
         self.assertEqual(stdout.strip(), "-11.25")
+
+    @patch("ThermoCR.cli.scan_thermo")
+    @patch("ThermoCR.cli.read_molecule_data")
+    def test_thermo_scan_command_writes_csv(self, read_molecule_data, scan_thermo):
+        molecule = object()
+        read_molecule_data.return_value = molecule
+        scan_thermo.return_value = pd.DataFrame([
+            {"temperature": 300.0, "pressure": 100000.0, "gibbs_free_energy": -1.0},
+            {"temperature": 400.0, "pressure": 100000.0, "gibbs_free_energy": -2.0},
+        ])
+
+        with TemporaryDirectory() as tmpdir:
+            output_path = Path(tmpdir) / "thermo.csv"
+            exit_code, stdout = self._run_cli([
+                "thermo",
+                "scan",
+                "calc.out",
+                "--t-min",
+                "300",
+                "--t-max",
+                "400",
+                "--n-points",
+                "2",
+                "--pressure",
+                "100000",
+                "--gaussian-job-index",
+                "-1",
+                "--output",
+                str(output_path),
+            ])
+
+            csv_text = output_path.read_text(encoding="utf-8")
+
+        self.assertEqual(exit_code, 0)
+        self.assertIn(str(output_path), stdout)
+        self.assertIn("temperature,pressure,gibbs_free_energy", csv_text)
+        read_molecule_data.assert_called_once_with("calc.out", gaussian_job_index=-1)
+        call = scan_thermo.call_args
+        self.assertIs(call.args[0], molecule)
+        self.assertEqual(call.kwargs["temperatures"], [300.0, 400.0])
+        self.assertEqual(call.kwargs["pressure"], 100000.0)
+        self.assertIsInstance(call.kwargs["options"], ThermoOptions)
 
 
 if __name__ == "__main__":

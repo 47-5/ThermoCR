@@ -50,6 +50,7 @@ After installation, ThermoCR provides a small command-line entry point for commo
 thermocr split-link1 example/CPD.out split_jobs
 thermocr select-gaussian example/CPD.out selected.out --task-id 2 --mode select
 thermocr qm-energy example/CPD.out --gaussian-job-index -1
+thermocr thermo scan example/CPD.out --t-min 300 --t-max 3000 --n-points 100 --output thermo.csv
 thermocr orca-energy path/to/orca.out
 ```
 

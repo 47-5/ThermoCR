@@ -5,7 +5,8 @@ from pathlib import Path
 
 from ThermoCR.io.gaussian import select_gaussian_output, split_gaussian_link1_output
 from ThermoCR.io.orca import read_orca_final_single_point_energy
-from ThermoCR.io.qm_output import read_electronic_energy
+from ThermoCR.io.qm_output import read_electronic_energy, read_molecule_data
+from ThermoCR.thermo import ThermoOptions, scan_thermo
 
 
 def _positive_or_negative_int(value):
@@ -14,6 +15,29 @@ def _positive_or_negative_int(value):
     except ValueError as exc:
         raise argparse.ArgumentTypeError(f"expected an integer, got {value!r}") from exc
     return parsed
+
+
+def _positive_int(value):
+    parsed = _positive_or_negative_int(value)
+    if parsed <= 0:
+        raise argparse.ArgumentTypeError("expected a positive integer")
+    return parsed
+
+
+def _temperature_grid(t_min, t_max, n_points):
+    if n_points == 1:
+        return [float(t_min)]
+    step = (float(t_max) - float(t_min)) / (n_points - 1)
+    return [float(t_min) + index * step for index in range(n_points)]
+
+
+def _write_dataframe(df, output_path):
+    output_path = Path(output_path)
+    if output_path.suffix.lower() in {".xls", ".xlsx"}:
+        df.to_excel(output_path, index=False)
+    else:
+        df.to_csv(output_path, index=False)
+    return output_path
 
 
 def _cmd_split_link1(args):
@@ -53,6 +77,80 @@ def _cmd_orca_energy(args):
     energy = read_orca_final_single_point_energy(args.input)
     print(energy)
     return 0
+
+
+def _cmd_thermo_scan(args):
+    molecule = read_molecule_data(
+        args.input,
+        gaussian_job_index=args.gaussian_job_index,
+    )
+    options = ThermoOptions(
+        pressure=args.pressure,
+        ignore_trans_and_rot=args.ignore_trans_and_rot,
+    )
+    temperatures = _temperature_grid(args.t_min, args.t_max, args.n_points)
+    df = scan_thermo(
+        molecule,
+        temperatures=temperatures,
+        pressure=args.pressure,
+        options=options,
+    )
+    output_path = _write_dataframe(df, args.output)
+    print(output_path)
+    return 0
+
+
+def _add_thermo_commands(subparsers):
+    thermo_parser = subparsers.add_parser(
+        "thermo",
+        help="structured thermochemistry workflows",
+    )
+    thermo_subparsers = thermo_parser.add_subparsers(
+        dest="thermo_command",
+        required=True,
+    )
+
+    scan_parser = thermo_subparsers.add_parser(
+        "scan",
+        help="scan thermochemistry over a temperature grid",
+    )
+    scan_parser.add_argument("input", help="QM output file to read")
+    scan_parser.add_argument("--output", required=True, help="CSV/XLSX output file")
+    scan_parser.add_argument(
+        "--t-min",
+        type=float,
+        default=300.0,
+        help="minimum temperature in K; default: 300",
+    )
+    scan_parser.add_argument(
+        "--t-max",
+        type=float,
+        default=3000.0,
+        help="maximum temperature in K; default: 3000",
+    )
+    scan_parser.add_argument(
+        "--n-points",
+        type=_positive_int,
+        default=100,
+        help="number of temperature points; default: 100",
+    )
+    scan_parser.add_argument(
+        "--pressure",
+        type=float,
+        default=101325.0,
+        help="pressure in Pa; default: 101325",
+    )
+    scan_parser.add_argument(
+        "--gaussian-job-index",
+        type=_positive_or_negative_int,
+        help="Gaussian Link1 job index; default: last job when Link1 is detected",
+    )
+    scan_parser.add_argument(
+        "--ignore-trans-and-rot",
+        action="store_true",
+        help="ignore translational and rotational contributions",
+    )
+    scan_parser.set_defaults(func=_cmd_thermo_scan)
 
 
 def build_parser():
@@ -121,6 +219,8 @@ def build_parser():
     )
     orca_energy_parser.add_argument("input", help="ORCA output file to read")
     orca_energy_parser.set_defaults(func=_cmd_orca_energy)
+
+    _add_thermo_commands(subparsers)
 
     return parser
 
