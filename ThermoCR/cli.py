@@ -6,7 +6,12 @@ from pathlib import Path
 
 import pandas as pd
 
-from ThermoCR.export import format_cantera_reaction_yaml, format_cantera_yaml_thermo
+from ThermoCR.export import (
+    format_cantera_mechanism_yaml,
+    format_cantera_reaction_yaml,
+    format_cantera_species_yaml,
+    format_cantera_yaml_thermo,
+)
 from ThermoCR.io.gaussian import select_gaussian_output, split_gaussian_link1_output
 from ThermoCR.io.orca import read_orca_final_single_point_energy
 from ThermoCR.io.qm_output import read_electronic_energy, read_molecule_data
@@ -83,6 +88,10 @@ def _read_dataframe(input_path):
     if input_path.suffix.lower() in {".xls", ".xlsx"}:
         return pd.read_excel(input_path)
     return pd.read_csv(input_path)
+
+
+def _read_text(input_path):
+    return Path(input_path).read_text(encoding="utf-8")
 
 
 def _write_thermo_fit_result(result, output_path):
@@ -276,6 +285,119 @@ def _cmd_kinetics_fit(args):
     )
     print(output_path)
     return 0
+
+
+def _cmd_cantera_mechanism(args):
+    species_blocks = []
+    if args.species is not None:
+        species_blocks.extend(_read_text(path) for path in args.species)
+
+    species_heads = [] if args.species_head is None else args.species_head
+    species_thermos = [] if args.species_thermo is None else args.species_thermo
+    if species_thermos and len(species_thermos) != len(species_heads):
+        raise ValueError("--species-thermo must be repeated once for each --species-head")
+    for index, species_head in enumerate(species_heads):
+        thermo_block = None
+        if species_thermos:
+            thermo_block = _read_text(species_thermos[index])
+        species_blocks.append(format_cantera_species_yaml(
+            _read_text(species_head),
+            thermo_block=thermo_block,
+        ))
+
+    if not species_blocks:
+        raise ValueError("--species or --species-head must be provided")
+
+    reaction_blocks = []
+    if args.reaction is not None:
+        reaction_blocks = [_read_text(path) for path in args.reaction]
+
+    state = {
+        "T": args.initial_temperature,
+        "P": args.initial_pressure,
+    }
+    yaml_text = format_cantera_mechanism_yaml(
+        species_blocks,
+        reaction_blocks=reaction_blocks,
+        phase_name=args.phase_name,
+        elements=args.element,
+        thermo_model=args.thermo_model,
+        kinetics_model=args.kinetics_model,
+        state=state,
+    )
+    output_path = Path(args.output)
+    output_path.write_text(yaml_text, encoding="utf-8")
+    print(output_path)
+    return 0
+
+
+def _add_cantera_commands(subparsers):
+    cantera_parser = subparsers.add_parser(
+        "cantera",
+        help="Cantera YAML export workflows",
+    )
+    cantera_subparsers = cantera_parser.add_subparsers(
+        dest="cantera_command",
+        required=True,
+    )
+
+    mechanism_parser = cantera_subparsers.add_parser(
+        "mechanism",
+        help="combine species and reaction YAML fragments into a Cantera mechanism",
+    )
+    mechanism_parser.add_argument("--output", required=True, help="YAML output file")
+    mechanism_parser.add_argument(
+        "--species",
+        action="append",
+        help="complete species YAML fragment; repeat for multiple species",
+    )
+    mechanism_parser.add_argument(
+        "--species-head",
+        action="append",
+        help="species header YAML fragment; repeat for multiple species",
+    )
+    mechanism_parser.add_argument(
+        "--species-thermo",
+        action="append",
+        help="species thermo YAML fragment; repeat in the same order as --species-head",
+    )
+    mechanism_parser.add_argument(
+        "--reaction",
+        action="append",
+        help="reaction YAML fragment; repeat for multiple reaction files",
+    )
+    mechanism_parser.add_argument(
+        "--element",
+        action="append",
+        help="element symbol in the mechanism; repeat to override derived elements",
+    )
+    mechanism_parser.add_argument(
+        "--phase-name",
+        default="gas",
+        help="Cantera phase name; default: gas",
+    )
+    mechanism_parser.add_argument(
+        "--thermo-model",
+        default="ideal-gas",
+        help="Cantera phase thermo model; default: ideal-gas",
+    )
+    mechanism_parser.add_argument(
+        "--kinetics-model",
+        default="gas",
+        help="Cantera kinetics model; default: gas",
+    )
+    mechanism_parser.add_argument(
+        "--initial-temperature",
+        type=float,
+        default=300.0,
+        help="initial phase temperature in K; default: 300",
+    )
+    mechanism_parser.add_argument(
+        "--initial-pressure",
+        default="1 atm",
+        help="initial phase pressure; default: 1 atm",
+    )
+    mechanism_parser.set_defaults(func=_cmd_cantera_mechanism)
 
 
 def _add_thermo_commands(subparsers):
@@ -621,6 +743,7 @@ def build_parser():
     orca_energy_parser.add_argument("input", help="ORCA output file to read")
     orca_energy_parser.set_defaults(func=_cmd_orca_energy)
 
+    _add_cantera_commands(subparsers)
     _add_thermo_commands(subparsers)
     _add_kinetics_commands(subparsers)
 

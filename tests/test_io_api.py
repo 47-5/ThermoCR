@@ -55,8 +55,8 @@ class IOApiTests(unittest.TestCase):
             yaml_text = (Path(tmpdir) / "CPD_head.yaml").read_text()
 
         self.assertIn("- name: CPD", yaml_text)
-        self.assertIn("C:5", yaml_text)
-        self.assertIn("H:6", yaml_text)
+        self.assertIn("C: 5", yaml_text)
+        self.assertIn("H: 6", yaml_text)
 
 
 if __name__ == "__main__":

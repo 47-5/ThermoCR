@@ -38,7 +38,7 @@ from ThermoCR.io import read_qm_output, read_molecule_data, read_atom_coordinate
 from ThermoCR.thermo import calculate_thermo, scan_thermo, fit_thermo_frame, ThermoOptions
 from ThermoCR.kinetics import calculate_tst_rate_frame, k_TST, k_VTST
 from ThermoCR.simulation import ChemicalKineticsSimulator
-from ThermoCR.export import make_cantera_specie_name_yaml
+from ThermoCR.export import format_cantera_mechanism_yaml, make_cantera_specie_name_yaml
 ```
 
 Legacy imports such as `ThermoCR.QMthermo`, `ThermoCR.QMkinetics`, `ThermoCR.QMconcvar`, and `ThermoCR.tools` remain available for existing scripts.
@@ -55,6 +55,7 @@ thermocr thermo fit thermo.csv --model NASA7 --output CPD_thermo.yaml
 thermocr kinetics tst thermo_ts.csv --reactant thermo_r1.csv --reactant thermo_r2.csv --output rates.csv
 thermocr kinetics vtst path1.csv path2.csv --reactant thermo_r1.csv --reactant thermo_r2.csv --output vtst_rates.csv
 thermocr kinetics fit rates.csv --model Arrhenius --reactant-name CPD --reactant-name CPD --product-name DCPD --output reaction.yaml
+thermocr cantera mechanism --species-head CPD_head.yaml --species-thermo CPD_thermo.yaml --reaction reaction.yaml --output mechanism.yaml
 thermocr orca-energy path/to/orca.out
 ```
 

@@ -2,14 +2,22 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 import unittest
 
+import yaml
+
 from ThermoCR.export import (
+    format_cantera_mechanism_yaml,
     format_cantera_reaction_yaml,
+    format_cantera_species_yaml,
     format_cantera_yaml_thermo,
+    make_cantera_mechanism_yaml,
     make_cantera_reaction_yaml,
     make_cantera_specie_name_yaml,
     write_cantera_yaml_thermo_NASA7,
 )
 from ThermoCR.tools.about_cantera import (
+    format_cantera_mechanism_yaml as package_format_cantera_mechanism_yaml,
+    format_cantera_species_yaml as package_format_cantera_species_yaml,
+    make_cantera_mechanism_yaml as package_make_cantera_mechanism_yaml,
     make_cantera_reaction_yaml as package_make_cantera_reaction_yaml,
     make_cantera_specie_name_yaml as package_make_cantera_specie_name_yaml,
     write_cantera_yaml_thermo_NASA7 as package_write_cantera_yaml_thermo_NASA7,
@@ -40,8 +48,8 @@ class CanteraExportApiTests(unittest.TestCase):
             yaml_text = (Path(tmpdir) / "CPD_head.yaml").read_text(encoding="utf-8")
 
         self.assertIn("- name: CPD", yaml_text)
-        self.assertIn("C:5", yaml_text)
-        self.assertIn("H:6", yaml_text)
+        self.assertIn("C: 5", yaml_text)
+        self.assertIn("H: 6", yaml_text)
         self.assertIs(make_cantera_specie_name_yaml, legacy_make_cantera_specie_name_yaml)
         self.assertIs(make_cantera_specie_name_yaml, package_make_cantera_specie_name_yaml)
 
@@ -118,6 +126,61 @@ class CanteraExportApiTests(unittest.TestCase):
         self.assertIn("model: NASA9", nasa9_text)
         self.assertIn("reference-pressure: 1 bar\n   data:", nasa9_text)
         self.assertIn("model: Shomate", shomate_text)
+
+    def test_format_cantera_mechanism_yaml_combines_fragments(self):
+        species = format_cantera_species_yaml(
+            "- name: CPD\n  composition: {C:5, H:6}\n",
+            format_cantera_yaml_thermo(
+                "NASA7",
+                T_range=(300.0, 1000.0),
+                parameters=[1, 2, 3, 4, 5, 6, 7],
+            ),
+        )
+        reaction = format_cantera_reaction_yaml(
+            ["CPD"],
+            ["CPD"],
+            A=1.0,
+            b=0.0,
+            Ea=0.0,
+        )
+
+        yaml_text = format_cantera_mechanism_yaml(
+            [species],
+            reaction_blocks=[reaction],
+        )
+
+        self.assertIn("phases:", yaml_text)
+        self.assertIn("species: [CPD]", yaml_text)
+        self.assertIn("elements: [C, H]", yaml_text)
+        self.assertIn("- name: CPD", yaml_text)
+        self.assertIn("reactions:", yaml_text)
+        self.assertIn("- equation: CPD <=> CPD", yaml_text)
+        payload = yaml.safe_load(yaml_text)
+        self.assertEqual(payload["species"][0]["composition"], {"C": 5, "H": 6})
+        self.assertIs(format_cantera_mechanism_yaml, package_format_cantera_mechanism_yaml)
+        self.assertIs(format_cantera_species_yaml, package_format_cantera_species_yaml)
+
+    def test_make_cantera_mechanism_yaml_writes_output(self):
+        species = format_cantera_species_yaml(
+            "- name: A\n  composition: {C:1}\n",
+            format_cantera_yaml_thermo(
+                "NASA7",
+                T_range=(300.0, 1000.0),
+                parameters=[1, 2, 3, 4, 5, 6, 7],
+            ),
+        )
+
+        with TemporaryDirectory() as tmpdir:
+            make_cantera_mechanism_yaml(
+                [species],
+                yaml_name="mechanism.yaml",
+                root_path=tmpdir,
+            )
+            yaml_text = (Path(tmpdir) / "mechanism.yaml").read_text(encoding="utf-8")
+
+        self.assertIn("reactions: none", yaml_text)
+        self.assertIn("species: [A]", yaml_text)
+        self.assertIs(make_cantera_mechanism_yaml, package_make_cantera_mechanism_yaml)
 
 
 if __name__ == "__main__":

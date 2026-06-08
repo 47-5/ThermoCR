@@ -50,6 +50,7 @@ class CliTests(unittest.TestCase):
         self.assertIn("orca-energy", help_text)
         self.assertIn("thermo", help_text)
         self.assertIn("kinetics", help_text)
+        self.assertIn("cantera", help_text)
 
     def test_split_link1_command_writes_job_files(self):
         with TemporaryDirectory() as tmpdir:
@@ -400,6 +401,53 @@ class CliTests(unittest.TestCase):
         self.assertIn(str(output_path), stdout)
         self.assertIn("- equation: CPD + CPD <=> DCPD", yaml_text)
         self.assertIn("rate-constant:", yaml_text)
+
+    def test_cantera_mechanism_command_writes_yaml(self):
+        with TemporaryDirectory() as tmpdir:
+            species_head_path = Path(tmpdir) / "CPD_head.yaml"
+            species_thermo_path = Path(tmpdir) / "CPD_thermo.yaml"
+            reaction_path = Path(tmpdir) / "reaction.yaml"
+            output_path = Path(tmpdir) / "mechanism.yaml"
+            species_head_path.write_text(
+                "- name: CPD\n  composition: {C:5, H:6}\n",
+                encoding="utf-8",
+            )
+            species_thermo_path.write_text(
+                "  thermo:\n"
+                "   model: NASA7\n"
+                "   temperature-ranges: [300.0, 1000.0]\n"
+                "   data:\n"
+                "   - [1, 2, 3, 4, 5, 6, 7]\n",
+                encoding="utf-8",
+            )
+            reaction_path.write_text(
+                "- equation: CPD <=> CPD\n"
+                "  type: elementary\n"
+                "  rate-constant: {A: 1.0, b: 0.0, Ea: 0.0 }\n",
+                encoding="utf-8",
+            )
+
+            exit_code, stdout = self._run_cli([
+                "cantera",
+                "mechanism",
+                "--species-head",
+                str(species_head_path),
+                "--species-thermo",
+                str(species_thermo_path),
+                "--reaction",
+                str(reaction_path),
+                "--output",
+                str(output_path),
+            ])
+            yaml_text = output_path.read_text(encoding="utf-8")
+
+        self.assertEqual(exit_code, 0)
+        self.assertIn(str(output_path), stdout)
+        self.assertIn("phases:", yaml_text)
+        self.assertIn("elements: [C, H]", yaml_text)
+        self.assertIn("species: [CPD]", yaml_text)
+        self.assertIn("model: NASA7", yaml_text)
+        self.assertIn("- equation: CPD <=> CPD", yaml_text)
 
 
 if __name__ == "__main__":
