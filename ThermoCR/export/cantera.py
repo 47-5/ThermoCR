@@ -106,6 +106,28 @@ def write_cantera_yaml_thermo_Shomate(
     return None
 
 
+def format_cantera_reaction_yaml(
+    r_name_list,
+    p_name_list,
+    A,
+    b,
+    Ea,
+    reversible=True,
+    convert_A_unit_fun=None,
+):
+    """Return one elementary reaction entry in Cantera YAML format."""
+    left = " + ".join(r_name_list)
+    middle = "<=>" if reversible else "=>"
+    right = " + ".join(p_name_list)
+    if convert_A_unit_fun is not None:
+        A = convert_A_unit_fun(A)
+    return (
+        f"- equation: {left} {middle} {right}\n"
+        "  type: elementary\n"
+        f"  rate-constant: {{A: {A}, b: {b}, Ea: {Ea} }}\n"
+    )
+
+
 def make_cantera_reaction_yaml(
     r_name_list,
     p_name_list,
@@ -119,18 +141,17 @@ def make_cantera_reaction_yaml(
     convert_A_unit_fun=None,
 ):
     """Write one elementary reaction entry in Cantera YAML format."""
-    left = " + ".join(r_name_list)
-    middle = "<=>" if reversible else "=>"
-    right = " + ".join(p_name_list)
     yaml_path = _output_path(root_path, yaml_name)
-
-    if convert_A_unit_fun is not None:
-        A = convert_A_unit_fun(A)
-
     with yaml_path.open(write_mode, encoding="utf-8") as f:
-        f.write(f"- equation: {left} {middle} {right}\n")
-        f.write("  type: elementary\n")
-        f.write(f"  rate-constant: {{A: {A}, b: {b}, Ea: {Ea} }}\n")
+        f.write(format_cantera_reaction_yaml(
+            r_name_list,
+            p_name_list,
+            A,
+            b,
+            Ea,
+            reversible=reversible,
+            convert_A_unit_fun=convert_A_unit_fun,
+        ))
     return None
 
 

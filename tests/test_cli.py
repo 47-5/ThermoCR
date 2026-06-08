@@ -10,6 +10,7 @@ import numpy as np
 import pandas as pd
 
 from ThermoCR.cli import build_parser, main
+from ThermoCR.kinetics import arrhenius
 from ThermoCR.thermo import nasa7
 from ThermoCR.types import ThermoOptions
 
@@ -278,6 +279,70 @@ class CliTests(unittest.TestCase):
         self.assertEqual(list(output["delta_n"]), [1, 1])
         self.assertIn("rate_constant", output.columns)
         self.assertGreater(float(output["rate_constant"].iloc[0]), 0.0)
+
+    def test_kinetics_fit_command_writes_json(self):
+        temperatures = np.linspace(300.0, 1000.0, 12)
+        parameters = [1.2e7, 35000.0, 0.5]
+        rates = arrhenius(temperatures, *parameters)
+
+        with TemporaryDirectory() as tmpdir:
+            input_path = Path(tmpdir) / "rates.csv"
+            output_path = Path(tmpdir) / "fit.json"
+            pd.DataFrame({
+                "temperature": temperatures,
+                "rate_constant": rates,
+            }).to_csv(input_path, index=False)
+
+            exit_code, stdout = self._run_cli([
+                "kinetics",
+                "fit",
+                str(input_path),
+                "--guess",
+                ",".join(str(parameter) for parameter in parameters),
+                "--output",
+                str(output_path),
+            ])
+            payload = json.loads(output_path.read_text(encoding="utf-8"))
+
+        self.assertEqual(exit_code, 0)
+        self.assertIn(str(output_path), stdout)
+        self.assertEqual(payload["model_type"], "Arrhenius")
+        self.assertGreater(payload["metrics"]["rate_constant"]["r2"], 0.999999)
+
+    def test_kinetics_fit_command_writes_cantera_yaml(self):
+        temperatures = np.linspace(300.0, 1000.0, 12)
+        parameters = [1.2e7, 35000.0, 0.5]
+        rates = arrhenius(temperatures, *parameters)
+
+        with TemporaryDirectory() as tmpdir:
+            input_path = Path(tmpdir) / "rates.csv"
+            output_path = Path(tmpdir) / "reaction.yaml"
+            pd.DataFrame({
+                "temperature": temperatures,
+                "rate_constant": rates,
+            }).to_csv(input_path, index=False)
+
+            exit_code, stdout = self._run_cli([
+                "kinetics",
+                "fit",
+                str(input_path),
+                "--guess",
+                ",".join(str(parameter) for parameter in parameters),
+                "--reactant-name",
+                "CPD",
+                "--reactant-name",
+                "CPD",
+                "--product-name",
+                "DCPD",
+                "--output",
+                str(output_path),
+            ])
+            yaml_text = output_path.read_text(encoding="utf-8")
+
+        self.assertEqual(exit_code, 0)
+        self.assertIn(str(output_path), stdout)
+        self.assertIn("- equation: CPD + CPD <=> DCPD", yaml_text)
+        self.assertIn("rate-constant:", yaml_text)
 
 
 if __name__ == "__main__":

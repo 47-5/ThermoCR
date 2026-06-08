@@ -1,5 +1,6 @@
 """Kinetic model fitting helpers."""
 
+from dataclasses import dataclass
 import os
 from os.path import join
 import numpy as np
@@ -65,6 +66,171 @@ def arrhenius_2piecewise(T, A1, b1, b2, Ea1, Ea2, T_cut):
 def A_nplus1(A_n, Ea_n, Ea_nplus1, b_n, b_nplus1, T_cut_n):
     A_nplus1 = A_n * T_cut_n ** (b_n - b_nplus1) * np.exp((Ea_nplus1 - Ea_n) / (R * T_cut_n))
     return A_nplus1
+
+
+_STRUCTURED_KINETICS_COLUMNS = {
+    "T": "temperature",
+    "k": "rate_constant",
+}
+_LEGACY_KINETICS_COLUMNS = {
+    "T": "T/K",
+    "k": "k",
+}
+_KINETICS_MODEL_INFO = {
+    "Arrhenius": {
+        "fit_func": arrhenius,
+        "model_class": Arrhenius,
+        "n_params": 3,
+        "yaml_writer": make_cantera_reaction_yaml,
+    },
+    "Arrhenius2Piecewise": {
+        "fit_func": arrhenius_2piecewise,
+        "model_class": Arrhenius2Piecewise,
+        "n_params": 6,
+        "yaml_writer": None,
+    },
+}
+
+
+@dataclass
+class KineticsFitResult:
+    """Structured kinetic model fit result."""
+
+    model_type: str
+    parameters: tuple
+    metrics: dict
+    covariance: np.ndarray = None
+
+    def __post_init__(self):
+        self.model_type = _canonical_model_type(self.model_type)
+        self.parameters = tuple(float(parameter) for parameter in self.parameters)
+        if self.covariance is not None:
+            self.covariance = np.asarray(self.covariance, dtype=float)
+
+    def model(self):
+        """Return a callable model object for the fitted parameters."""
+        model_class = _get_kinetics_model_info(self.model_type)["model_class"]
+        return model_class(*self.parameters)
+
+    def predict(self, temperatures):
+        """Predict rate constants at the requested temperatures."""
+        return self.model()(np.asarray(temperatures, dtype=float))
+
+    def named_parameters(self):
+        if self.model_type == "Arrhenius":
+            return {
+                "A": self.parameters[0],
+                "Ea": self.parameters[1],
+                "b": self.parameters[2],
+            }
+        if self.model_type == "Arrhenius2Piecewise":
+            keys = ("A1", "b1", "b2", "Ea1", "Ea2", "Tcut")
+            return dict(zip(keys, self.parameters))
+        raise ValueError(f"unsupported kinetics model type: {self.model_type}")
+
+    def as_dict(self):
+        covariance = None
+        if self.covariance is not None:
+            covariance = self.covariance.tolist()
+        return {
+            "model_type": self.model_type,
+            "parameters": list(self.parameters),
+            "named_parameters": self.named_parameters(),
+            "metrics": self.metrics,
+            "covariance": covariance,
+        }
+
+
+def _canonical_model_type(model_type):
+    for candidate in _KINETICS_MODEL_INFO:
+        if str(model_type).lower() == candidate.lower():
+            return candidate
+    raise ValueError(f"unsupported kinetics model type: {model_type}")
+
+
+def _get_kinetics_model_info(model_type):
+    return _KINETICS_MODEL_INFO[_canonical_model_type(model_type)]
+
+
+def _resolve_kinetics_columns(data_frame, data_columns):
+    if data_columns is not None:
+        required = {"T", "k"}
+        missing_keys = required.difference(data_columns)
+        if missing_keys:
+            missing = ", ".join(sorted(missing_keys))
+            raise ValueError(f"data_columns is missing keys: {missing}")
+        return data_columns
+
+    for columns in (_STRUCTURED_KINETICS_COLUMNS, _LEGACY_KINETICS_COLUMNS):
+        if all(column in data_frame.columns for column in columns.values()):
+            return columns
+    raise ValueError("could not infer kinetics columns; provide data_columns with T and k")
+
+
+def _extract_kinetics_fit_arrays(data_frame, data_columns, start_index, end_index):
+    columns = _resolve_kinetics_columns(data_frame, data_columns)
+    selected = data_frame.iloc[start_index:end_index]
+    T = selected[columns["T"]].to_numpy(dtype=float)
+    k = selected[columns["k"]].to_numpy(dtype=float)
+    if len(T) == 0:
+        raise ValueError("no kinetics rows were selected for fitting")
+    if not np.all(np.isfinite(T)) or not np.all(np.isfinite(k)):
+        raise ValueError("kinetics fitting data must contain only finite numbers")
+    return T, k
+
+
+def _fit_metrics(y_true, y_pred):
+    return {
+        "r2": float(r2_score(y_true, y_pred)),
+        "mse": float(mean_squared_error(y_true, y_pred)),
+        "mae": float(mean_absolute_error(y_true, y_pred)),
+        "mape": float(mean_absolute_percentage_error(y_true, y_pred)),
+    }
+
+
+def fit_kinetics_frame(
+        data_frame,
+        model_type: str = "Arrhenius",
+        data_columns=None,
+        start_index: int = 0,
+        end_index: int = None,
+        guess: list = None,
+        bounds: tuple = None,
+        maxfev: int = 100000,
+        convert_k_unit_fun=None,
+):
+    """Fit kinetic model parameters from a table without file I/O."""
+    df = pd.DataFrame(data_frame)
+    T, k = _extract_kinetics_fit_arrays(
+        df,
+        data_columns=data_columns,
+        start_index=start_index,
+        end_index=end_index,
+    )
+    if convert_k_unit_fun is not None:
+        k = convert_k_unit_fun(k)
+
+    model = _get_kinetics_model_info(model_type)
+    n_params = model["n_params"]
+    if bounds is None:
+        bounds = ([-np.inf] * n_params, [np.inf] * n_params)
+
+    popt, pcov = curve_fit(
+        f=model["fit_func"],
+        xdata=T,
+        ydata=k,
+        p0=guess,
+        bounds=bounds,
+        maxfev=maxfev,
+    )
+    fitted_model = model["model_class"](*popt)
+    k_pred = fitted_model(T)
+    return KineticsFitResult(
+        model_type=_canonical_model_type(model_type),
+        parameters=tuple(float(parameter) for parameter in popt),
+        metrics={"rate_constant": _fit_metrics(k, k_pred)},
+        covariance=pcov,
+    )
 
 
 def fit(fun, xdata, ydata, sigma, p0, bounds, maxfev=10000):
@@ -221,25 +387,8 @@ def fit_kinetics_model(
     Y = k
 
     # 选择模型函数
-    model_info = {
-        "Arrhenius": {
-            "fit_func": arrhenius,
-            "model_class": Arrhenius,
-            "n_params": 3,
-            "yaml_writer": make_cantera_reaction_yaml,
-        },
-        "Arrhenius2Piecewise": {
-            "fit_func": arrhenius_2piecewise,
-            "model_class": Arrhenius2Piecewise,
-            "n_params": 6,
-            "yaml_writer": None,
-        },
-    }
-
-    if model_type not in model_info:
-        raise ValueError(f"不支持的模型类型: {model_type}")
-
-    model = model_info[model_type]
+    model_type = _canonical_model_type(model_type)
+    model = _get_kinetics_model_info(model_type)
     FUN = model["fit_func"]
     FUN_CLASS = model["model_class"]
     n_params = model["n_params"]
@@ -328,6 +477,8 @@ __all__ = [
     'convert_k_unit_from_ThermoCR_to_Cantera',
     'export_data',
     'fit',
+    'KineticsFitResult',
+    'fit_kinetics_frame',
     'fit_kinetics_model',
     'plot_fit',
 ]

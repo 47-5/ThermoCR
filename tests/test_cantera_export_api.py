@@ -3,6 +3,7 @@ from tempfile import TemporaryDirectory
 import unittest
 
 from ThermoCR.export import (
+    format_cantera_reaction_yaml,
     format_cantera_yaml_thermo,
     make_cantera_reaction_yaml,
     make_cantera_specie_name_yaml,
@@ -82,6 +83,24 @@ class CanteraExportApiTests(unittest.TestCase):
         self.assertIn("temperature-ranges: [300.0, 1000.0]", yaml_text)
         self.assertIs(write_cantera_yaml_thermo_NASA7, legacy_write_cantera_yaml_thermo_NASA7)
         self.assertIs(write_cantera_yaml_thermo_NASA7, package_write_cantera_yaml_thermo_NASA7)
+
+    def test_format_cantera_reaction_yaml_matches_writer(self):
+        reactants = ["A", "B"]
+        products = ["C"]
+
+        text = format_cantera_reaction_yaml(
+            reactants,
+            products,
+            A=1.2,
+            b=0.5,
+            Ea=10.0,
+            reversible=False,
+        )
+
+        self.assertEqual(reactants, ["A", "B"])
+        self.assertEqual(products, ["C"])
+        self.assertIn("- equation: A + B => C", text)
+        self.assertIn("rate-constant: {A: 1.2, b: 0.5, Ea: 10.0 }", text)
 
     def test_format_cantera_yaml_thermo_supports_common_models(self):
         nasa9_text = format_cantera_yaml_thermo(

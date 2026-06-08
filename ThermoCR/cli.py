@@ -6,15 +6,16 @@ from pathlib import Path
 
 import pandas as pd
 
-from ThermoCR.export import format_cantera_yaml_thermo
+from ThermoCR.export import format_cantera_reaction_yaml, format_cantera_yaml_thermo
 from ThermoCR.io.gaussian import select_gaussian_output, split_gaussian_link1_output
 from ThermoCR.io.orca import read_orca_final_single_point_energy
 from ThermoCR.io.qm_output import read_electronic_energy, read_molecule_data
-from ThermoCR.kinetics import calculate_tst_rate_frame
+from ThermoCR.kinetics import calculate_tst_rate_frame, fit_kinetics_frame
 from ThermoCR.thermo import ThermoOptions, fit_thermo_frame, scan_thermo
 
 
 _THERMO_MODELS = ("NASA7", "NASA9", "Shomate")
+_KINETICS_MODELS = ("Arrhenius", "Arrhenius2Piecewise")
 
 
 def _positive_or_negative_int(value):
@@ -37,6 +38,14 @@ def _thermo_model_type(value):
         if str(value).lower() == model_type.lower():
             return model_type
     choices = ", ".join(_THERMO_MODELS)
+    raise argparse.ArgumentTypeError(f"expected one of: {choices}")
+
+
+def _kinetics_model_type(value):
+    for model_type in _KINETICS_MODELS:
+        if str(value).lower() == model_type.lower():
+            return model_type
+    choices = ", ".join(_KINETICS_MODELS)
     raise argparse.ArgumentTypeError(f"expected one of: {choices}")
 
 
@@ -87,6 +96,34 @@ def _write_thermo_fit_result(result, output_path):
         output_path.write_text(text + "\n", encoding="utf-8")
     else:
         raise ValueError("thermo fit output must use .json, .yaml, or .yml")
+    return output_path
+
+
+def _write_kinetics_fit_result(result, output_path, reactants=None, products=None, reversible=True):
+    output_path = Path(output_path)
+    suffix = output_path.suffix.lower()
+    if suffix == ".json":
+        text = json.dumps(result.as_dict(), indent=2)
+        output_path.write_text(text + "\n", encoding="utf-8")
+    elif suffix in {".yaml", ".yml"}:
+        if result.model_type != "Arrhenius":
+            raise ValueError("only Arrhenius kinetics fits can be written as Cantera YAML")
+        if not reactants or not products:
+            raise ValueError("reactant and product names are required for Cantera YAML output")
+        parameters = result.named_parameters()
+        output_path.write_text(
+            format_cantera_reaction_yaml(
+                reactants,
+                products,
+                A=parameters["A"],
+                b=parameters["b"],
+                Ea=parameters["Ea"],
+                reversible=reversible,
+            ),
+            encoding="utf-8",
+        )
+    else:
+        raise ValueError("kinetics fit output must use .json, .yaml, or .yml")
     return output_path
 
 
@@ -185,6 +222,27 @@ def _cmd_kinetics_tst(args):
         reference_pressure=args.reference_pressure,
     )
     output_path = _write_dataframe(df, args.output)
+    print(output_path)
+    return 0
+
+
+def _cmd_kinetics_fit(args):
+    df = _read_dataframe(args.input)
+    result = fit_kinetics_frame(
+        df,
+        model_type=args.model,
+        start_index=args.start_index,
+        end_index=args.end_index,
+        guess=args.guess,
+        maxfev=args.maxfev,
+    )
+    output_path = _write_kinetics_fit_result(
+        result,
+        args.output,
+        reactants=args.reactant_name,
+        products=args.product_name,
+        reversible=not args.irreversible,
+    )
     print(output_path)
     return 0
 
@@ -351,6 +409,57 @@ def _add_kinetics_commands(subparsers):
         help="reference pressure in Pa; default: 100000",
     )
     tst_parser.set_defaults(func=_cmd_kinetics_tst)
+
+    fit_parser = kinetics_subparsers.add_parser(
+        "fit",
+        help="fit Arrhenius kinetics parameters from rate data",
+    )
+    fit_parser.add_argument("input", help="CSV/XLSX rate scan data")
+    fit_parser.add_argument("--output", required=True, help="JSON/YAML output file")
+    fit_parser.add_argument(
+        "--model",
+        type=_kinetics_model_type,
+        default="Arrhenius",
+        help="kinetics model to fit: Arrhenius or Arrhenius2Piecewise; default: Arrhenius",
+    )
+    fit_parser.add_argument(
+        "--start-index",
+        type=int,
+        default=0,
+        help="first row index included in the fit; default: 0",
+    )
+    fit_parser.add_argument(
+        "--end-index",
+        type=int,
+        help="row index after the last row included in the fit",
+    )
+    fit_parser.add_argument(
+        "--guess",
+        type=_float_sequence,
+        help="comma-separated initial model parameters for scipy curve_fit",
+    )
+    fit_parser.add_argument(
+        "--maxfev",
+        type=_positive_int,
+        default=100000,
+        help="maximum function evaluations for fitting; default: 100000",
+    )
+    fit_parser.add_argument(
+        "--reactant-name",
+        action="append",
+        help="reactant name for Cantera YAML output; repeat for multiple reactants",
+    )
+    fit_parser.add_argument(
+        "--product-name",
+        action="append",
+        help="product name for Cantera YAML output; repeat for multiple products",
+    )
+    fit_parser.add_argument(
+        "--irreversible",
+        action="store_true",
+        help="write an irreversible Cantera reaction when output is YAML",
+    )
+    fit_parser.set_defaults(func=_cmd_kinetics_fit)
 
 
 def build_parser():
