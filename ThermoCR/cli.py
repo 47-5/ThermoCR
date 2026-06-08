@@ -187,6 +187,8 @@ def _cmd_thermo_scan(args):
     options = ThermoOptions(
         pressure=args.pressure,
         ignore_trans_and_rot=args.ignore_trans_and_rot,
+        point_group=args.point_group,
+        rotational_symmetry_number=args.rotational_symmetry_number,
     )
     temperatures = _temperature_grid(args.t_min, args.t_max, args.n_points)
     df = scan_thermo(
@@ -449,6 +451,15 @@ def _add_thermo_commands(subparsers):
         "--ignore-trans-and-rot",
         action="store_true",
         help="ignore translational and rotational contributions",
+    )
+    scan_parser.add_argument(
+        "--point-group",
+        help="override automatic point-group detection, for example C2v",
+    )
+    scan_parser.add_argument(
+        "--rotational-symmetry-number",
+        type=float,
+        help="override rotational symmetry number directly",
     )
     scan_parser.set_defaults(func=_cmd_thermo_scan)
 

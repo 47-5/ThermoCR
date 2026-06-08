@@ -56,12 +56,20 @@ class ThermoOptions:
     electronic_degeneracies: Optional[Sequence[int]] = None
     ignore_trans_and_rot: bool = False
     concentration: Optional[float] = None
+    point_group: Optional[str] = None
+    rotational_symmetry_number: Optional[float] = None
 
     def __post_init__(self):
         if self.temperature <= 0.0:
             raise ValueError("temperature must be positive")
         if self.pressure <= 0.0:
             raise ValueError("pressure must be positive")
+        if self.point_group is not None:
+            self.point_group = str(self.point_group)
+        if self.rotational_symmetry_number is not None:
+            self.rotational_symmetry_number = float(self.rotational_symmetry_number)
+            if self.rotational_symmetry_number <= 0.0:
+                raise ValueError("rotational_symmetry_number must be positive")
         if (self.electronic_energies is None) != (self.electronic_degeneracies is None):
             raise ValueError(
                 "electronic_energies and electronic_degeneracies must be provided together"

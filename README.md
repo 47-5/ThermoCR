@@ -51,6 +51,7 @@ thermocr split-link1 example/CPD.out split_jobs
 thermocr select-gaussian example/CPD.out selected.out --task-id 2 --mode select
 thermocr qm-energy example/CPD.out --gaussian-job-index -1
 thermocr thermo scan example/CPD.out --t-min 300 --t-max 3000 --n-points 100 --output thermo.csv
+thermocr thermo scan example/CPD.out --point-group C2v --output thermo_with_symmetry_override.csv
 thermocr thermo fit thermo.csv --model NASA7 --output CPD_thermo.yaml
 thermocr kinetics tst thermo_ts.csv --reactant thermo_r1.csv --reactant thermo_r2.csv --output rates.csv
 thermocr kinetics vtst path1.csv path2.csv --reactant thermo_r1.csv --reactant thermo_r2.csv --output vtst_rates.csv

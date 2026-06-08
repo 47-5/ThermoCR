@@ -58,7 +58,9 @@ def qm_thermo(atom_coord_path=None, atom_numbers=None, coords=None,
               read_ee_index=-1,
               E_list=None, g_list=None,
               ignore_trans_and_rot=False,
-              c=None):
+              c=None,
+              point_group=None,
+              rotational_symmetry_number=None):
     """
     Calculates thermodynamic properties based on quantum mechanical data.
 
@@ -111,6 +113,10 @@ def qm_thermo(atom_coord_path=None, atom_numbers=None, coords=None,
             Flag to ignore translational and rotational contributions.
     - c (float):
             Concentration in mol/m^3 for calculating concentration-dependent Gibbs free energy.
+    - point_group (str):
+            Optional point-group symbol used to override automatic point-group detection.
+    - rotational_symmetry_number (float):
+            Optional rotational symmetry number. If provided, this overrides `point_group`.
 
     Returns:
         (dict)
@@ -158,7 +164,14 @@ def qm_thermo(atom_coord_path=None, atom_numbers=None, coords=None,
         print(f'Cp_t: {Cp_t}')
         print(f'S_t: {S_t}')
     # rot
-    q_r, U_r, H_r, Cv_r, Cp_r, S_r = contribution_rot(atom_numbers=atom_numbers, coords=coords, T=T, convert_unit=True)
+    q_r, U_r, H_r, Cv_r, Cp_r, S_r = contribution_rot(
+        atom_numbers=atom_numbers,
+        coords=coords,
+        T=T,
+        convert_unit=True,
+        point_group=point_group,
+        rotational_symmetry_number=rotational_symmetry_number,
+    )
     if verbose:
         print('========= Rotation ========')
         print(f'q_r: {q_r}')
@@ -302,6 +315,8 @@ def calculate_thermo(molecule, options=None):
         g_list=options.electronic_degeneracies,
         ignore_trans_and_rot=options.ignore_trans_and_rot,
         c=options.concentration,
+        point_group=options.point_group,
+        rotational_symmetry_number=options.rotational_symmetry_number,
     )
     return ThermoResult.from_qm_thermo_dict(result)
 
@@ -345,6 +360,8 @@ def qm_thermo_scan(
         read_ee_index=-1,
         E_list=None, g_list=None,
         c=None,
+        point_group=None,
+        rotational_symmetry_number=None,
         out_path='QMthermoScan.xlsx'
         ):
     """
@@ -400,6 +417,10 @@ def qm_thermo_scan(
             Flag to ignore translational and rotational contributions.
     - c (float):
             Concentration in mol/m^3 for calculating concentration-dependent Gibbs free energy.
+    - point_group (str):
+            Optional point-group symbol used to override automatic point-group detection.
+    - rotational_symmetry_number (float):
+            Optional rotational symmetry number. If provided, this overrides `point_group`.
     - out_path: str, default 'QMthermoScan.xlsx'
         Path to save the output Excel file.
 
@@ -420,11 +441,13 @@ def qm_thermo_scan(
                                vib_path=vib_path, vibfreqs=vibfreqs,
                                ee_path=ee_path, ee=ee,
                                T=t, P=p,
-                               sclZPE=sclZPE, sclU=sclU, sclCv=sclCv, sclS=sclS,
-                               U_Minenkov=U_Minenkov, S_Grimme=S_Grimme,
-                               read_ee_index=read_ee_index, E_list=E_list, g_list=g_list,
-                               verbose=False, c=c
-                               )
+                                sclZPE=sclZPE, sclU=sclU, sclCv=sclCv, sclS=sclS,
+                                U_Minenkov=U_Minenkov, S_Grimme=S_Grimme,
+                                read_ee_index=read_ee_index, E_list=E_list, g_list=g_list,
+                                verbose=False, c=c,
+                                point_group=point_group,
+                                rotational_symmetry_number=rotational_symmetry_number,
+                                )
             results.append(result)
     df = pd.DataFrame(results)
     if out_path is not None:
@@ -567,7 +590,14 @@ def contribution_trans(M, T, P):
     return q_t, U_t, H_t, Cv_t, Cp_t, S_t
 
 
-def contribution_rot(atom_numbers, coords, T, convert_unit=True):
+def contribution_rot(
+        atom_numbers,
+        coords,
+        T,
+        convert_unit=True,
+        point_group=None,
+        rotational_symmetry_number=None,
+):
     """
     Calculate the rotational contribution to thermodynamic properties for a molecule.
 
@@ -581,6 +611,9 @@ def contribution_rot(atom_numbers, coords, T, convert_unit=True):
     - coords (List[List[float]]): 3D coordinates of the atoms in the molecule.
     - T (float): Temperature at which to calculate the thermodynamic properties.
     - convert_unit (bool, optional): Whether to convert moment of inertia units. Defaults to True.
+    - point_group (str, optional): Point-group symbol used instead of automatic detection.
+    - rotational_symmetry_number (float, optional): Symmetry number used directly. Takes
+      precedence over `point_group`.
 
     Returns:
     - Tuple[float, float, float, float, float, float]: A tuple containing q_r, U_r, H_r, Cv_r, Cp_r, S_r respectively.
@@ -608,8 +641,15 @@ def contribution_rot(atom_numbers, coords, T, convert_unit=True):
     else:
         I = get_I(coords=coords, numbers=atom_numbers)
         linear_flag = check_linear(I)
-        pg = get_point_group(coords=coords, numbers=atom_numbers)
-        sigma = get_rotational_symmetry_number(pg)
+        if rotational_symmetry_number is not None:
+            sigma = float(rotational_symmetry_number)
+            if sigma <= 0.0:
+                raise ValueError("rotational_symmetry_number must be positive")
+        else:
+            pg = point_group
+            if pg is None:
+                pg = get_point_group(coords=coords, numbers=atom_numbers)
+            sigma = get_rotational_symmetry_number(pg)
         if convert_unit:
             I *= convert_I
         if linear_flag:

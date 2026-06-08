@@ -1,6 +1,9 @@
 from pathlib import Path
 import unittest
 
+import numpy as np
+
+from ThermoCR.constants import R
 from ThermoCR import ThermoOptions as top_level_ThermoOptions
 from ThermoCR import calculate_thermo as top_level_calculate_thermo
 from ThermoCR import scan_thermo as top_level_scan_thermo
@@ -10,6 +13,7 @@ from ThermoCR.thermo import (
     ThermoResult,
     calculate_thermo,
     qm_thermo,
+    qm_thermo_scan,
     scan_thermo,
 )
 
@@ -67,9 +71,92 @@ class StructuredThermoApiTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             ThermoOptions(pressure=0.0)
         with self.assertRaises(ValueError):
+            ThermoOptions(rotational_symmetry_number=0.0)
+        with self.assertRaises(ValueError):
             ThermoOptions(electronic_energies=[0.0], electronic_degeneracies=None)
         with self.assertRaises(ValueError):
             ThermoOptions(electronic_energies=[0.0], electronic_degeneracies=[1, 2])
+
+    def test_rotational_symmetry_number_override_changes_rotational_entropy(self):
+        molecule = read_molecule_data(self.example_path)
+        temperature = 350.0
+        result_sigma_1 = calculate_thermo(
+            molecule,
+            ThermoOptions(
+                temperature=temperature,
+                pressure=100000.0,
+                rotational_symmetry_number=1,
+            ),
+        )
+        result_sigma_2 = calculate_thermo(
+            molecule,
+            ThermoOptions(
+                temperature=temperature,
+                pressure=100000.0,
+                rotational_symmetry_number=2,
+            ),
+        )
+
+        self.assertAlmostEqual(
+            result_sigma_1.partition_function_v0 / result_sigma_2.partition_function_v0,
+            2.0,
+            places=10,
+        )
+        self.assertAlmostEqual(
+            result_sigma_1.entropy - result_sigma_2.entropy,
+            R * np.log(2.0),
+            places=8,
+        )
+        self.assertAlmostEqual(
+            result_sigma_2.gibbs_free_energy - result_sigma_1.gibbs_free_energy,
+            temperature * R * np.log(2.0),
+            places=6,
+        )
+
+    def test_point_group_override_matches_equivalent_symmetry_number(self):
+        molecule = read_molecule_data(self.example_path)
+        from_point_group = calculate_thermo(
+            molecule,
+            ThermoOptions(point_group="C2", pressure=100000.0),
+        )
+        from_sigma = calculate_thermo(
+            molecule,
+            ThermoOptions(rotational_symmetry_number=2, pressure=100000.0),
+        )
+
+        self.assertAlmostEqual(
+            from_point_group.gibbs_free_energy,
+            from_sigma.gibbs_free_energy,
+            places=6,
+        )
+
+    def test_legacy_qm_thermo_scan_accepts_symmetry_override(self):
+        molecule = read_molecule_data(self.example_path)
+        structured = calculate_thermo(
+            molecule,
+            ThermoOptions(
+                temperature=350.0,
+                pressure=100000.0,
+                rotational_symmetry_number=2,
+            ),
+        )
+
+        legacy_scan = qm_thermo_scan(
+            atom_numbers=molecule.atom_numbers,
+            coords=molecule.coordinates,
+            vibfreqs=molecule.frequencies,
+            ee=molecule.electronic_energy,
+            T=[350.0],
+            P=[100000.0],
+            rotational_symmetry_number=2,
+            out_path=None,
+        )
+
+        self.assertAlmostEqual(
+            float(legacy_scan["G/(J/mol)"].iloc[0]),
+            structured.gibbs_free_energy,
+            places=6,
+        )
 
     def test_concentration_correction_is_preserved(self):
         molecule = read_molecule_data(self.example_path)

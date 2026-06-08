@@ -158,6 +158,10 @@ class CliTests(unittest.TestCase):
                 "100000",
                 "--gaussian-job-index",
                 "-1",
+                "--point-group",
+                "C2v",
+                "--rotational-symmetry-number",
+                "2",
                 "--output",
                 str(output_path),
             ])
@@ -173,6 +177,8 @@ class CliTests(unittest.TestCase):
         self.assertEqual(call.kwargs["temperatures"], [300.0, 400.0])
         self.assertEqual(call.kwargs["pressure"], 100000.0)
         self.assertIsInstance(call.kwargs["options"], ThermoOptions)
+        self.assertEqual(call.kwargs["options"].point_group, "C2v")
+        self.assertEqual(call.kwargs["options"].rotational_symmetry_number, 2.0)
 
     def test_thermo_fit_command_writes_json(self):
         temperatures = np.linspace(300.0, 1000.0, 12)
