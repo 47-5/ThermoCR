@@ -2,6 +2,7 @@
 
 from ThermoCR.thermo.calculators import (
     calculate_conformation_weighting,
+    calculate_thermo,
     contribution_ele,
     contribution_rot,
     contribution_trans,
@@ -69,6 +70,7 @@ from ThermoCR.thermo.partition import (
     q_vib_V0,
     q_vib_bot,
 )
+from ThermoCR.types import ThermoOptions, ThermoResult
 from ThermoCR.thermo.solvation import (
     calculate_solvent_energy,
     sort_key,
@@ -113,6 +115,7 @@ __all__ = [
     "ZPE",
     "ZPE_one_mode",
     "calculate_conformation_weighting",
+    "calculate_thermo",
     "calculate_solvent_energy",
     "contribution_ele",
     "contribution_rot",
@@ -139,5 +142,7 @@ __all__ = [
     "shomate_for_fit",
     "sort_key",
     "standard_state_energy",
+    "ThermoOptions",
+    "ThermoResult",
     "w_vec",
 ]

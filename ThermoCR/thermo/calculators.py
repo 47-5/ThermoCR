@@ -42,6 +42,7 @@ from ThermoCR.symmetry import (
     rotational_symmetry_number as get_rotational_symmetry_number,
 )
 from ThermoCR.constants import R, au2j_mol, convert_I
+from ThermoCR.types import MoleculeData, ThermoOptions, ThermoResult
 from typing import List
 import pandas as pd
 
@@ -257,6 +258,50 @@ def qm_thermo(atom_coord_path=None, atom_numbers=None, coords=None,
             'zpe/(J/mol)': zpe, 'U_corr/(J/mol)': U_corr, 'H_corr/(J/mol)': H_corr, 'G_corr/(J/mol)': G_corr,
             'ee/(J/mol)': ee * au2j_mol, 'U/(J/mol)': U, 'H/(J/mol)': H, 'G/(J/mol)': G,
         }
+
+
+def _require_molecule_field(molecule, field_name):
+    value = getattr(molecule, field_name)
+    if value is None:
+        raise ValueError(f"molecule.{field_name} is required for thermochemistry")
+    return value
+
+
+def calculate_thermo(molecule, options=None):
+    """Calculate thermochemistry from structured molecule data."""
+    if options is None:
+        options = ThermoOptions()
+    if not isinstance(options, ThermoOptions):
+        raise TypeError("options must be a ThermoOptions instance")
+    if not isinstance(molecule, MoleculeData):
+        raise TypeError("molecule must be a MoleculeData instance")
+
+    atom_numbers = _require_molecule_field(molecule, "atom_numbers")
+    frequencies = _require_molecule_field(molecule, "frequencies")
+    electronic_energy = _require_molecule_field(molecule, "electronic_energy")
+    if molecule.electronic_energy_unit.lower() != "hartree":
+        raise ValueError("molecule.electronic_energy must be in hartree")
+
+    result = qm_thermo(
+        atom_numbers=atom_numbers,
+        coords=molecule.coordinates,
+        vibfreqs=frequencies,
+        ee=electronic_energy,
+        T=options.temperature,
+        P=options.pressure,
+        sclZPE=options.zpe_scale_factor,
+        sclU=options.internal_energy_scale_factor,
+        sclCv=options.heat_capacity_scale_factor,
+        sclS=options.entropy_scale_factor,
+        U_Minenkov=options.use_minenkov_internal_energy,
+        S_Grimme=options.use_grimme_entropy,
+        verbose=False,
+        E_list=options.electronic_energies,
+        g_list=options.electronic_degeneracies,
+        ignore_trans_and_rot=options.ignore_trans_and_rot,
+        c=options.concentration,
+    )
+    return ThermoResult.from_qm_thermo_dict(result)
 
 
 def qm_thermo_scan(
@@ -668,6 +713,7 @@ def contribution_ele(E_list, g_list, T, convert_unit=True):
 
 __all__ = [
     'calculate_conformation_weighting',
+    'calculate_thermo',
     'contribution_ele',
     'contribution_rot',
     'contribution_trans',
