@@ -66,20 +66,34 @@ class GaussianLink1Tests(unittest.TestCase):
         with TemporaryDirectory() as tmpdir:
             input_path = Path(tmpdir) / "link1.out"
             output_dir = Path(tmpdir) / "jobs"
-            input_path.write_text(LINK1_TEXT)
+            input_path.write_text(LINK1_TEXT, encoding="utf-8")
 
             output_paths = split_gaussian_link1_output(input_path, output_dir)
 
             self.assertIs(split_gaussian_link1_output, package_split_gaussian_link1_output)
             self.assertEqual(len(output_paths), 2)
-            self.assertIn("first job body", output_paths[0].read_text())
-            self.assertIn("second job body", output_paths[1].read_text())
+            self.assertIn("first job body", output_paths[0].read_text(encoding="utf-8"))
+            self.assertIn("second job body", output_paths[1].read_text(encoding="utf-8"))
+
+    def test_split_output_writes_utf8_text(self):
+        unicode_text = LINK1_TEXT.replace(
+            "second job body",
+            "second job body with delta ΔG",
+        )
+        with TemporaryDirectory() as tmpdir:
+            input_path = Path(tmpdir) / "link1.out"
+            output_dir = Path(tmpdir) / "jobs"
+            input_path.write_text(unicode_text, encoding="utf-8")
+
+            output_paths = split_gaussian_link1_output(input_path, output_dir)
+
+            self.assertIn("delta ΔG", output_paths[1].read_text(encoding="utf-8"))
 
     def test_formal_select_gaussian_output_selects_readable_link1_job(self):
         with TemporaryDirectory() as tmpdir:
             input_path = Path(tmpdir) / "link1.out"
             output_path = Path(tmpdir) / "job2.out"
-            input_path.write_text(LINK1_TEXT)
+            input_path.write_text(LINK1_TEXT, encoding="utf-8")
 
             select_gaussian_output(
                 input_path,
@@ -88,7 +102,7 @@ class GaussianLink1Tests(unittest.TestCase):
                 select_mode="select",
             )
 
-            selected_text = output_path.read_text()
+            selected_text = output_path.read_text(encoding="utf-8")
             self.assertTrue(selected_text.startswith(" Entering Gaussian System"))
             self.assertIn("second job body", selected_text)
             self.assertNotIn("first job body", selected_text)
@@ -97,7 +111,7 @@ class GaussianLink1Tests(unittest.TestCase):
         with TemporaryDirectory() as tmpdir:
             input_path = Path(tmpdir) / "link1.out"
             output_path = Path(tmpdir) / "job2.out"
-            input_path.write_text(LINK1_TEXT)
+            input_path.write_text(LINK1_TEXT, encoding="utf-8")
 
             self.assertIs(select_gaussian_out, package_select_gaussian_out)
             select_gaussian_out(
@@ -107,7 +121,7 @@ class GaussianLink1Tests(unittest.TestCase):
                 select_mode="select",
             )
 
-            selected_text = output_path.read_text()
+            selected_text = output_path.read_text(encoding="utf-8")
             self.assertTrue(selected_text.startswith(" Entering Gaussian System"))
             self.assertIn("second job body", selected_text)
             self.assertNotIn("first job body", selected_text)

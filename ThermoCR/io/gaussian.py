@@ -29,6 +29,14 @@ def _as_text(input_text):
     return "".join(input_text)
 
 
+def _read_text(path):
+    return Path(path).read_text(encoding="utf-8", errors="replace")
+
+
+def _write_text(path, text):
+    Path(path).write_text(text, encoding="utf-8")
+
+
 def _find_gaussian_header(lines):
     """Return the banner/header that cclib needs before a Link1 job body."""
     for index, line in enumerate(lines):
@@ -113,7 +121,7 @@ def select_gaussian_output(input_path, output_path, task_id=2, select_mode="cut"
     if select_mode not in {"cut", "select"}:
         raise ValueError("select_mode must be 'cut' or 'select'")
 
-    text = Path(input_path).read_text(errors="replace")
+    text = _read_text(input_path)
 
     if task_id == 1:
         select_mode = "cut"
@@ -135,7 +143,7 @@ def select_gaussian_output(input_path, output_path, task_id=2, select_mode="cut"
             )
         output_text = "".join(lines[: end_line_indices[task_index]])
 
-    Path(output_path).write_text(output_text)
+    _write_text(output_path, output_text)
     return None
 
 
@@ -151,7 +159,7 @@ def select_gaussian_out(input_path, output_path, task_id=2, select_mode="cut"):
 
 def is_gaussian_link1_output(filepath):
     """Return True when a file looks like a multi-step Gaussian Link1 output."""
-    text = Path(filepath).read_text(errors="replace")
+    text = _read_text(filepath)
     return (
         LINK1_MARKER in text
         and text.count(NORMAL_TERMINATION_MARKER) > 1
@@ -164,7 +172,7 @@ def split_gaussian_link1_output(input_path, output_dir, prefix=None):
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    text = input_path.read_text(errors="replace")
+    text = _read_text(input_path)
     sections = split_gaussian_link1_text(text)
     if prefix is None:
         prefix = input_path.stem
@@ -173,7 +181,7 @@ def split_gaussian_link1_output(input_path, output_dir, prefix=None):
     width = max(2, len(str(len(sections))))
     for index, section in enumerate(sections, start=1):
         output_path = output_dir / f"{prefix}_job{index:0{width}d}.out"
-        output_path.write_text(section)
+        _write_text(output_path, section)
         output_paths.append(output_path)
     return output_paths
 
@@ -181,10 +189,10 @@ def split_gaussian_link1_output(input_path, output_dir, prefix=None):
 def read_gaussian_link1_job(input_path, job_index=-1):
     """Read one job section from a Gaussian Link1 output with cclib."""
     input_path = Path(input_path)
-    text = input_path.read_text(errors="replace")
+    text = _read_text(input_path)
     selected_text = select_gaussian_link1_text(text, job_index=job_index)
 
     with TemporaryDirectory() as tmpdir:
         selected_path = Path(tmpdir) / input_path.name
-        selected_path.write_text(selected_text)
+        _write_text(selected_path, selected_text)
         return cclib.io.ccread(str(selected_path))
