@@ -35,7 +35,7 @@ ThermoCR now provides modern, lower-case namespaces for common workflows:
 ```python
 from ThermoCR.elements import atomic_mass, atomic_masses
 from ThermoCR.io import read_qm_output, read_molecule_data, read_atom_coordinates
-from ThermoCR.thermo import calculate_thermo, ThermoOptions, qm_thermo_scan
+from ThermoCR.thermo import calculate_thermo, scan_thermo, ThermoOptions
 from ThermoCR.kinetics import k_TST, k_VTST
 from ThermoCR.simulation import ChemicalKineticsSimulator
 from ThermoCR.export import make_cantera_specie_name_yaml

@@ -1,6 +1,6 @@
 """Shared data objects for ThermoCR public APIs."""
 
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from typing import Optional, Sequence
 
 import numpy as np
@@ -97,6 +97,9 @@ class ThermoResult:
     enthalpy: float
     gibbs_free_energy: float
     concentration_delta_g: Optional[float] = None
+
+    def as_dict(self):
+        return asdict(self)
 
     @classmethod
     def from_qm_thermo_dict(cls, data):

@@ -1,5 +1,7 @@
 """High-level thermochemistry calculators."""
 
+from dataclasses import replace
+
 import numpy as np
 
 from ThermoCR.thermo.partition import q_trans, q_rot_single_atom, q_rot_linear, q_rot_nonlinear, q_vib_V0, q_vib_bot, q_ele, q
@@ -302,6 +304,35 @@ def calculate_thermo(molecule, options=None):
         c=options.concentration,
     )
     return ThermoResult.from_qm_thermo_dict(result)
+
+
+def _normalize_temperatures(temperatures):
+    if np.isscalar(temperatures):
+        temperatures = [temperatures]
+    else:
+        temperatures = list(temperatures)
+    if not temperatures:
+        raise ValueError("temperatures must not be empty")
+    return [float(temperature) for temperature in temperatures]
+
+
+def scan_thermo(molecule, temperatures, pressure=None, options=None):
+    """Calculate thermochemistry over temperatures and return a DataFrame."""
+    if options is None:
+        options = ThermoOptions()
+    if not isinstance(options, ThermoOptions):
+        raise TypeError("options must be a ThermoOptions instance")
+
+    rows = []
+    target_pressure = options.pressure if pressure is None else float(pressure)
+    for temperature in _normalize_temperatures(temperatures):
+        step_options = replace(
+            options,
+            temperature=temperature,
+            pressure=target_pressure,
+        )
+        rows.append(calculate_thermo(molecule, step_options).as_dict())
+    return pd.DataFrame(rows)
 
 
 def qm_thermo_scan(
@@ -721,4 +752,5 @@ __all__ = [
     'qm_thermo',
     'qm_thermo_conformation_weighting',
     'qm_thermo_scan',
+    'scan_thermo',
 ]

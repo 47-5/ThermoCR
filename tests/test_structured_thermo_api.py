@@ -3,8 +3,15 @@ import unittest
 
 from ThermoCR import ThermoOptions as top_level_ThermoOptions
 from ThermoCR import calculate_thermo as top_level_calculate_thermo
+from ThermoCR import scan_thermo as top_level_scan_thermo
 from ThermoCR.io import read_molecule_data
-from ThermoCR.thermo import ThermoOptions, ThermoResult, calculate_thermo, qm_thermo
+from ThermoCR.thermo import (
+    ThermoOptions,
+    ThermoResult,
+    calculate_thermo,
+    qm_thermo,
+    scan_thermo,
+)
 
 
 class StructuredThermoApiTests(unittest.TestCase):
@@ -34,6 +41,20 @@ class StructuredThermoApiTests(unittest.TestCase):
         self.assertAlmostEqual(result.entropy, legacy["S/(J/mol/K)"], places=8)
         self.assertAlmostEqual(result.gibbs_free_energy, legacy["G/(J/mol)"], places=6)
 
+    def test_scan_thermo_returns_dataframe_without_writing_files(self):
+        molecule = read_molecule_data(self.example_path)
+
+        df = scan_thermo(
+            molecule,
+            temperatures=[300.0, 400.0],
+            pressure=100000.0,
+        )
+
+        self.assertEqual(list(df["temperature"]), [300.0, 400.0])
+        self.assertEqual(list(df["pressure"]), [100000.0, 100000.0])
+        self.assertIn("gibbs_free_energy", df.columns)
+        self.assertEqual(len(df), 2)
+
     def test_calculate_thermo_rejects_non_hartree_energy(self):
         molecule = read_molecule_data(self.example_path, return_hartree=False)
 
@@ -59,6 +80,7 @@ class StructuredThermoApiTests(unittest.TestCase):
     def test_top_level_exports_structured_thermo_api(self):
         self.assertIs(top_level_calculate_thermo, calculate_thermo)
         self.assertIs(top_level_ThermoOptions, ThermoOptions)
+        self.assertIs(top_level_scan_thermo, scan_thermo)
 
 
 if __name__ == "__main__":

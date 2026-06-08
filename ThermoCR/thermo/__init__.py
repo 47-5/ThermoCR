@@ -10,6 +10,7 @@ from ThermoCR.thermo.calculators import (
     qm_thermo,
     qm_thermo_conformation_weighting,
     qm_thermo_scan,
+    scan_thermo,
 )
 from ThermoCR.thermo.corrections import (
     Cp_ele,
@@ -138,6 +139,7 @@ __all__ = [
     "qm_thermo",
     "qm_thermo_conformation_weighting",
     "qm_thermo_scan",
+    "scan_thermo",
     "shomate",
     "shomate_for_fit",
     "sort_key",
