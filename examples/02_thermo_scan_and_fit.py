@@ -46,6 +46,7 @@ def main():
             fit.model_type,
             fit.temperature_range,
             fit.parameters,
+            reference_pressure_pa=fit.reference_pressure_pa,
         ),
         encoding="utf-8",
     )

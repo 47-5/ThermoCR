@@ -56,6 +56,7 @@ class StructuredThermoApiTests(unittest.TestCase):
 
         self.assertEqual(list(df["temperature"]), [300.0, 400.0])
         self.assertEqual(list(df["pressure"]), [100000.0, 100000.0])
+        self.assertEqual(df.attrs["reference_pressure_pa"], 100000.0)
         self.assertIn("gibbs_free_energy", df.columns)
         self.assertEqual(len(df), 2)
 

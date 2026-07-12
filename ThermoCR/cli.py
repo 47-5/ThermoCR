@@ -102,6 +102,7 @@ def _write_thermo_fit_result(result, output_path):
             result.model_type,
             result.temperature_range,
             result.parameters,
+            reference_pressure_pa=result.reference_pressure_pa,
         )
         output_path.write_text(text, encoding="utf-8")
     elif suffix == ".json":
@@ -213,6 +214,7 @@ def _cmd_thermo_fit(args):
         T_range=args.t_range,
         guess=args.guess,
         maxfev=args.maxfev,
+        reference_pressure_pa=args.reference_pressure_pa,
     )
     output_path = _write_thermo_fit_result(result, args.output)
     print(output_path)
@@ -438,9 +440,11 @@ def _add_thermo_commands(subparsers):
     )
     scan_parser.add_argument(
         "--pressure",
+        "--reference-pressure-pa",
+        dest="pressure",
         type=float,
         default=101325.0,
-        help="pressure in Pa; default: 101325",
+        help="thermochemistry reference pressure in Pa; default: 101325",
     )
     scan_parser.add_argument(
         "--gaussian-job-index",
@@ -509,6 +513,14 @@ def _add_thermo_commands(subparsers):
         type=_positive_int,
         default=100000,
         help="maximum function evaluations for fitting; default: 100000",
+    )
+    fit_parser.add_argument(
+        "--reference-pressure-pa",
+        type=float,
+        help=(
+            "reference pressure in Pa; by default infer the unique value "
+            "from the input pressure column"
+        ),
     )
     fit_parser.set_defaults(func=_cmd_thermo_fit)
 

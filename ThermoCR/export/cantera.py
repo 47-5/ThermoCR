@@ -1,11 +1,16 @@
 """Cantera YAML export helpers for ThermoCR."""
 
 from collections import Counter
+import math
 from pathlib import Path
 import re
 
 from ThermoCR.io import read_qm_output
 from ThermoCR.constants import atomic_number_map
+from ThermoCR.reference_state import (
+    DEFAULT_REFERENCE_PRESSURE_PA,
+    resolve_export_reference_pressure_pa,
+)
 
 au_to_kcal_per_mol = 627.51
 au_to_kJ_per_mol = 2625.5
@@ -13,6 +18,7 @@ au_to_kJ_per_mol = 2625.5
 __all__ = [
     "au_to_kJ_per_mol",
     "au_to_kcal_per_mol",
+    "DEFAULT_REFERENCE_PRESSURE_PA",
     "format_cantera_mechanism_yaml",
     "format_cantera_reaction_yaml",
     "format_cantera_species_yaml",
@@ -76,8 +82,67 @@ def _elements_from_species_blocks(species_blocks):
     return elements
 
 
-def format_cantera_yaml_thermo(model_type, T_range, parameters, reference_p=None):
-    """Return a Cantera YAML thermo block for fitted parameters."""
+def _format_pressure_pa(pressure_pa):
+    if pressure_pa.is_integer():
+        return str(int(pressure_pa))
+    return format(pressure_pa, ".15g")
+
+
+def _validate_single_region_thermo(model, T_range, parameters):
+    expected_parameter_counts = {
+        "NASA7": 7,
+        "NASA9": 9,
+        "Shomate": 7,
+    }
+    temperatures = list(T_range)
+    if len(temperatures) != 2:
+        raise ValueError(
+            "single-region thermo export requires two increasing temperature bounds"
+        )
+    try:
+        lower, upper = (float(value) for value in temperatures)
+    except (TypeError, ValueError) as exc:
+        raise ValueError(
+            "single-region thermo export requires two increasing temperature bounds"
+        ) from exc
+    if (
+        not math.isfinite(lower)
+        or not math.isfinite(upper)
+        or lower <= 0.0
+        or upper <= lower
+    ):
+        raise ValueError(
+            "single-region thermo export requires two increasing positive "
+            "temperature bounds"
+        )
+
+    coefficients = list(parameters)
+    expected_count = expected_parameter_counts[model]
+    if len(coefficients) != expected_count:
+        raise ValueError(f"{model} requires exactly {expected_count} parameters")
+    try:
+        numeric_coefficients = [float(value) for value in coefficients]
+    except (TypeError, ValueError) as exc:
+        raise ValueError(f"{model} parameters must be finite numbers") from exc
+    if not all(math.isfinite(value) for value in numeric_coefficients):
+        raise ValueError(f"{model} parameters must be finite numbers")
+    return [lower, upper], numeric_coefficients
+
+
+def format_cantera_yaml_thermo(
+    model_type,
+    T_range,
+    parameters,
+    reference_p=None,
+    *,
+    reference_pressure_pa=None,
+):
+    """Return a Cantera YAML thermo block for fitted parameters.
+
+    ``reference_pressure_pa`` is the canonical API and is always interpreted
+    in Pa. The legacy ``reference_p`` argument remains supported temporarily
+    and is interpreted in bar, matching the historical writer behavior.
+    """
     model_names = {
         "nasa7": "NASA7",
         "nasa9": "NASA9",
@@ -86,14 +151,23 @@ def format_cantera_yaml_thermo(model_type, T_range, parameters, reference_p=None
     model = model_names.get(str(model_type).lower())
     if model is None:
         raise ValueError(f"unsupported thermo model type: {model_type}")
+    T_range, parameters = _validate_single_region_thermo(
+        model,
+        T_range,
+        parameters,
+    )
+    pressure_pa = resolve_export_reference_pressure_pa(
+        reference_p=reference_p,
+        reference_pressure_pa=reference_pressure_pa,
+        warning_stacklevel=3,
+    )
 
     lines = [
         "  thermo:",
         f"   model: {model}",
         f"   temperature-ranges: {list(T_range)}",
+        f"   reference-pressure: {_format_pressure_pa(pressure_pa)} Pa",
     ]
-    if reference_p is not None:
-        lines.append(f"   reference-pressure: {reference_p} bar")
     lines.extend([
         "   data:",
         f"   - {list(parameters)}",
@@ -218,11 +292,25 @@ def write_cantera_yaml_thermo_piecewise_Gibbs(
     return None
 
 
-def write_cantera_yaml_thermo_NASA7(specie_name, T_range, nasa7_parameters, root_path="."):
+def write_cantera_yaml_thermo_NASA7(
+    specie_name,
+    T_range,
+    nasa7_parameters,
+    root_path=".",
+    *,
+    reference_pressure_pa=None,
+    reference_p=None,
+):
     """Write NASA7 thermodynamic data in Cantera YAML format."""
     yaml_path = _output_path(root_path, f"{specie_name}_thermo.yaml")
     with yaml_path.open("w", encoding="utf-8") as f:
-        f.write(format_cantera_yaml_thermo("NASA7", T_range, nasa7_parameters))
+        f.write(format_cantera_yaml_thermo(
+            "NASA7",
+            T_range,
+            nasa7_parameters,
+            reference_p=reference_p,
+            reference_pressure_pa=reference_pressure_pa,
+        ))
     return None
 
 
@@ -230,10 +318,18 @@ def write_cantera_yaml_thermo_NASA9(
     specie_name,
     T_range,
     nasa9_parameters,
-    reference_p=1,
+    reference_p=None,
     root_path=".",
+    *,
+    reference_pressure_pa=None,
 ):
-    """Write NASA9 thermodynamic data in Cantera YAML format."""
+    """Write NASA9 thermodynamic data in Cantera YAML format.
+
+    A call that supplies neither pressure argument retains the historical
+    1 bar writer default. New code should pass ``reference_pressure_pa``.
+    """
+    if reference_p is None and reference_pressure_pa is None:
+        reference_p = 1.0
     yaml_path = _output_path(root_path, f"{specie_name}_thermo.yaml")
     with yaml_path.open("w", encoding="utf-8") as f:
         f.write(format_cantera_yaml_thermo(
@@ -241,6 +337,7 @@ def write_cantera_yaml_thermo_NASA9(
             T_range,
             nasa9_parameters,
             reference_p=reference_p,
+            reference_pressure_pa=reference_pressure_pa,
         ))
     return None
 
@@ -249,10 +346,18 @@ def write_cantera_yaml_thermo_Shomate(
     specie_name,
     T_range,
     Shomate_parameters,
-    reference_p=1,
+    reference_p=None,
     root_path=".",
+    *,
+    reference_pressure_pa=None,
 ):
-    """Write Shomate thermodynamic data in Cantera YAML format."""
+    """Write Shomate thermodynamic data in Cantera YAML format.
+
+    A call that supplies neither pressure argument retains the historical
+    1 bar writer default. New code should pass ``reference_pressure_pa``.
+    """
+    if reference_p is None and reference_pressure_pa is None:
+        reference_p = 1.0
     yaml_path = _output_path(root_path, f"{specie_name}_thermo.yaml")
     with yaml_path.open("w", encoding="utf-8") as f:
         f.write(format_cantera_yaml_thermo(
@@ -260,6 +365,7 @@ def write_cantera_yaml_thermo_Shomate(
             T_range,
             Shomate_parameters,
             reference_p=reference_p,
+            reference_pressure_pa=reference_pressure_pa,
         ))
     return None
 

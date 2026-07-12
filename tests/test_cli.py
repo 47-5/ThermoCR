@@ -193,6 +193,7 @@ class CliTests(unittest.TestCase):
                 "heat_capacity_cp": heat_capacity,
                 "enthalpy": enthalpy,
                 "entropy": entropy,
+                "pressure": 100000.0,
             }).to_csv(input_path, index=False)
 
             exit_code, stdout = self._run_cli([
@@ -214,6 +215,7 @@ class CliTests(unittest.TestCase):
         self.assertIn(str(output_path), stdout)
         self.assertEqual(payload["model_type"], "NASA7")
         self.assertEqual(payload["temperature_range"], [300.0, 1000.0])
+        self.assertEqual(payload["reference_pressure_pa"], 100000.0)
         self.assertGreater(payload["metrics"]["heat_capacity_cp"]["r2"], 0.999999)
 
     def test_thermo_fit_command_writes_cantera_yaml(self):
@@ -229,6 +231,7 @@ class CliTests(unittest.TestCase):
                 "heat_capacity_cp": heat_capacity,
                 "enthalpy": enthalpy,
                 "entropy": entropy,
+                "pressure": 100000.0,
             }).to_csv(input_path, index=False)
 
             exit_code, stdout = self._run_cli([
@@ -242,6 +245,7 @@ class CliTests(unittest.TestCase):
         self.assertIn(str(output_path), stdout)
         self.assertIn("model: NASA7", yaml_text)
         self.assertIn("temperature-ranges: [300.0, 1000.0]", yaml_text)
+        self.assertIn("reference-pressure: 100000 Pa", yaml_text)
 
     def test_kinetics_tst_command_writes_csv(self):
         temperatures = [300.0, 400.0]

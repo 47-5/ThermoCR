@@ -1,6 +1,7 @@
 """Export helpers for ThermoCR."""
 
 from ThermoCR.export.cantera import (
+    DEFAULT_REFERENCE_PRESSURE_PA,
     au_to_kJ_per_mol,
     au_to_kcal_per_mol,
     format_cantera_mechanism_yaml,
@@ -17,6 +18,7 @@ from ThermoCR.export.cantera import (
 )
 
 __all__ = [
+    "DEFAULT_REFERENCE_PRESSURE_PA",
     "au_to_kJ_per_mol",
     "au_to_kcal_per_mol",
     "format_cantera_mechanism_yaml",

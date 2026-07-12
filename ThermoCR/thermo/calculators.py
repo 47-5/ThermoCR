@@ -347,7 +347,9 @@ def scan_thermo(molecule, temperatures, pressure=None, options=None):
             pressure=target_pressure,
         )
         rows.append(calculate_thermo(molecule, step_options).as_dict())
-    return pd.DataFrame(rows)
+    frame = pd.DataFrame(rows)
+    frame.attrs["reference_pressure_pa"] = target_pressure
+    return frame
 
 
 def qm_thermo_scan(

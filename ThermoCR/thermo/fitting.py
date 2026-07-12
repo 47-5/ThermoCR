@@ -3,6 +3,7 @@
 from dataclasses import dataclass
 import os
 from os.path import join
+import warnings
 import numpy as np
 import pandas as pd
 from scipy.optimize import curve_fit
@@ -10,10 +11,22 @@ from sklearn.metrics import mean_squared_error, mean_absolute_error, mean_absolu
 from matplotlib import rcParams
 import matplotlib.pyplot as plt
 
+from ThermoCR.constants import R
 from ThermoCR.export.cantera import write_cantera_yaml_thermo_NASA7, write_cantera_yaml_thermo_NASA9, write_cantera_yaml_thermo_Shomate
+from ThermoCR.reference_state import (
+    DEFAULT_REFERENCE_PRESSURE_PA,
+    validate_reference_pressure_pa,
+)
 
 
 kj_to_j = 1000
+
+
+def _validate_model_temperature(T):
+    temperature = np.asarray(T, dtype=float)
+    if not np.all(np.isfinite(temperature)) or np.any(temperature <= 0.0):
+        raise ValueError("thermo model temperature must be finite and positive")
+    return temperature
 
 
 class NASA7:
@@ -45,7 +58,7 @@ class NASA7:
 
 
 def nasa7(T, a0, a1, a2, a3, a4, a5, a6):
-    R = 8.314
+    T = _validate_model_temperature(T)
     Cp_T = R * (a0 + a1 * T + a2 * T ** 2 + a3 * T ** 3 + a4 * T ** 4)
     H_T = R * T * (a0 + a1 / 2 * T + a2 / 3 * T ** 2 + a3 / 4 * T ** 3 + a4 / 5 * T ** 4 + a5 / T)
     S_T = R * (a0 * np.log(T) + a1 * T + a2 / 2 * T ** 2 + a3 / 3 * T ** 3 + a4 / 4 * T ** 4 + a6)
@@ -89,13 +102,14 @@ class NASA9:
 
 
 def nasa9(T, a0, a1, a2, a3, a4, a5, a6, a7, a8):
-    R = 8.314
+    T = _validate_model_temperature(T)
     Cp_T = R * (a0 * T ** -2 + a1 * T ** -1 +
                 a2 + a3 * T + a4 * T ** 2 + a5 * T ** 3 + a6 * T ** 4)
     H_T = R * T * (-a0 * T ** -2 + a1 * np.log(T) / T +
                    a2 + a3 / 2 * T + a4 / 3 * T ** 2 + a5 / 4 * T ** 3 + a6 / 5 * T ** 4 + a7 / T)
-    S_T = R * T * (-a0 / 2 * T ** -2 - a1 * T ** -1 +
-                   a2 * np.log(T) + a3 * T + a4 / 2 * T ** 2 + a5 / 3 * T ** 3 + a6 / 4 * T ** 4 + a8)
+    S_T = R * (-a0 / 2 * T ** -2 - a1 * T ** -1 +
+               a2 * np.log(T) + a3 * T + a4 / 2 * T ** 2 +
+               a5 / 3 * T ** 3 + a6 / 4 * T ** 4 + a8)
     return Cp_T, H_T, S_T
 
 
@@ -134,9 +148,20 @@ class Shomate:
 
 
 def shomate(T, A, B, C, D, E, F, G):
+    """Evaluate a Shomate polynomial in ThermoCR's SI molar units.
+
+    The customary Shomate enthalpy expression evaluates numerically in
+    kJ/mol, while heat capacity and entropy evaluate in J/(mol K). ThermoCR's
+    fitting tables use J/mol for enthalpy, so the enthalpy result is converted
+    explicitly here.
+    """
+    T = _validate_model_temperature(T)
     t = T / 1000
     Cp_T = A + B * t + C * t ** 2 + D * t ** 3 + E * t ** -2
-    H_T = A * t + B / 2 * t ** 2 + C / 3 * t ** 3 + D / 4 * t ** 4 - E / t + F
+    H_T = kj_to_j * (
+        A * t + B / 2 * t ** 2 + C / 3 * t ** 3 +
+        D / 4 * t ** 4 - E / t + F
+    )
     S_T = A * np.log(t) + B * t + C / 2 * t ** 2 + D / 3 * t ** 3 - E / 2 * t ** -2 + G
     return Cp_T, H_T, S_T
 
@@ -158,6 +183,11 @@ _LEGACY_THERMO_COLUMNS = {
     "H": "H/(J/mol)",
     "S": "S/(J/mol/K)",
 }
+_REFERENCE_PRESSURE_COLUMNS = (
+    "reference_pressure_pa",
+    "pressure",
+    "P/Pa",
+)
 _THERMO_MODEL_INFO = {
     "NASA7": {
         "fit_func": nasa7_for_fit,
@@ -189,11 +219,15 @@ class ThermoFitResult:
     temperature_range: tuple
     metrics: dict
     covariance: np.ndarray = None
+    reference_pressure_pa: float = DEFAULT_REFERENCE_PRESSURE_PA
 
     def __post_init__(self):
         self.model_type = _canonical_model_type(self.model_type)
         self.parameters = tuple(float(parameter) for parameter in self.parameters)
         self.temperature_range = tuple(float(value) for value in self.temperature_range)
+        self.reference_pressure_pa = validate_reference_pressure_pa(
+            self.reference_pressure_pa
+        )
         if self.covariance is not None:
             self.covariance = np.asarray(self.covariance, dtype=float)
 
@@ -216,6 +250,7 @@ class ThermoFitResult:
             "temperature_range": list(self.temperature_range),
             "metrics": self.metrics,
             "covariance": covariance,
+            "reference_pressure_pa": self.reference_pressure_pa,
         }
 
 
@@ -263,6 +298,71 @@ def _extract_thermo_fit_arrays(data_frame, data_columns, start_index, end_index)
     return arrays
 
 
+def _resolve_fit_reference_pressure(
+    data_frame,
+    start_index,
+    end_index,
+    reference_pressure_pa,
+):
+    selected = data_frame.iloc[start_index:end_index]
+    pressure_values = []
+    for column in _REFERENCE_PRESSURE_COLUMNS:
+        if column not in selected.columns:
+            continue
+        try:
+            values = selected[column].to_numpy(dtype=float)
+        except (TypeError, ValueError) as exc:
+            raise ValueError(f"reference pressure column {column!r} must be numeric") from exc
+        if not np.all(np.isfinite(values)) or np.any(values <= 0.0):
+            raise ValueError(
+                f"reference pressure column {column!r} must contain finite positive values"
+            )
+        pressure_values.extend(values.tolist())
+
+    attr_pressure = data_frame.attrs.get("reference_pressure_pa")
+    if attr_pressure is not None:
+        pressure_values.append(validate_reference_pressure_pa(attr_pressure))
+
+    inferred_pressure = None
+    if pressure_values:
+        inferred_pressure = pressure_values[0]
+        if not np.allclose(
+            pressure_values,
+            inferred_pressure,
+            rtol=1.0e-12,
+            atol=1.0e-9,
+        ):
+            raise ValueError(
+                "thermo fitting data contains multiple reference pressures; "
+                "fit each pressure separately"
+            )
+
+    if reference_pressure_pa is not None:
+        explicit_pressure = validate_reference_pressure_pa(reference_pressure_pa)
+        if inferred_pressure is not None and not np.isclose(
+            explicit_pressure,
+            inferred_pressure,
+            rtol=1.0e-12,
+            atol=1.0e-9,
+        ):
+            raise ValueError(
+                f"explicit reference pressure {explicit_pressure:g} Pa does not match "
+                f"the fitting data pressure {inferred_pressure:g} Pa"
+            )
+        return explicit_pressure
+
+    if inferred_pressure is not None:
+        return validate_reference_pressure_pa(inferred_pressure)
+
+    warnings.warn(
+        "thermo fitting data does not declare a reference pressure; falling "
+        f"back to {DEFAULT_REFERENCE_PRESSURE_PA:g} Pa",
+        DeprecationWarning,
+        stacklevel=3,
+    )
+    return DEFAULT_REFERENCE_PRESSURE_PA
+
+
 def _build_fit_sigma(Cp_T, H_T, S_T, weight_strategy):
     if weight_strategy == "uniform":
         return None
@@ -300,6 +400,7 @@ def fit_thermo_frame(
         guess: list = None,
         bounds: tuple = None,
         maxfev: int = 100000,
+        reference_pressure_pa: float = None,
 ):
     """Fit NASA/Shomate thermo parameters from a table without file I/O.
 
@@ -307,7 +408,10 @@ def fit_thermo_frame(
     ``temperature``, ``heat_capacity_cp``, ``enthalpy``, and ``entropy``. It
     also accepts the legacy Excel column names used by ``fit_thermo_model``.
     """
-    df = pd.DataFrame(data_frame)
+    if isinstance(data_frame, pd.DataFrame):
+        df = data_frame.copy()
+    else:
+        df = pd.DataFrame(data_frame)
     T, Cp_T, H_T, S_T = _extract_thermo_fit_arrays(
         df,
         data_columns=data_columns,
@@ -316,6 +420,12 @@ def fit_thermo_frame(
     )
     if T_range is None:
         T_range = [float(np.min(T)), float(np.max(T))]
+    resolved_reference_pressure_pa = _resolve_fit_reference_pressure(
+        df,
+        start_index=start_index,
+        end_index=end_index,
+        reference_pressure_pa=reference_pressure_pa,
+    )
 
     model = _get_thermo_model_info(model_type)
     n_params = model["n_params"]
@@ -348,6 +458,7 @@ def fit_thermo_frame(
         temperature_range=tuple(float(value) for value in T_range),
         metrics=metrics,
         covariance=pcov,
+        reference_pressure_pa=resolved_reference_pressure_pa,
     )
 
 
@@ -433,6 +544,7 @@ def fit_thermo_model(
         guess: list = None,
         bounds: tuple = None,
         maxfev: int = 100000,
+        reference_pressure_pa: float = None,
 ):
     """
     Fits a thermodynamic model to experimental data and evaluates the fit.
@@ -507,6 +619,12 @@ def fit_thermo_model(
     H_T = df[data_columns["H"]].to_numpy()[start_index:end_index]
     S_T = df[data_columns["S"]].to_numpy()[start_index:end_index]
     Cp_T = df[data_columns["Cp"]].to_numpy()[start_index:end_index]
+    resolved_reference_pressure_pa = _resolve_fit_reference_pressure(
+        df,
+        start_index=start_index,
+        end_index=end_index,
+        reference_pressure_pa=reference_pressure_pa,
+    )
 
     # 确定温度范围
     if T_range is None:
@@ -586,15 +704,27 @@ def fit_thermo_model(
     if write_yaml and model["yaml_writer"]:
         if model_type == "NASA7":
             model["yaml_writer"](
-                name, T_range, [float(p) for p in popt], root_path=output_dir
+                name,
+                T_range,
+                [float(p) for p in popt],
+                root_path=output_dir,
+                reference_pressure_pa=resolved_reference_pressure_pa,
             )
         elif model_type == "NASA9":
             model["yaml_writer"](
-                name, T_range, [float(p) for p in popt], root_path=output_dir
+                name,
+                T_range,
+                [float(p) for p in popt],
+                root_path=output_dir,
+                reference_pressure_pa=resolved_reference_pressure_pa,
             )
         elif model_type == 'Shomate':
             model["yaml_writer"](
-                name, T_range, [float(p) for p in popt], root_path=output_dir
+                name,
+                T_range,
+                [float(p) for p in popt],
+                root_path=output_dir,
+                reference_pressure_pa=resolved_reference_pressure_pa,
             )
 
     return popt, fitted_model

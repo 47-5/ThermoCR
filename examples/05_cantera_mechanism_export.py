@@ -35,6 +35,7 @@ def _fit_species_block(species_name, composition, thermo_scan_name):
         fit.model_type,
         fit.temperature_range,
         fit.parameters,
+        reference_pressure_pa=fit.reference_pressure_pa,
     )
     return format_cantera_species_yaml(species_head, thermo_block)
 

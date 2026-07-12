@@ -1,6 +1,7 @@
 import math
 import unittest
 
+from ThermoCR.constants import R
 from ThermoCR.QMkinetics import (
     Arrhenius as legacy_package_Arrhenius,
     arrhenius as legacy_package_arrhenius,
@@ -195,9 +196,9 @@ class FormalNamespaceApiTests(unittest.TestCase):
         self.assertEqual(q_rot_single_atom(), 1.0)
         self.assertGreater(ZPE([1000.0, 1500.0]), 0.0)
         cp, h, s = nasa7(300.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
-        self.assertAlmostEqual(cp, 8.314)
-        self.assertAlmostEqual(h, 8.314 * 300.0)
-        self.assertAlmostEqual(s, 8.314 * math.log(300.0))
+        self.assertAlmostEqual(cp, R)
+        self.assertAlmostEqual(h, R * 300.0)
+        self.assertAlmostEqual(s, R * math.log(300.0))
         weights = calculate_conformation_weighting([0.0, 1000.0], T=298.15)
         self.assertAlmostEqual(float(weights.sum()), 1.0)
         self.assertGreater(weights[0], weights[1])

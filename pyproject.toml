@@ -32,6 +32,11 @@ dependencies = [
     "scipy",
 ]
 
+[project.optional-dependencies]
+test = [
+    "cantera>=3.2",
+]
+
 [project.scripts]
 thermocr = "ThermoCR.cli:main"
 
