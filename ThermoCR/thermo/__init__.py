@@ -1,5 +1,13 @@
 """Modern thermochemistry API for ThermoCR."""
 
+from ThermoCR.thermo.anchoring import anchor_enthalpy_curve
+from ThermoCR.thermo.artifacts import (
+    EnergyConvention,
+    SpeciesThermoArtifact,
+    THERMO_ARTIFACT_SCHEMA_VERSION,
+    assert_energy_conventions_compatible,
+)
+
 from ThermoCR.thermo.calculators import (
     calculate_conformation_weighting,
     calculate_thermo,
@@ -86,6 +94,7 @@ __all__ = [
     "Cp_rot_nonlinear",
     "Cp_trans",
     "Cp_vib",
+    "EnergyConvention",
     "Cv_ele",
     "Cv_rot_linear",
     "Cv_rot_nonlinear",
@@ -107,6 +116,8 @@ __all__ = [
     "S_vib_FR_vec",
     "S_vib_RRHO_vec",
     "Shomate",
+    "SpeciesThermoArtifact",
+    "THERMO_ARTIFACT_SCHEMA_VERSION",
     "U_ele",
     "U_rot_linear",
     "U_rot_nonlinear",
@@ -119,6 +130,8 @@ __all__ = [
     "ZPE_one_mode",
     "calculate_conformation_weighting",
     "calculate_thermo",
+    "anchor_enthalpy_curve",
+    "assert_energy_conventions_compatible",
     "calculate_solvent_energy",
     "contribution_ele",
     "contribution_rot",
