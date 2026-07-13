@@ -201,7 +201,7 @@ def q_vib_bot(vibfreqs, T, convert_unit=True):
     v = np.copy(vibfreqs)
     if convert_unit:
         v *= wave2freq
-    positive_freq_mask = v >= 0
+    positive_freq_mask = v > 0
     vibfreqs_pos = v[positive_freq_mask]
     q_v = np.prod(np.exp((-h * vibfreqs_pos) / (2 * k_b * T)) / (1 - np.exp((-h * vibfreqs_pos) / (k_b * T))))
     return q_v
@@ -234,7 +234,7 @@ def q_vib_V0(vibfreqs, T, convert_unit=True):
     v = np.copy(vibfreqs)
     if convert_unit:
         v *= wave2freq
-    positive_freq_mask = v >= 0
+    positive_freq_mask = v > 0
     vibfreqs_pos = v[positive_freq_mask]
     q_v = np.prod(1 / (1 - np.exp((-h * vibfreqs_pos) / (k_b * T))))
     return q_v

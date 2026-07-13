@@ -77,6 +77,21 @@ class StructuredThermoApiTests(unittest.TestCase):
             ThermoOptions(electronic_energies=[0.0], electronic_degeneracies=None)
         with self.assertRaises(ValueError):
             ThermoOptions(electronic_energies=[0.0], electronic_degeneracies=[1, 2])
+        with self.assertRaisesRegex(ValueError, "stationary_point_type"):
+            ThermoOptions(stationary_point_type="saddle")
+
+    def test_transition_state_frequency_policy_is_explicit(self):
+        molecule = read_molecule_data(self.example_path)
+        molecule.frequencies[0] = -abs(molecule.frequencies[0])
+
+        with self.assertRaisesRegex(ValueError, "minimum frequencies"):
+            calculate_thermo(molecule)
+
+        result = calculate_thermo(
+            molecule,
+            ThermoOptions(stationary_point_type="transition_state"),
+        )
+        self.assertTrue(np.isfinite(result.gibbs_free_energy))
 
     def test_rotational_symmetry_number_override_changes_rotational_entropy(self):
         molecule = read_molecule_data(self.example_path)
@@ -158,6 +173,37 @@ class StructuredThermoApiTests(unittest.TestCase):
             structured.gibbs_free_energy,
             places=6,
         )
+
+    def test_legacy_qm_thermo_scan_keeps_positional_output_argument(self):
+        molecule = read_molecule_data(self.example_path)
+
+        legacy_scan = qm_thermo_scan(
+            None,
+            molecule.atom_numbers,
+            molecule.coordinates,
+            None,
+            molecule.frequencies,
+            None,
+            molecule.electronic_energy,
+            [350.0],
+            [100000.0],
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            False,
+            True,
+            -1,
+            None,
+            None,
+            None,
+            None,
+            2,
+            None,
+        )
+
+        self.assertEqual(len(legacy_scan), 1)
+        self.assertEqual(float(legacy_scan["T/K"].iloc[0]), 350.0)
 
     def test_concentration_correction_is_preserved(self):
         molecule = read_molecule_data(self.example_path)

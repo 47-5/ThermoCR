@@ -190,6 +190,7 @@ def _cmd_thermo_scan(args):
         ignore_trans_and_rot=args.ignore_trans_and_rot,
         point_group=args.point_group,
         rotational_symmetry_number=args.rotational_symmetry_number,
+        stationary_point_type=args.stationary_point_type,
     )
     temperatures = _temperature_grid(args.t_min, args.t_max, args.n_points)
     df = scan_thermo(
@@ -464,6 +465,15 @@ def _add_thermo_commands(subparsers):
         "--rotational-symmetry-number",
         type=float,
         help="override rotational symmetry number directly",
+    )
+    scan_parser.add_argument(
+        "--stationary-point-type",
+        choices=("minimum", "transition_state"),
+        default="minimum",
+        help=(
+            "vibrational stationary-point policy; default: minimum "
+            "(transition_state requires exactly one imaginary mode)"
+        ),
     )
     scan_parser.set_defaults(func=_cmd_thermo_scan)
 

@@ -189,7 +189,11 @@ class ChemicalKineticsSimulator:
             E_list=params.get('E_list', None),
             g_list=params.get('g_list', None),
             ignore_trans_and_rot=params.get('ignore_trans_and_rot', False),
-            c=params.get('c', None)
+            c=params.get('c', None),
+            stationary_point_type=params.get(
+                'stationary_point_type',
+                'minimum',
+            ),
         )
 
         return thermo_result
@@ -210,7 +214,12 @@ class ChemicalKineticsSimulator:
         # 计算自由能垒
         if ts_params:
             # 如果有过渡态数据，计算实际的自由能垒
-            TS_thermo = self.thermo_on_the_fly(ts_params)
+            ts_thermo_params = dict(ts_params)
+            ts_thermo_params.setdefault(
+                'stationary_point_type',
+                'transition_state',
+            )
+            TS_thermo = self.thermo_on_the_fly(ts_thermo_params)
             if TS_thermo:
                 G_TS = TS_thermo['G/(J/mol)']
                 G_reactants = sum(coeff * self.thermo_data[species]['G/(J/mol)']

@@ -422,7 +422,7 @@ def U_vib_0_T(vibfreqs, T, convert_unit=True, scale_factor=1.0):
     if convert_unit:
         v = v * wave2freq
 
-    pos_mask = v >= 0
+    pos_mask = v > 0
     v_pos = v[pos_mask]
 
     if len(v_pos) == 0:
@@ -460,7 +460,7 @@ def U_vib_T(vibfreqs, T, convert_unit=True, QRRHO=False,
 
     Returns:
     (float)
-        The total vibrational contribution to the internal energy in kJ/mol.
+        The total vibrational contribution to the internal energy in J/mol.
 
     Raises:
     - ValueError
@@ -491,7 +491,7 @@ def U_vib_T(vibfreqs, T, convert_unit=True, QRRHO=False,
     v_zpe = v * scale_factor_zpe
     v_U_0_T = v * scale_factor_U_0_T
 
-    pos_mask = v >= 0
+    pos_mask = v > 0
     v_pos = v[pos_mask]
     v_zpe_pos = v_zpe[pos_mask]
     v_U_0_T_pos = v_U_0_T[pos_mask]
@@ -505,10 +505,7 @@ def U_vib_T(vibfreqs, T, convert_unit=True, QRRHO=False,
     U_0_T = R * T * term * exp_term / (1 - exp_term)
 
     # 计算ZPE部分
-    if convert_unit:
-        zpe = 0.5 * h * v_zpe_pos / Eh * (au2kj_mol * 1000)
-    else:
-        zpe = 0.5 * h * v_zpe_pos * (au2kj_mol * 1000)
+    zpe = 0.5 * h * v_zpe_pos / Eh * (au2kj_mol * 1000)
 
     U_RRHO = U_0_T + zpe
 
@@ -516,7 +513,7 @@ def U_vib_T(vibfreqs, T, convert_unit=True, QRRHO=False,
         return np.sum(U_RRHO)
 
     # QRRHO处理
-    wei = w_vec(v_pos, convert_unit=False)
+    wei = _qrrho_weights_from_hz(v_pos)
     U_FR = R * T / 2
     return np.sum(wei * U_RRHO + (1 - wei) * U_FR)
 
@@ -536,7 +533,7 @@ def H_vib_T(vibfreqs, T, convert_unit=True, QRRHO=False, scale_factor_zpe=1.0, s
                    scale_factor_zpe=scale_factor_zpe, scale_factor_U_0_T=scale_factor_U_0_T)
 
 
-def Cv_vib(vibfreqs, T, convert_unit=True, scale_factor=1.0):
+def Cv_vib(vibfreqs, T, convert_unit=True, scale_factor=1.0, QRRHO=False):
     """
     Calculate the vibrational contribution to the molar heat capacity (Cv) at a given temperature.
 
@@ -552,6 +549,10 @@ def Cv_vib(vibfreqs, T, convert_unit=True, scale_factor=1.0):
         If True, converts the input frequencies from cm^-1 to Hz. Default is True.
     - scale_factor (float, optional):
         A factor to scale the input frequencies. Default is 1.0.
+    - QRRHO (bool, optional):
+        If True, apply the Minenkov interpolation between the RRHO heat
+        capacity and the free-rotor limit. The interpolation weight is based
+        on the unscaled frequency, matching ``U_vib_T``. Default is False.
 
     Returns:
     (float)
@@ -561,26 +562,42 @@ def Cv_vib(vibfreqs, T, convert_unit=True, scale_factor=1.0):
     - ValueError
         If any of the input parameters are not of the expected type or if the temperature is non-positive.
     """
-    v = np.array(vibfreqs, dtype=float) * scale_factor
+    v = np.array(vibfreqs, dtype=float)
     if convert_unit:
         v = v * wave2freq
 
-    pos_mask = v >= 0
+    pos_mask = v > 0
     v_pos = v[pos_mask]
+    v_scaled_pos = v_pos * scale_factor
 
     if len(v_pos) == 0:
         return 0.0
 
-    term = h * v_pos / (k_b * T)
+    term = h * v_scaled_pos / (k_b * T)
     exp_term = np.exp(-term)
-    return np.sum(R * term ** 2 * exp_term / (1 - exp_term) ** 2)
+    heat_capacity_rrho = R * term ** 2 * exp_term / (1 - exp_term) ** 2
+    if not QRRHO:
+        return np.sum(heat_capacity_rrho)
+
+    weights = _qrrho_weights_from_hz(v_pos)
+    heat_capacity_free_rotor = R / 2.0
+    return np.sum(
+        weights * heat_capacity_rrho
+        + (1.0 - weights) * heat_capacity_free_rotor
+    )
 
 
-def Cp_vib(vibfreqs, T, convert_unit=True, scale_factor=1.0):
+def Cp_vib(vibfreqs, T, convert_unit=True, scale_factor=1.0, QRRHO=False):
     """
     same as Cv_vib
     """
-    return Cv_vib(vibfreqs=vibfreqs, T=T, convert_unit=convert_unit, scale_factor=scale_factor)
+    return Cv_vib(
+        vibfreqs=vibfreqs,
+        T=T,
+        convert_unit=convert_unit,
+        scale_factor=scale_factor,
+        QRRHO=QRRHO,
+    )
 
 
 def S_vib(vibfreqs, T, convert_unit=True, QRRHO=True, scale_factor=1.0):
@@ -627,7 +644,7 @@ def S_vib(vibfreqs, T, convert_unit=True, QRRHO=True, scale_factor=1.0):
         v = v * wave2freq
 
     v_s = v * scale_factor
-    pos_mask = v >= 0
+    pos_mask = v > 0
     v_pos = v[pos_mask]
     v_s_pos = v_s[pos_mask]
 
@@ -638,16 +655,42 @@ def S_vib(vibfreqs, T, convert_unit=True, QRRHO=True, scale_factor=1.0):
         return np.sum(S_vib_RRHO_vec(v_s_pos, T))
 
     # QRRHO处理
-    wei = w_vec(v_pos, convert_unit=False)
+    wei = _qrrho_weights_from_hz(v_pos)
     S_RRHO = S_vib_RRHO_vec(v_s_pos, T)
     S_FR = S_vib_FR_vec(v_s_pos, T)
     return np.sum(wei * S_RRHO + (1 - wei) * S_FR)
 
 
+def _qrrho_weights_from_hz(frequencies_hz, reference_wavenumber_cm1=100.0):
+    frequencies_hz = np.asarray(frequencies_hz, dtype=float)
+    if (
+        not np.all(np.isfinite(frequencies_hz))
+        or np.any(frequencies_hz <= 0.0)
+    ):
+        raise ValueError("QRRHO frequencies must be finite and positive")
+    reference_frequency_hz = float(reference_wavenumber_cm1) * wave2freq
+    if not np.isfinite(reference_frequency_hz) or reference_frequency_hz <= 0.0:
+        raise ValueError("QRRHO reference wavenumber must be finite and positive")
+    return 1.0 / (1.0 + (reference_frequency_hz / frequencies_hz) ** 4)
+
+
 def w_vec(v, v0=100, convert_unit=True):
-    if convert_unit:
-        v0 = v0 * wave2freq
-    return 1 / (1 + (v0 / v)**4)
+    """Return Grimme QRRHO weights for frequencies in Hz or cm^-1.
+
+    ``v0`` is always expressed in cm^-1. For backward compatibility, the
+    historical ``convert_unit=True`` means that ``v`` is already in Hz;
+    ``convert_unit=False`` means that ``v`` is in cm^-1. New code should call
+    the higher-level thermochemistry functions instead of relying on this
+    counter-intuitive legacy flag.
+    """
+
+    frequencies_hz = np.asarray(v, dtype=float)
+    if not convert_unit:
+        frequencies_hz = frequencies_hz * wave2freq
+    return _qrrho_weights_from_hz(
+        frequencies_hz,
+        reference_wavenumber_cm1=v0,
+    )
 
 
 def U_vib_0_T_RRHO(vibfreq, T):

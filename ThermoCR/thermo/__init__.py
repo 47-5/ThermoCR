@@ -56,6 +56,12 @@ from ThermoCR.thermo.corrections import (
     ZPE_one_mode,
     w_vec,
 )
+from ThermoCR.thermo.continuous_nasa7 import (
+    ContinuousNASA7Fit,
+    GAS_CONSTANT_J_MOL_K,
+    fit_continuous_nasa7,
+    nasa7_values,
+)
 from ThermoCR.thermo.fitting import (
     NASA7,
     NASA9,
@@ -94,6 +100,7 @@ __all__ = [
     "Cp_rot_nonlinear",
     "Cp_trans",
     "Cp_vib",
+    "ContinuousNASA7Fit",
     "EnergyConvention",
     "Cv_ele",
     "Cv_rot_linear",
@@ -106,6 +113,7 @@ __all__ = [
     "H_trans",
     "H_vib_0_T",
     "H_vib_T",
+    "GAS_CONSTANT_J_MOL_K",
     "NASA7",
     "NASA9",
     "S_ele",
@@ -139,8 +147,10 @@ __all__ = [
     "contribution_vib",
     "fit_thermo_frame",
     "fit_thermo_model",
+    "fit_continuous_nasa7",
     "nasa7",
     "nasa7_for_fit",
+    "nasa7_values",
     "nasa9",
     "nasa9_for_fit",
     "q",

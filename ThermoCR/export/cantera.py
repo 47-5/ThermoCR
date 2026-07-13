@@ -129,6 +129,49 @@ def _validate_single_region_thermo(model, T_range, parameters):
     return [lower, upper], numeric_coefficients
 
 
+def _validate_two_region_nasa7(T_range, parameters):
+    temperatures = list(T_range)
+    if len(temperatures) != 3:
+        raise ValueError(
+            "two-region NASA7 export requires three increasing temperature bounds"
+        )
+    try:
+        lower, midpoint, upper = (float(value) for value in temperatures)
+    except (TypeError, ValueError) as exc:
+        raise ValueError(
+            "two-region NASA7 export requires three increasing temperature bounds"
+        ) from exc
+    if (
+        not all(math.isfinite(value) for value in (lower, midpoint, upper))
+        or lower <= 0.0
+        or not lower < midpoint < upper
+    ):
+        raise ValueError(
+            "two-region NASA7 export requires three increasing positive "
+            "temperature bounds"
+        )
+
+    coefficient_regions = list(parameters)
+    if len(coefficient_regions) != 2:
+        raise ValueError("two-region export requires two NASA7 coefficient regions")
+    numeric_regions = []
+    for coefficients in coefficient_regions:
+        try:
+            numeric_coefficients = [float(value) for value in coefficients]
+        except (TypeError, ValueError) as exc:
+            raise ValueError(
+                "each NASA7 coefficient region must contain seven finite numbers"
+            ) from exc
+        if len(numeric_coefficients) != 7 or not all(
+            math.isfinite(value) for value in numeric_coefficients
+        ):
+            raise ValueError(
+                "each NASA7 coefficient region must contain seven finite numbers"
+            )
+        numeric_regions.append(numeric_coefficients)
+    return [lower, midpoint, upper], numeric_regions
+
+
 def format_cantera_yaml_thermo(
     model_type,
     T_range,
@@ -138,6 +181,10 @@ def format_cantera_yaml_thermo(
     reference_pressure_pa=None,
 ):
     """Return a Cantera YAML thermo block for fitted parameters.
+
+    NASA7 accepts either two temperature bounds with one seven-coefficient
+    region, or three bounds ``(Tlow, Tmid, Thigh)`` with two seven-coefficient
+    regions ordered low then high. NASA9 and Shomate remain single-region.
 
     ``reference_pressure_pa`` is the canonical API and is always interpreted
     in Pa. The legacy ``reference_p`` argument remains supported temporarily
@@ -151,11 +198,19 @@ def format_cantera_yaml_thermo(
     model = model_names.get(str(model_type).lower())
     if model is None:
         raise ValueError(f"unsupported thermo model type: {model_type}")
-    T_range, parameters = _validate_single_region_thermo(
-        model,
-        T_range,
-        parameters,
-    )
+    T_range = list(T_range)
+    if model == "NASA7" and len(T_range) == 3:
+        T_range, parameter_regions = _validate_two_region_nasa7(
+            T_range,
+            parameters,
+        )
+    else:
+        T_range, parameters = _validate_single_region_thermo(
+            model,
+            T_range,
+            parameters,
+        )
+        parameter_regions = [parameters]
     pressure_pa = resolve_export_reference_pressure_pa(
         reference_p=reference_p,
         reference_pressure_pa=reference_pressure_pa,
@@ -168,10 +223,11 @@ def format_cantera_yaml_thermo(
         f"   temperature-ranges: {list(T_range)}",
         f"   reference-pressure: {_format_pressure_pa(pressure_pa)} Pa",
     ]
-    lines.extend([
-        "   data:",
-        f"   - {list(parameters)}",
-    ])
+    lines.append("   data:")
+    lines.extend(
+        f"   - {list(region_parameters)}"
+        for region_parameters in parameter_regions
+    )
     return "\n".join(lines) + "\n"
 
 
@@ -301,7 +357,11 @@ def write_cantera_yaml_thermo_NASA7(
     reference_pressure_pa=None,
     reference_p=None,
 ):
-    """Write NASA7 thermodynamic data in Cantera YAML format."""
+    """Write one- or two-region NASA7 data in Cantera YAML format.
+
+    A two-region fit uses three temperature bounds and two ordered sequences
+    of seven coefficients, matching ``format_cantera_yaml_thermo``.
+    """
     yaml_path = _output_path(root_path, f"{specie_name}_thermo.yaml")
     with yaml_path.open("w", encoding="utf-8") as f:
         f.write(format_cantera_yaml_thermo(

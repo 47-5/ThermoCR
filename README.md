@@ -45,6 +45,31 @@ Legacy imports such as `ThermoCR.QMthermo`, `ThermoCR.QMkinetics`, `ThermoCR.QMc
 
 The modern API manual is available at `doc/modern_api_manual.md`. Runnable examples based on the modern API are available in `examples/`.
 
+## Low-frequency thermochemistry
+
+`ThermoOptions.use_grimme_entropy=True` remains the default. The Grimme
+interpolation now applies its documented 100 cm^-1 threshold in consistent
+frequency units, so entropy and Gibbs-energy results for low-frequency systems
+may differ from releases containing the former unit bug. Set
+`use_grimme_entropy=False` to request the historical harmonic RRHO model
+explicitly. Minenkov internal-energy and heat-capacity interpolation is enabled
+separately with `use_minenkov_internal_energy=True`.
+
+Thermochemistry is fail-closed with respect to stationary-point character.
+`stationary_point_type="minimum"` requires finite, strictly positive
+frequencies. A first-order saddle must be requested explicitly with
+`stationary_point_type="transition_state"`; exactly one imaginary mode is then
+excluded from the vibrational partition function. This prevents failed minima
+or higher-order saddles from silently producing apparently valid tables.
+
+## Continuous two-region NASA7 fitting
+
+Wide temperature tables can be fit with `fit_continuous_nasa7`. Its canonical
+evaluator is `nasa7_values`, which uses Cantera's molar gas constant so audited
+coefficients can be exported without a convention offset. The fitter enforces
+Cp, H, and S continuity at the midpoint and anchors low-region H and S at the
+requested reference temperature.
+
 # Command Line
 After installation, ThermoCR provides a small command-line entry point for common file utilities:
 

@@ -52,12 +52,22 @@ class ThermoGoldenTests(unittest.TestCase):
                     electronic_energy=float(golden["ee/(J/mol)"].iloc[0]) / au2j_mol,
                 )
                 pressure = float(golden["P/Pa"].iloc[0])
+                imaginary_count = len(molecule.imaginary_frequencies)
+                self.assertIn(imaginary_count, (0, 1))
+                stationary_point_type = (
+                    "transition_state" if imaginary_count == 1 else "minimum"
+                )
 
                 result = scan_thermo(
                     molecule,
                     temperatures=golden["T/K"],
                     pressure=pressure,
-                    options=ThermoOptions(pressure=pressure),
+                    options=ThermoOptions(
+                        pressure=pressure,
+                        use_grimme_entropy=False,
+                        use_minenkov_internal_energy=False,
+                        stationary_point_type=stationary_point_type,
+                    ),
                 )
 
                 for result_column, golden_column in THERMO_COLUMN_MAP.items():

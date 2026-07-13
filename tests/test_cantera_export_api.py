@@ -6,7 +6,7 @@ import unittest
 import numpy as np
 import yaml
 
-from ThermoCR.thermo import nasa7, nasa9, shomate
+from ThermoCR.thermo import nasa7, nasa7_values, nasa9, shomate
 
 from ThermoCR.export import (
     format_cantera_mechanism_yaml,
@@ -102,6 +102,30 @@ class CanteraExportApiTests(unittest.TestCase):
         self.assertIs(write_cantera_yaml_thermo_NASA7, legacy_write_cantera_yaml_thermo_NASA7)
         self.assertIs(write_cantera_yaml_thermo_NASA7, package_write_cantera_yaml_thermo_NASA7)
 
+    def test_nasa7_writer_supports_two_regions(self):
+        low = [3.5, 0.0, 0.0, 0.0, 0.0, -1000.0, 2.0]
+        high = [3.0, 5.0e-4, 0.0, 0.0, 0.0, -750.0, 5.0]
+
+        with TemporaryDirectory() as tmpdir:
+            write_cantera_yaml_thermo_NASA7(
+                "TWO_REGION",
+                T_range=(300.0, 1000.0, 2000.0),
+                nasa7_parameters=[low, high],
+                root_path=tmpdir,
+                reference_pressure_pa=100000.0,
+            )
+            payload = yaml.safe_load(
+                (Path(tmpdir) / "TWO_REGION_thermo.yaml").read_text(
+                    encoding="utf-8"
+                )
+            )
+
+        self.assertEqual(
+            payload["thermo"]["temperature-ranges"],
+            [300.0, 1000.0, 2000.0],
+        )
+        self.assertEqual(payload["thermo"]["data"], [low, high])
+
     def test_format_cantera_reaction_yaml_matches_writer(self):
         reactants = ["A", "B"]
         products = ["C"]
@@ -148,6 +172,32 @@ class CanteraExportApiTests(unittest.TestCase):
         )
 
         self.assertIn("reference-pressure: 100000 Pa", thermo_text)
+
+    def test_format_cantera_yaml_thermo_supports_two_region_nasa7(self):
+        low = [3.5, 0.0, 0.0, 0.0, 0.0, -1000.0, 2.0]
+        high = [
+            3.0,
+            5.0e-4,
+            0.0,
+            0.0,
+            0.0,
+            -750.0,
+            1.5 + 0.5 * np.log(1000.0),
+        ]
+
+        thermo_text = format_cantera_yaml_thermo(
+            "NASA7",
+            T_range=(300.0, 1000.0, 2000.0),
+            parameters=[low, high],
+            reference_pressure_pa=100000.0,
+        )
+        payload = yaml.safe_load(thermo_text)
+
+        self.assertEqual(
+            payload["thermo"]["temperature-ranges"],
+            [300.0, 1000.0, 2000.0],
+        )
+        self.assertEqual(payload["thermo"]["data"], [low, high])
 
     def test_format_cantera_yaml_thermo_rejects_ambiguous_pressure_arguments(self):
         with self.assertRaisesRegex(ValueError, "reference pressure"):
@@ -207,6 +257,20 @@ class CanteraExportApiTests(unittest.TestCase):
                 "NASA9",
                 T_range=(2000.0, 300.0),
                 parameters=[1] * 9,
+            )
+
+    def test_format_cantera_yaml_thermo_validates_two_region_nasa7_shape(self):
+        with self.assertRaisesRegex(ValueError, "two NASA7 coefficient regions"):
+            format_cantera_yaml_thermo(
+                "NASA7",
+                T_range=(300.0, 1000.0, 2000.0),
+                parameters=[1] * 7,
+            )
+        with self.assertRaisesRegex(ValueError, "three increasing"):
+            format_cantera_yaml_thermo(
+                "NASA7",
+                T_range=(300.0, 2000.0, 1000.0),
+                parameters=[[1] * 7, [1] * 7],
             )
 
     def test_format_cantera_mechanism_yaml_combines_fragments(self):
@@ -269,14 +333,20 @@ class CanteraExportApiTests(unittest.TestCase):
 
 @unittest.skipUnless(CANTERA_AVAILABLE, "Cantera is not installed")
 class CanteraThermoRoundTripTests(unittest.TestCase):
-    def _load_single_species(self, model, parameters, reference_pressure_pa):
+    def _load_single_species(
+        self,
+        model,
+        parameters,
+        reference_pressure_pa,
+        temperature_range=(300.0, 2000.0),
+    ):
         import cantera as ct
 
         species = format_cantera_species_yaml(
             "- name: test-species\n  composition: {H: 2}\n",
             format_cantera_yaml_thermo(
                 model,
-                T_range=(300.0, 2000.0),
+                T_range=temperature_range,
                 parameters=parameters,
                 reference_pressure_pa=reference_pressure_pa,
             ),
@@ -300,6 +370,52 @@ class CanteraThermoRoundTripTests(unittest.TestCase):
                 self.assertAlmostEqual(gas.cp_mole / 1000.0, expected_cp, delta=1.0e-4)
                 self.assertAlmostEqual(gas.enthalpy_mole / 1000.0, expected_h, delta=0.02)
                 self.assertAlmostEqual(gas.entropy_mole / 1000.0, expected_s, delta=1.0e-4)
+
+    def test_two_region_nasa7_survives_cantera_round_trip(self):
+        low = (3.5, 0.0, 0.0, 0.0, 0.0, -1000.0, 2.0)
+        high = (
+            3.0,
+            5.0e-4,
+            0.0,
+            0.0,
+            0.0,
+            -750.0,
+            1.5 + 0.5 * np.log(1000.0),
+        )
+        reference_pressure_pa = 100000.0
+        gas = self._load_single_species(
+            "NASA7",
+            [low, high],
+            reference_pressure_pa,
+            temperature_range=(300.0, 1000.0, 2000.0),
+        )
+
+        for temperature, coefficients in (
+            (400.0, low),
+            (1000.0, low),
+            (1500.0, high),
+        ):
+            with self.subTest(temperature=temperature):
+                gas.TP = temperature, reference_pressure_pa
+                expected_cp, expected_h, expected_s = nasa7_values(
+                    temperature,
+                    coefficients,
+                )
+                self.assertAlmostEqual(
+                    gas.cp_mole / 1000.0,
+                    expected_cp[0],
+                    delta=1.0e-4,
+                )
+                self.assertAlmostEqual(
+                    gas.enthalpy_mole / 1000.0,
+                    expected_h[0],
+                    delta=0.02,
+                )
+                self.assertAlmostEqual(
+                    gas.entropy_mole / 1000.0,
+                    expected_s[0],
+                    delta=1.0e-4,
+                )
 
     def test_nasa9_properties_survive_cantera_round_trip(self):
         parameters = (1.0e4, -10.0, 3.5, 1.0e-3, -2.0e-7, 0.0, 0.0, -1000.0, 2.0)

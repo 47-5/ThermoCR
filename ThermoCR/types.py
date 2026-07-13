@@ -58,6 +58,7 @@ class ThermoOptions:
     concentration: Optional[float] = None
     point_group: Optional[str] = None
     rotational_symmetry_number: Optional[float] = None
+    stationary_point_type: str = "minimum"
 
     def __post_init__(self):
         if self.temperature <= 0.0:
@@ -70,6 +71,11 @@ class ThermoOptions:
             self.rotational_symmetry_number = float(self.rotational_symmetry_number)
             if self.rotational_symmetry_number <= 0.0:
                 raise ValueError("rotational_symmetry_number must be positive")
+        self.stationary_point_type = str(self.stationary_point_type)
+        if self.stationary_point_type not in {"minimum", "transition_state"}:
+            raise ValueError(
+                "stationary_point_type must be 'minimum' or 'transition_state'"
+            )
         if (self.electronic_energies is None) != (self.electronic_degeneracies is None):
             raise ValueError(
                 "electronic_energies and electronic_degeneracies must be provided together"

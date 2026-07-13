@@ -60,7 +60,8 @@ def qm_thermo(atom_coord_path=None, atom_numbers=None, coords=None,
               ignore_trans_and_rot=False,
               c=None,
               point_group=None,
-              rotational_symmetry_number=None):
+              rotational_symmetry_number=None,
+              stationary_point_type="minimum"):
     """
     Calculates thermodynamic properties based on quantum mechanical data.
 
@@ -117,6 +118,10 @@ def qm_thermo(atom_coord_path=None, atom_numbers=None, coords=None,
             Optional point-group symbol used to override automatic point-group detection.
     - rotational_symmetry_number (float):
             Optional rotational symmetry number. If provided, this overrides `point_group`.
+    - stationary_point_type (str):
+            ``"minimum"`` requires every vibrational mode to be finite and
+            positive. ``"transition_state"`` requires exactly one imaginary
+            mode and excludes only that mode from thermochemistry.
 
     Returns:
         (dict)
@@ -181,9 +186,18 @@ def qm_thermo(atom_coord_path=None, atom_numbers=None, coords=None,
         print(f'Cp_r: {Cp_r}')
         print(f'S_r: {S_r}')
     # vib
-    q_v_0, q_v_bot, U_v_0_T, H_v_0_T, U_v, H_v, Cv_v, Cp_v, S_v, zpe = contribution_vib(vibfreqs=vibfreqs, T=T, convert_unit=True,
-                                                                                        sclZPE=sclZPE, sclU=sclU, sclCv=sclCv, sclS=sclS,
-                                                                                        U_Minenkov=U_Minenkov, S_Grimme=S_Grimme)
+    q_v_0, q_v_bot, U_v_0_T, H_v_0_T, U_v, H_v, Cv_v, Cp_v, S_v, zpe = contribution_vib(
+        vibfreqs=vibfreqs,
+        T=T,
+        convert_unit=True,
+        sclZPE=sclZPE,
+        sclU=sclU,
+        sclCv=sclCv,
+        sclS=sclS,
+        U_Minenkov=U_Minenkov,
+        S_Grimme=S_Grimme,
+        stationary_point_type=stationary_point_type,
+    )
     if verbose:
         print('======== Vibration ========')
         print(f'q_v_bot: {q_v_bot}')
@@ -317,6 +331,7 @@ def calculate_thermo(molecule, options=None):
         c=options.concentration,
         point_group=options.point_group,
         rotational_symmetry_number=options.rotational_symmetry_number,
+        stationary_point_type=options.stationary_point_type,
     )
     return ThermoResult.from_qm_thermo_dict(result)
 
@@ -364,7 +379,8 @@ def qm_thermo_scan(
         c=None,
         point_group=None,
         rotational_symmetry_number=None,
-        out_path='QMthermoScan.xlsx'
+        out_path='QMthermoScan.xlsx',
+        stationary_point_type="minimum"
         ):
     """
     Perform a thermodynamic scan over a range of temperatures and pressures for quantum mechanical calculations.
@@ -423,6 +439,8 @@ def qm_thermo_scan(
             Optional point-group symbol used to override automatic point-group detection.
     - rotational_symmetry_number (float):
             Optional rotational symmetry number. If provided, this overrides `point_group`.
+    - stationary_point_type (str):
+            ``"minimum"`` or ``"transition_state"``. See ``qm_thermo``.
     - out_path: str, default 'QMthermoScan.xlsx'
         Path to save the output Excel file.
 
@@ -449,6 +467,7 @@ def qm_thermo_scan(
                                 verbose=False, c=c,
                                 point_group=point_group,
                                 rotational_symmetry_number=rotational_symmetry_number,
+                                stationary_point_type=stationary_point_type,
                                 )
             results.append(result)
     df = pd.DataFrame(results)
@@ -673,7 +692,45 @@ def contribution_rot(
     return q_r, U_r, H_r, Cv_r, Cp_r, S_r
 
 
-def contribution_vib(vibfreqs, T, convert_unit=True, sclZPE=1.0, sclU=1.0, sclCv=1.0, sclS=1.0, U_Minenkov=False, S_Grimme=True):
+def _validated_vibrational_modes(vibfreqs, stationary_point_type):
+    frequencies = np.asarray(vibfreqs, dtype=float)
+    if frequencies.ndim != 1:
+        raise ValueError("vibrational frequencies must be one-dimensional")
+    if stationary_point_type not in {"minimum", "transition_state"}:
+        raise ValueError(
+            "stationary_point_type must be 'minimum' or 'transition_state'"
+        )
+
+    if stationary_point_type == "minimum":
+        if not np.all(np.isfinite(frequencies)) or np.any(frequencies <= 0.0):
+            raise ValueError("minimum frequencies must be finite and positive")
+        return frequencies
+
+    imaginary_count = int(np.count_nonzero(frequencies < 0.0))
+    if (
+        not np.all(np.isfinite(frequencies))
+        or np.any(frequencies == 0.0)
+        or imaginary_count != 1
+    ):
+        raise ValueError(
+            "transition_state requires exactly one imaginary frequency and "
+            "all remaining frequencies must be finite and positive"
+        )
+    return frequencies[frequencies > 0.0]
+
+
+def contribution_vib(
+    vibfreqs,
+    T,
+    convert_unit=True,
+    sclZPE=1.0,
+    sclU=1.0,
+    sclCv=1.0,
+    sclS=1.0,
+    U_Minenkov=False,
+    S_Grimme=True,
+    stationary_point_type="minimum",
+):
     """
     Calculates the vibrational contributions to thermodynamic properties for a given set of vibrational frequencies and
     temperature. The function computes several thermodynamic quantities, including partition functions, internal energy,
@@ -698,6 +755,10 @@ def contribution_vib(vibfreqs, T, convert_unit=True, sclZPE=1.0, sclU=1.0, sclCv
         If True, applies Minenkov's correction for internal energy. Default is False.
     - S_Grimme: bool, optional
         If True, applies Grimme's correction for entropy. Default is True.
+    - stationary_point_type: str, optional
+        ``"minimum"`` rejects every non-positive mode. ``"transition_state"``
+        requires and removes exactly one imaginary mode. Default is
+        ``"minimum"``.
 
     Returns:
     (tuple)
@@ -710,6 +771,10 @@ def contribution_vib(vibfreqs, T, convert_unit=True, sclZPE=1.0, sclU=1.0, sclCv
     - TypeError
         If any of the parameters are of incorrect type.
     """
+    vibfreqs = _validated_vibrational_modes(
+        vibfreqs,
+        stationary_point_type,
+    )
     q_v_0 = q_vib_V0(vibfreqs=vibfreqs, T=T, convert_unit=convert_unit)
     q_v_bot = q_vib_bot(vibfreqs=vibfreqs, T=T, convert_unit=convert_unit)
 
@@ -718,8 +783,20 @@ def contribution_vib(vibfreqs, T, convert_unit=True, sclZPE=1.0, sclU=1.0, sclCv
     H_v_0_T = H_vib_0_T(vibfreqs=vibfreqs, T=T, convert_unit=convert_unit, scale_factor=sclU)
     U_v = U_vib_T(vibfreqs=vibfreqs, T=T, QRRHO=U_Minenkov, convert_unit=convert_unit, scale_factor_U_0_T=sclU, scale_factor_zpe=sclZPE)
     H_v = H_vib_T(vibfreqs=vibfreqs, T=T, QRRHO=U_Minenkov, convert_unit=convert_unit, scale_factor_U_0_T=sclU, scale_factor_zpe=sclZPE)
-    Cv_v = Cv_vib(vibfreqs=vibfreqs, T=T, convert_unit=convert_unit, scale_factor=sclCv)
-    Cp_v = Cp_vib(vibfreqs=vibfreqs, T=T, convert_unit=convert_unit, scale_factor=sclCv)
+    Cv_v = Cv_vib(
+        vibfreqs=vibfreqs,
+        T=T,
+        convert_unit=convert_unit,
+        scale_factor=sclCv,
+        QRRHO=U_Minenkov,
+    )
+    Cp_v = Cp_vib(
+        vibfreqs=vibfreqs,
+        T=T,
+        convert_unit=convert_unit,
+        scale_factor=sclCv,
+        QRRHO=U_Minenkov,
+    )
     S_v = S_vib(vibfreqs=vibfreqs, T=T, convert_unit=convert_unit, QRRHO=S_Grimme, scale_factor=sclS)
     return q_v_0, q_v_bot, U_v_0_T, H_v_0_T, U_v, H_v, Cv_v, Cp_v, S_v, zpe
 
