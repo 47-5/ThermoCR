@@ -2,16 +2,28 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass
 import math
+from numbers import Integral, Real
 
 import numpy as np
+
+from ThermoCR.reference_state import validate_reference_pressure_pa
 
 
 # Cantera's molar gas constant in J/(mol K). Keeping the fitting and export
 # convention identical avoids a systematic coefficient interpretation offset.
 GAS_CONSTANT_J_MOL_K = 8.31446261815324
 _TEMPERATURE_SCALE_K = 1000.0
+_ANCHOR_ENTHALPY_ATOL_J_MOL = 1.0e-4
+_ANCHOR_ENTROPY_ATOL_J_MOL_K = 1.0e-8
+_ANCHOR_RTOL = 1.0e-13
+_CONTINUITY_ATOL = {
+    "cp_jump_j_mol_k": 1.0e-6,
+    "h_jump_j_mol": 1.0e-3,
+    "s_jump_j_mol_k": 1.0e-6,
+}
 
 
 @dataclass(frozen=True)
@@ -23,12 +35,82 @@ class ContinuousNASA7Fit:
     anchor_temperature_k: float
     anchor_enthalpy_j_mol: float
     anchor_entropy_j_mol_k: float
+    reference_pressure_pa: float
     cp_fit_point_count: int
     low_coefficients: tuple[float, ...]
     high_coefficients: tuple[float, ...]
     metrics: dict
     continuity: dict
     diagnostics: dict
+
+    def __post_init__(self):
+        lower, upper = _validated_temperature_range(self.temperature_range_k)
+        midpoint = _finite_positive(
+            self.midpoint_temperature_k,
+            "midpoint_temperature_k",
+        )
+        anchor = _finite_positive(
+            self.anchor_temperature_k,
+            "anchor_temperature_k",
+        )
+        if not lower < midpoint < upper:
+            raise ValueError(
+                "midpoint_temperature_k must lie inside temperature_range_k"
+            )
+        if not lower <= anchor <= midpoint:
+            raise ValueError(
+                "anchor_temperature_k must lie between the lower temperature "
+                "bound and midpoint_temperature_k"
+            )
+
+        anchor_enthalpy = _finite_number(
+            self.anchor_enthalpy_j_mol,
+            "anchor_enthalpy_j_mol",
+        )
+        anchor_entropy = _finite_number(
+            self.anchor_entropy_j_mol_k,
+            "anchor_entropy_j_mol_k",
+        )
+        reference_pressure = validate_reference_pressure_pa(
+            self.reference_pressure_pa
+        )
+        if (
+            isinstance(self.cp_fit_point_count, bool)
+            or not isinstance(self.cp_fit_point_count, Integral)
+            or self.cp_fit_point_count <= 0
+        ):
+            raise ValueError("cp_fit_point_count must be a positive integer")
+
+        low_coefficients = _validated_nasa7_coefficients(
+            self.low_coefficients,
+            "low_coefficients",
+        )
+        high_coefficients = _validated_nasa7_coefficients(
+            self.high_coefficients,
+            "high_coefficients",
+        )
+        for field_name in ("metrics", "continuity", "diagnostics"):
+            _validate_finite_mapping(getattr(self, field_name), field_name)
+        continuity = _validated_coefficient_contract(
+            low_coefficients=low_coefficients,
+            high_coefficients=high_coefficients,
+            midpoint_temperature_k=midpoint,
+            anchor_temperature_k=anchor,
+            anchor_enthalpy_j_mol=anchor_enthalpy,
+            anchor_entropy_j_mol_k=anchor_entropy,
+            declared_continuity=self.continuity,
+        )
+
+        object.__setattr__(self, "temperature_range_k", (lower, upper))
+        object.__setattr__(self, "midpoint_temperature_k", midpoint)
+        object.__setattr__(self, "anchor_temperature_k", anchor)
+        object.__setattr__(self, "anchor_enthalpy_j_mol", anchor_enthalpy)
+        object.__setattr__(self, "anchor_entropy_j_mol_k", anchor_entropy)
+        object.__setattr__(self, "reference_pressure_pa", reference_pressure)
+        object.__setattr__(self, "cp_fit_point_count", int(self.cp_fit_point_count))
+        object.__setattr__(self, "low_coefficients", low_coefficients)
+        object.__setattr__(self, "high_coefficients", high_coefficients)
+        object.__setattr__(self, "continuity", continuity)
 
     def predict(self, temperatures):
         """Evaluate Cp, H, and S using Cantera's midpoint convention."""
@@ -55,6 +137,7 @@ class ContinuousNASA7Fit:
             "anchor_temperature_k": self.anchor_temperature_k,
             "anchor_enthalpy_j_mol": self.anchor_enthalpy_j_mol,
             "anchor_entropy_j_mol_k": self.anchor_entropy_j_mol_k,
+            "reference_pressure_pa": self.reference_pressure_pa,
             "cp_fit_point_count": self.cp_fit_point_count,
             "low_coefficients": list(self.low_coefficients),
             "high_coefficients": list(self.high_coefficients),
@@ -71,6 +154,7 @@ def fit_continuous_nasa7(
     entropies,
     *,
     midpoint_temperature_k,
+    reference_pressure_pa,
     anchor_temperature_k=298.15,
     cp_fit_mask=None,
 ):
@@ -81,6 +165,10 @@ def fit_continuous_nasa7(
     midpoint. The low-region H and S integration constants are fixed by the
     requested anchor. The high-region constants are fixed by H and S
     continuity at the midpoint.
+
+    ``reference_pressure_pa`` is mandatory because the entropy anchor, and
+    therefore the NASA7 entropy integration constants, depend on the declared
+    ideal-gas standard pressure.
     """
 
     temperature, cp, enthalpy, entropy, fit_mask = _validated_fit_arrays(
@@ -95,6 +183,7 @@ def fit_continuous_nasa7(
         "midpoint_temperature_k",
     )
     anchor = _finite_positive(anchor_temperature_k, "anchor_temperature_k")
+    reference_pressure = validate_reference_pressure_pa(reference_pressure_pa)
     if not temperature[0] < midpoint < temperature[-1]:
         raise ValueError("midpoint_temperature_k must lie inside the fit range")
 
@@ -193,6 +282,7 @@ def fit_continuous_nasa7(
         anchor_temperature_k=anchor,
         anchor_enthalpy_j_mol=anchor_enthalpy,
         anchor_entropy_j_mol_k=anchor_entropy,
+        reference_pressure_pa=reference_pressure,
         cp_fit_point_count=int(np.count_nonzero(fit_mask)),
         low_coefficients=tuple(float(value) for value in low),
         high_coefficients=tuple(float(value) for value in high),
@@ -306,10 +396,153 @@ def _temperature_array(values):
 
 
 def _finite_positive(value, name):
-    value = float(value)
+    value = _finite_number(value, name)
     if not math.isfinite(value) or value <= 0.0:
         raise ValueError(f"{name} must be finite and positive")
     return value
+
+
+def _finite_number(value, name):
+    if isinstance(value, bool):
+        raise ValueError(f"{name} must be finite")
+    try:
+        value = float(value)
+    except (TypeError, ValueError) as exc:
+        raise ValueError(f"{name} must be finite") from exc
+    if not math.isfinite(value):
+        raise ValueError(f"{name} must be finite")
+    return value
+
+
+def _validated_temperature_range(values):
+    if isinstance(values, (str, bytes)):
+        raise ValueError(
+            "temperature_range_k must contain exactly two finite positive values"
+        )
+    try:
+        lower, upper = values
+    except (TypeError, ValueError) as exc:
+        raise ValueError(
+            "temperature_range_k must contain exactly two finite positive values"
+        ) from exc
+    lower = _finite_positive(lower, "temperature_range_k lower bound")
+    upper = _finite_positive(upper, "temperature_range_k upper bound")
+    if lower >= upper:
+        raise ValueError("temperature_range_k must be strictly increasing")
+    return lower, upper
+
+
+def _validated_nasa7_coefficients(values, name):
+    try:
+        coefficients = tuple(values)
+    except TypeError as exc:
+        raise ValueError(f"{name} must contain seven finite values") from exc
+    if len(coefficients) != 7:
+        raise ValueError(f"{name} must contain seven finite values")
+    return tuple(
+        _finite_number(value, f"{name}[{index}]")
+        for index, value in enumerate(coefficients)
+    )
+
+
+def _validate_finite_mapping(value, name):
+    if not isinstance(value, Mapping):
+        raise ValueError(f"{name} must be a mapping")
+    _validate_nested_numeric_values(value, name)
+
+
+def _validate_nested_numeric_values(value, path):
+    if isinstance(value, Mapping):
+        for key, nested_value in value.items():
+            _validate_nested_numeric_values(nested_value, f"{path}[{key!r}]")
+        return
+    if isinstance(value, (list, tuple)):
+        for index, nested_value in enumerate(value):
+            _validate_nested_numeric_values(nested_value, f"{path}[{index}]")
+        return
+    if isinstance(value, Real) and not isinstance(value, bool):
+        _finite_number(value, path)
+
+
+def _validated_coefficient_contract(
+    *,
+    low_coefficients,
+    high_coefficients,
+    midpoint_temperature_k,
+    anchor_temperature_k,
+    anchor_enthalpy_j_mol,
+    anchor_entropy_j_mol_k,
+    declared_continuity,
+):
+    _, coefficient_anchor_h, coefficient_anchor_s = nasa7_values(
+        [anchor_temperature_k],
+        low_coefficients,
+    )
+    if not np.isclose(
+        coefficient_anchor_h[0],
+        anchor_enthalpy_j_mol,
+        rtol=_ANCHOR_RTOL,
+        atol=_ANCHOR_ENTHALPY_ATOL_J_MOL,
+    ):
+        raise ValueError(
+            "low_coefficients do not reproduce anchor_enthalpy_j_mol"
+        )
+    if not np.isclose(
+        coefficient_anchor_s[0],
+        anchor_entropy_j_mol_k,
+        rtol=_ANCHOR_RTOL,
+        atol=_ANCHOR_ENTROPY_ATOL_J_MOL_K,
+    ):
+        raise ValueError(
+            "low_coefficients do not reproduce anchor_entropy_j_mol_k"
+        )
+
+    low_midpoint = nasa7_values(
+        [midpoint_temperature_k],
+        low_coefficients,
+    )
+    high_midpoint = nasa7_values(
+        [midpoint_temperature_k],
+        high_coefficients,
+    )
+    names = (
+        "cp_jump_j_mol_k",
+        "h_jump_j_mol",
+        "s_jump_j_mol_k",
+    )
+    actual_continuity = {
+        name: float(high_value[0] - low_value[0])
+        for name, low_value, high_value in zip(
+            names,
+            low_midpoint,
+            high_midpoint,
+        )
+    }
+    for name, actual_value in actual_continuity.items():
+        tolerance = _CONTINUITY_ATOL[name]
+        if abs(actual_value) > tolerance:
+            raise ValueError(
+                f"NASA7 coefficients violate {name} continuity tolerance"
+            )
+        if name not in declared_continuity:
+            raise ValueError(f"continuity must declare {name}")
+        declared_value = _finite_number(
+            declared_continuity[name],
+            f"continuity[{name!r}]",
+        )
+        if not np.isclose(
+            declared_value,
+            actual_value,
+            rtol=0.0,
+            atol=tolerance,
+        ):
+            raise ValueError(
+                f"continuity[{name!r}] does not match NASA7 coefficients"
+            )
+
+    normalized = dict(declared_continuity)
+    normalized.update(actual_continuity)
+    return normalized
 
 
 def _cp_design(scaled_temperature):
