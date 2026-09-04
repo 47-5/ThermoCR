@@ -60,6 +60,70 @@ class StructuredThermoApiTests(unittest.TestCase):
         self.assertIn("gibbs_free_energy", df.columns)
         self.assertEqual(len(df), 2)
 
+    def test_qrrho_parameters_are_exposed_by_structured_options(self):
+        molecule = read_molecule_data(self.example_path)
+        default = calculate_thermo(
+            molecule,
+            ThermoOptions(
+                use_minenkov_internal_energy=True,
+                use_grimme_entropy=True,
+            ),
+        )
+        custom = calculate_thermo(
+            molecule,
+            ThermoOptions(
+                use_minenkov_internal_energy=True,
+                use_grimme_entropy=True,
+                qrrho_reference_wavenumber_cm1=250.0,
+                qrrho_interpolation_exponent=2.0,
+            ),
+        )
+
+        self.assertNotAlmostEqual(
+            custom.enthalpy_correction,
+            default.enthalpy_correction,
+            places=6,
+        )
+        self.assertNotAlmostEqual(custom.entropy, default.entropy, places=6)
+
+    def test_qrrho_options_reject_nonpositive_or_nonfinite_values(self):
+        for value in (0.0, -1.0, np.nan, np.inf):
+            with self.subTest(reference_wavenumber=value):
+                with self.assertRaisesRegex(ValueError, "reference_wavenumber"):
+                    ThermoOptions(qrrho_reference_wavenumber_cm1=value)
+            with self.subTest(interpolation_exponent=value):
+                with self.assertRaisesRegex(ValueError, "interpolation_exponent"):
+                    ThermoOptions(qrrho_interpolation_exponent=value)
+
+    def test_new_qrrho_fields_preserve_legacy_positional_mapping(self):
+        options = ThermoOptions(
+            350.0,
+            100000.0,
+            0.90,
+            0.91,
+            0.92,
+            0.93,
+            True,
+            False,
+            (0.0,),
+            (1,),
+            True,
+            0.5,
+            "C2",
+            2.0,
+            "transition_state",
+        )
+
+        self.assertEqual(options.electronic_energies, (0.0,))
+        self.assertEqual(options.electronic_degeneracies, (1,))
+        self.assertTrue(options.ignore_trans_and_rot)
+        self.assertEqual(options.concentration, 0.5)
+        self.assertEqual(options.point_group, "C2")
+        self.assertEqual(options.rotational_symmetry_number, 2.0)
+        self.assertEqual(options.stationary_point_type, "transition_state")
+        self.assertEqual(options.qrrho_reference_wavenumber_cm1, 100.0)
+        self.assertEqual(options.qrrho_interpolation_exponent, 4.0)
+
     def test_calculate_thermo_rejects_non_hartree_energy(self):
         molecule = read_molecule_data(self.example_path, return_hartree=False)
 

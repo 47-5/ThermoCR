@@ -71,6 +71,54 @@ class QrrhoCorrectionTests(unittest.TestCase):
             atol=1.0e-15,
         )
 
+    def test_qrrho_weight_accepts_explicit_reference_and_exponent(self):
+        wavenumbers = np.array([50.0, 200.0])
+        expected = 1.0 / (1.0 + (200.0 / wavenumbers) ** 2.0)
+
+        actual_from_wavenumbers = w_vec(
+            wavenumbers,
+            v0=200.0,
+            convert_unit=False,
+            interpolation_exponent=2.0,
+        )
+        actual_from_hertz = w_vec(
+            wavenumbers * wave2freq,
+            v0=200.0,
+            interpolation_exponent=2.0,
+        )
+
+        np.testing.assert_allclose(
+            actual_from_wavenumbers,
+            expected,
+            rtol=0.0,
+            atol=1.0e-15,
+        )
+        np.testing.assert_allclose(
+            actual_from_hertz,
+            expected,
+            rtol=0.0,
+            atol=1.0e-15,
+        )
+
+    def test_qrrho_weight_is_stable_for_large_finite_exponent(self):
+        actual = w_vec(
+            [1.0, 100.0, 10000.0],
+            convert_unit=False,
+            interpolation_exponent=1.0e6,
+        )
+
+        np.testing.assert_allclose(actual, [0.0, 0.5, 1.0], atol=1.0e-15)
+
+    def test_qrrho_weight_rejects_invalid_exponent(self):
+        for exponent in (0.0, -1.0, np.nan, np.inf):
+            with self.subTest(exponent=exponent):
+                with self.assertRaisesRegex(ValueError, "exponent"):
+                    w_vec(
+                        [50.0],
+                        convert_unit=False,
+                        interpolation_exponent=exponent,
+                    )
+
     def test_qrrho_weight_rejects_nonpositive_or_nonfinite_frequencies(self):
         for frequency in (0.0, -1.0, np.nan, np.inf):
             with self.subTest(frequency=frequency):

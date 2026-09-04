@@ -220,3 +220,5 @@ dist/
 /ThermoCR/QMconcvar/*.csv
 /ThermoCR/QMconcvar/*.png
 /examples/output/
+# Local reference manuscript; contains embedded objects and authoring metadata.
+/doc/ThermoCR-with references - lgz.docx

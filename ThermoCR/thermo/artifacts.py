@@ -14,6 +14,7 @@ from ThermoCR.reference_state import validate_reference_pressure_pa
 
 THERMO_ARTIFACT_SCHEMA_VERSION = "1.0"
 _FORMATION_REFERENCE_TEMPERATURE_K = 298.15
+_FORMATION_ENTHALPY_ANCHOR_ATOL_J_MOL = 1.0e-6
 _SHA256_PATTERN = re.compile(r"^[0-9a-fA-F]{64}$")
 _DEFAULT_TABLE_UNITS = {
     "temperature": "K",
@@ -335,6 +336,119 @@ class SpeciesThermoArtifact:
             temperature_grid_k=temperature_grid_k,
             fit=fit,
             fit_metrics=fit_result.metrics,
+            **metadata,
+        )
+
+    @classmethod
+    def from_continuous_nasa7_fit(
+        cls,
+        *,
+        species_id,
+        cantera_name,
+        composition,
+        energy_convention,
+        fit_result,
+        formation_enthalpy_298_j_mol=None,
+        formation_enthalpy_uncertainty_j_mol=None,
+        energy_reference_id=None,
+        temperature_grid_k=(),
+        **metadata,
+    ):
+        """Build an artifact from a validated two-region NASA7 fit."""
+        from ThermoCR.thermo.continuous_nasa7 import ContinuousNASA7Fit
+
+        if not isinstance(fit_result, ContinuousNASA7Fit):
+            raise TypeError(
+                "fit_result must be a ContinuousNASA7Fit instance"
+            )
+        reserved = {
+            "reference_pressure_pa",
+            "reference_temperature_k",
+            "fit",
+            "fit_metrics",
+            "continuity_metrics",
+            "cantera_species_dict",
+        }.intersection(metadata)
+        if reserved:
+            names = ", ".join(sorted(reserved))
+            raise ValueError(
+                f"metadata cannot override fit-derived fields: {names}"
+            )
+
+        convention = _normalize_energy_convention(energy_convention)
+        if (
+            convention is EnergyConvention.FORMATION_ENTHALPY
+            and formation_enthalpy_298_j_mol is not None
+        ):
+            formation_enthalpy = _finite_float(
+                formation_enthalpy_298_j_mol,
+                "formation_enthalpy_298_j_mol",
+            )
+            anchor_enthalpy = _finite_float(
+                fit_result.anchor_enthalpy_j_mol,
+                "fit_result.anchor_enthalpy_j_mol",
+            )
+            if not np.isclose(
+                formation_enthalpy,
+                anchor_enthalpy,
+                rtol=0.0,
+                atol=_FORMATION_ENTHALPY_ANCHOR_ATOL_J_MOL,
+            ):
+                raise ValueError(
+                    "formation_enthalpy_298_j_mol must match "
+                    "fit_result.anchor_enthalpy_j_mol"
+                )
+
+        lower, upper = fit_result.temperature_range_k
+        midpoint = fit_result.midpoint_temperature_k
+        reference_pressure = fit_result.reference_pressure_pa
+        normalized_composition = _normalize_composition(composition)
+        fit = {
+            "model": "NASA7",
+            "regions": [
+                [lower, midpoint],
+                [midpoint, upper],
+            ],
+            "coefficients": [
+                list(fit_result.low_coefficients),
+                list(fit_result.high_coefficients),
+            ],
+            "anchor_temperature_k": fit_result.anchor_temperature_k,
+            "anchor_enthalpy_j_mol": fit_result.anchor_enthalpy_j_mol,
+            "anchor_entropy_j_mol_k": fit_result.anchor_entropy_j_mol_k,
+            "cp_fit_point_count": fit_result.cp_fit_point_count,
+            "diagnostics": fit_result.diagnostics,
+        }
+        cantera_species_dict = {
+            "name": str(cantera_name).strip(),
+            "composition": normalized_composition,
+            "thermo": {
+                "model": "NASA7",
+                "reference-pressure": f"{reference_pressure:.17g} Pa",
+                "temperature-ranges": [lower, midpoint, upper],
+                "data": [
+                    list(fit_result.low_coefficients),
+                    list(fit_result.high_coefficients),
+                ],
+            },
+        }
+        return cls(
+            species_id=species_id,
+            cantera_name=cantera_name,
+            composition=normalized_composition,
+            energy_convention=energy_convention,
+            reference_temperature_k=fit_result.anchor_temperature_k,
+            reference_pressure_pa=reference_pressure,
+            formation_enthalpy_298_j_mol=formation_enthalpy_298_j_mol,
+            formation_enthalpy_uncertainty_j_mol=(
+                formation_enthalpy_uncertainty_j_mol
+            ),
+            energy_reference_id=energy_reference_id,
+            temperature_grid_k=temperature_grid_k,
+            fit=fit,
+            fit_metrics=fit_result.metrics,
+            continuity_metrics=fit_result.continuity,
+            cantera_species_dict=cantera_species_dict,
             **metadata,
         )
 
