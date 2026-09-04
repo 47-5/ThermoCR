@@ -1,22 +1,24 @@
 # ThermoCR
 
-ThermoCR 是一个从量子化学计算结果生成分子热力学数据和反应速率参数的 Python 程序。它可以：
+[简体中文](https://github.com/47-5/ThermoCR/blob/main/README.zh.md) · [中文完整教程](https://github.com/47-5/ThermoCR/blob/main/doc/tutorials.zh.md)
 
-- 读取 Gaussian 和 ORCA 输出；
-- 计算理想气体 $C_p(T)$、$H(T)$、$S(T)$ 和 $G(T)$；
-- 处理振动频率缩放、QRRHO 低频修正、点群和转动对称数；
-- 拟合 NASA7、NASA9、Shomate 以及连续双区 NASA7；
-- 生成带能量零点、参考压力、拟合指标和来源信息的热化学 JSON sidecar；
-- 计算 TST/VTST 速率并拟合 Arrhenius 参数；
-- 导出 Cantera species、reaction 和完整 mechanism YAML。
+ThermoCR is a Python package for generating molecular thermodynamic data and reaction-rate parameters from quantum-chemistry calculation outputs. It can:
 
-ThermoCR 的输出可交给 Cantera、`calculate_heat_sink` 或其他平衡与反应器程序继续使用。ThermoCR 不提供 Benson 基团贡献、BSR 参考反应构造或实验热化学数据库检索；生成焓锚点需要由使用者提供。
+- parse Gaussian and ORCA output files;
+- calculate ideal-gas $C_p(T)$, $H(T)$, $S(T)$, and $G(T)$;
+- apply vibrational-frequency scaling, QRRHO low-frequency corrections, point-group assignments, and rotational symmetry numbers;
+- fit NASA7, NASA9, Shomate, and continuous two-region NASA7 models;
+- generate thermochemistry JSON sidecars containing the energy convention, reference pressure, fit metrics, and provenance information;
+- calculate TST and VTST rate constants and fit Arrhenius parameters; and
+- export Cantera species, reactions, and complete mechanism YAML files.
 
-完整中文手册见 [`doc/tutorials.zh.md`](doc/tutorials.zh.md)。
+ThermoCR outputs can be used by Cantera, [`calculate_heat_sink`](https://github.com/47-5/calculate_heat_sink), and other equilibrium or reactor programs. ThermoCR does not provide Benson group-contribution estimates, BSR reference-reaction construction, or experimental thermochemistry database retrieval. The user must supply the enthalpy-of-formation anchor required by the selected thermochemistry protocol.
 
-## 安装
+For the complete Chinese-language guide, see [`doc/tutorials.zh.md`](https://github.com/47-5/ThermoCR/blob/main/doc/tutorials.zh.md).
 
-建议使用 Python 3.11 和独立 Conda 环境：
+## Installation
+
+Python 3.11 in a dedicated Conda environment is recommended:
 
 ```bash
 conda create -n thermocr python=3.11
@@ -26,86 +28,88 @@ cd ThermoCR
 pip install .
 ```
 
-若要修改源码并立即生效：
+For an editable installation:
 
 ```bash
 pip install -e .
 ```
 
-若需要 Cantera 交叉验证和完整测试：
+To install Cantera for cross-validation and run the complete test suite:
 
 ```bash
 pip install -e ".[test]"
 ```
 
-检查安装：
+Verify the installation:
 
 ```bash
 python -c "import ThermoCR; print(ThermoCR.__version__)"
 thermocr --help
 ```
 
-控制台入口不可用时，可将 `thermocr` 替换为 `python -m ThermoCR`。
+If the console entry point is unavailable, replace `thermocr` with `python -m ThermoCR`.
 
-## 五分钟 CLI 示例
+## Five-minute CLI quickstart
 
-以下命令使用仓库自带的 `example/CPD.out`，适合检查安装和熟悉文件流。
+The following commands use `example/CPD.out`, which is included in the repository. They are suitable for verifying the installation and becoming familiar with the file flow.
 
-### 1. 查看电子能
+### 1. Inspect the electronic energy
 
 ```bash
 thermocr qm-energy example/CPD.out --unit hartree
 ```
 
-ORCA 单点计算可用专用命令读取最后一个 `FINAL SINGLE POINT ENERGY`：
+For an ORCA single-point calculation, use the dedicated command to read the last `FINAL SINGLE POINT ENERGY`:
 
 ```bash
 thermocr orca-energy path/to/single_point.out
 ```
 
-### 2. 扫描热力学表
+### 2. Generate a thermodynamic scan
 
 ```bash
 thermocr thermo scan example/CPD.out --t-min 300 --t-max 1500 --n-points 49 --pressure 100000 --output CPD_thermo_scan.csv
 ```
 
-输出表包含温度、压力、$C_v$、$C_p$、熵、ZPE、热校正和总 $U/H/G$。热量单位为 J/mol，热容和熵单位为 J/(mol K)。
+The output table contains temperature, pressure, $C_v$, $C_p$, entropy, ZPE, thermal corrections, and total $U/H/G$. Energies are reported in J/mol, while heat capacities and entropy are reported in J/(mol K).
 
-### 3. 拟合一个单区 NASA7
+### 3. Fit a single-region NASA7 model
 
 ```bash
 thermocr thermo fit CPD_thermo_scan.csv --model NASA7 --weight-strategy uniform --t-range 300 1500 --reference-pressure-pa 100000 --output CPD_thermo.yaml
 ```
 
-`CPD_thermo.yaml` 是 Cantera thermo 片段。若要把它组合成完整机制，先建立物种头文件 `CPD_head.yaml`：
+`CPD_thermo.yaml` is a Cantera thermo fragment. To assemble it into a complete mechanism, first create the species header `CPD_head.yaml`:
 
 ```yaml
 - name: CPD
   composition: {C: 5, H: 6}
 ```
 
-再运行：
+Then run:
 
 ```bash
 thermocr cantera mechanism --species-head CPD_head.yaml --species-thermo CPD_thermo.yaml --output mechanism.yaml
 ```
 
-这组 CLI 命令用于快速检查和简单单文件任务，不代表正式高精度热化学协议。
+These CLI commands are intended for quick checks and simple single-file tasks. They do not constitute a production high-accuracy thermochemistry protocol.
 
-## 正式热化学计算
+## Production thermochemistry workflows
 
-下列任务需要 Python API：
+The following tasks require the Python API:
 
-- 从 `opt_freq.out` 读取几何和频率，再从独立 `single_point.out` 读取高水平电子能；
-- 对 ZPE、热内能、热容和熵统一采用 0.9838 频率缩放；
-- 同时启用 Grimme 熵修正和 Minenkov 内能/热容 QRRHO；
-- 自定义 QRRHO 参考波数和插值指数；
-- 用给定的 $\Delta_fH^\circ(298.15\ \mathrm K)$ 锚定生成焓曲线；
-- 拟合在中间温度处保证 $C_p$、$H$、$S$ 连续的双区 NASA7；
-- 用 `SpeciesThermoArtifact` 保存能量约定、参考压力、计算协议和拟合审计信息；
-- 对拟合结果执行误差、连续性、单位和 Cantera 交叉验证。
+- reading geometry and frequencies from `opt_freq.out` while taking a higher-level electronic energy from a separate `single_point.out`;
+- applying a frequency scale factor of 0.9838 consistently to ZPE, thermal internal energy, heat capacity, and entropy;
+- enabling both the Grimme entropy correction and the Minenkov internal-energy/heat-capacity QRRHO treatment;
+- selecting custom QRRHO reference wavenumbers and interpolation exponents;
+- anchoring the enthalpy curve to a supplied $\Delta_f H^\circ(298.15\ \mathrm{K})$;
+- fitting a continuous two-region NASA7 model that preserves $C_p$, $H$, and $S$ continuity at the midpoint temperature;
+- recording the energy convention, reference pressure, computational protocol, and fit-audit information in a `SpeciesThermoArtifact`; and
+- validating fit errors, continuity, units, and agreement with Cantera.
 
-最小接口如下：
+`SpeciesThermoArtifact` is an audit sidecar, not a replacement for the Cantera YAML file. Species used in one equilibrium pool must have compatible energy conventions, phases, reference temperatures, and reference pressures.
+
+The minimal set of interfaces is:
 
 ```python
 from ThermoCR.io import (
@@ -128,7 +132,7 @@ from ThermoCR.export import (
 )
 ```
 
-0.9838 与完整 QRRHO 的设置形式为：
+A calculation using the 0.9838 frequency scale factor and both QRRHO treatments can be configured as follows:
 
 ```python
 options = ThermoOptions(
@@ -145,11 +149,13 @@ options = ThermoOptions(
 )
 ```
 
-从 QM 输出到连续双区 NASA7 和 Cantera YAML 的完整代码模板、参数说明及验证方法见 [`doc/tutorials.zh.md`](doc/tutorials.zh.md)。该模板需要使用者提供实际 QM 输出、分子身份、转动对称数和生成焓锚点。ThermoCR CLI 当前不定义完整 `ThermoOptions` 的 YAML 配置格式；正式计算直接使用一个短 Python 驱动脚本即可。
+The complete template from QM outputs to a continuous two-region NASA7 fit and Cantera YAML, together with parameter explanations and validation procedures, is provided in the [Chinese user guide](https://github.com/47-5/ThermoCR/blob/main/doc/tutorials.zh.md). The user must supply the actual QM outputs, molecular identity, rotational symmetry number, and enthalpy-of-formation anchor.
 
-## Python 示例
+The ThermoCR CLI does not currently define a YAML configuration format covering the complete `ThermoOptions` interface. Production calculations should therefore use a short, version-controlled Python driver script.
 
-仓库提供五个示例脚本：
+## Python examples
+
+Five example scripts are included:
 
 ```bash
 python examples/01_read_qm_output.py
@@ -159,40 +165,41 @@ python examples/04_kinetics_fit.py
 python examples/05_cantera_mechanism_export.py
 ```
 
-示例输出写入 `examples/output/`。
+Example outputs are written to `examples/output/`.
 
-## 测试
+## Tests
 
-在仓库根目录运行：
+Run the test suite from the repository root:
 
 ```bash
 python -m unittest discover -s tests
 ```
 
-正式生成一批物种数据前，建议至少完成：
+Before generating a production batch of species data, verify at least the following:
 
-1. 全部单元测试通过；
-2. 极小值无虚频，过渡态恰好一个虚频；
-3. ORCA 单点能与最后一个 `FINAL SINGLE POINT ENERGY` 一致；
-4. 参考压力在扫描、拟合和导出中一致；
-5. NASA7 的拟合误差和中点连续性满足要求；
-6. 同批 artifact 的能量约定、相态和参考压力相容；
-7. 导出的 YAML 能被 Cantera 载入并重现 $C_p/H/S$。
+1. All unit tests pass.
+2. A minimum has no imaginary frequencies, while a transition state has exactly one.
+3. The ORCA single-point energy agrees with the last `FINAL SINGLE POINT ENERGY`.
+4. The same reference pressure is used during scanning, fitting, and export.
+5. NASA7 fit errors and midpoint continuity satisfy the project requirements.
+6. All artifacts in a batch use compatible energy conventions, phases, and reference pressures.
+7. The exported YAML can be loaded by Cantera and reproduces $C_p/H/S$.
 
-## 仓库导航
+## Repository layout
 
-| 路径 | 内容 |
+| Path | Contents |
 | --- | --- |
-| `ThermoCR/io/` | Gaussian、ORCA 和通用 QM 输出读取 |
-| `ThermoCR/thermo/` | 配分函数、热校正、QRRHO、生成焓锚定、热力学拟合和审计 artifact |
-| `ThermoCR/kinetics/` | TST、VTST、隧穿修正和动力学拟合 |
-| `ThermoCR/export/` | Cantera YAML 导出 |
-| `ThermoCR/symmetry/` | 点群、惯性矩和转动对称数 |
-| `examples/` | 推荐的 Python 示例脚本 |
-| `example/` | 示例所用的参考输入和表格数据 |
-| `tests/` | 单元测试与数值回归测试 |
-| `doc/tutorials.zh.md` | 完整中文使用手册 |
+| `ThermoCR/io/` | Gaussian, ORCA, and generic QM-output readers |
+| `ThermoCR/thermo/` | Partition functions, thermal corrections, QRRHO, enthalpy-of-formation anchoring, thermodynamic fitting, and audit artifacts |
+| `ThermoCR/kinetics/` | TST, VTST, tunneling corrections, and kinetics fitting |
+| `ThermoCR/export/` | Cantera YAML export |
+| `ThermoCR/symmetry/` | Point groups, moments of inertia, and rotational symmetry numbers |
+| `examples/` | Recommended Python example scripts |
+| `example/` | Reference inputs and tabular data used by the examples |
+| `tests/` | Unit tests and numerical regression tests |
+| `README.zh.md` | Chinese README |
+| `doc/tutorials.zh.md` | Complete Chinese-language guide |
 
-## 许可证
+## License
 
-ThermoCR 使用 MIT License。
+ThermoCR is distributed under the MIT License.
