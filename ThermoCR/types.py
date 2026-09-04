@@ -59,12 +59,30 @@ class ThermoOptions:
     point_group: Optional[str] = None
     rotational_symmetry_number: Optional[float] = None
     stationary_point_type: str = "minimum"
+    qrrho_reference_wavenumber_cm1: float = 100.0
+    qrrho_interpolation_exponent: float = 4.0
 
     def __post_init__(self):
         if self.temperature <= 0.0:
             raise ValueError("temperature must be positive")
         if self.pressure <= 0.0:
             raise ValueError("pressure must be positive")
+        self.qrrho_reference_wavenumber_cm1 = float(
+            self.qrrho_reference_wavenumber_cm1
+        )
+        self.qrrho_interpolation_exponent = float(
+            self.qrrho_interpolation_exponent
+        )
+        if (
+            not np.isfinite(self.qrrho_reference_wavenumber_cm1)
+            or self.qrrho_reference_wavenumber_cm1 <= 0.0
+        ):
+            raise ValueError("qrrho_reference_wavenumber_cm1 must be positive")
+        if (
+            not np.isfinite(self.qrrho_interpolation_exponent)
+            or self.qrrho_interpolation_exponent <= 0.0
+        ):
+            raise ValueError("qrrho_interpolation_exponent must be positive")
         if self.point_group is not None:
             self.point_group = str(self.point_group)
         if self.rotational_symmetry_number is not None:

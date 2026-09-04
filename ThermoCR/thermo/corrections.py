@@ -433,8 +433,16 @@ def U_vib_0_T(vibfreqs, T, convert_unit=True, scale_factor=1.0):
     return np.sum(R * T * term * exp_term / (1 - exp_term))
 
 
-def U_vib_T(vibfreqs, T, convert_unit=True, QRRHO=False,
-            scale_factor_zpe=1.0, scale_factor_U_0_T=1.0):
+def U_vib_T(
+    vibfreqs,
+    T,
+    convert_unit=True,
+    QRRHO=False,
+    scale_factor_zpe=1.0,
+    scale_factor_U_0_T=1.0,
+    qrrho_reference_wavenumber_cm1=100.0,
+    qrrho_interpolation_exponent=4.0,
+):
     """
     Calculate the vibrational contribution to the internal energy at a given temperature.
 
@@ -513,7 +521,11 @@ def U_vib_T(vibfreqs, T, convert_unit=True, QRRHO=False,
         return np.sum(U_RRHO)
 
     # QRRHO处理
-    wei = _qrrho_weights_from_hz(v_pos)
+    wei = _qrrho_weights_from_hz(
+        v_pos,
+        reference_wavenumber_cm1=qrrho_reference_wavenumber_cm1,
+        interpolation_exponent=qrrho_interpolation_exponent,
+    )
     U_FR = R * T / 2
     return np.sum(wei * U_RRHO + (1 - wei) * U_FR)
 
@@ -525,15 +537,40 @@ def H_vib_0_T(vibfreqs, T, convert_unit=True, scale_factor=1.0):
     return U_vib_0_T(vibfreqs=vibfreqs, T=T, convert_unit=convert_unit, scale_factor=scale_factor)
 
 
-def H_vib_T(vibfreqs, T, convert_unit=True, QRRHO=False, scale_factor_zpe=1.0, scale_factor_U_0_T=1.0):
+def H_vib_T(
+    vibfreqs,
+    T,
+    convert_unit=True,
+    QRRHO=False,
+    scale_factor_zpe=1.0,
+    scale_factor_U_0_T=1.0,
+    qrrho_reference_wavenumber_cm1=100.0,
+    qrrho_interpolation_exponent=4.0,
+):
     """
     See U_vib_T
     """
-    return U_vib_T(vibfreqs=vibfreqs, T=T, convert_unit=convert_unit, QRRHO=QRRHO,
-                   scale_factor_zpe=scale_factor_zpe, scale_factor_U_0_T=scale_factor_U_0_T)
+    return U_vib_T(
+        vibfreqs=vibfreqs,
+        T=T,
+        convert_unit=convert_unit,
+        QRRHO=QRRHO,
+        scale_factor_zpe=scale_factor_zpe,
+        scale_factor_U_0_T=scale_factor_U_0_T,
+        qrrho_reference_wavenumber_cm1=qrrho_reference_wavenumber_cm1,
+        qrrho_interpolation_exponent=qrrho_interpolation_exponent,
+    )
 
 
-def Cv_vib(vibfreqs, T, convert_unit=True, scale_factor=1.0, QRRHO=False):
+def Cv_vib(
+    vibfreqs,
+    T,
+    convert_unit=True,
+    scale_factor=1.0,
+    QRRHO=False,
+    qrrho_reference_wavenumber_cm1=100.0,
+    qrrho_interpolation_exponent=4.0,
+):
     """
     Calculate the vibrational contribution to the molar heat capacity (Cv) at a given temperature.
 
@@ -579,7 +616,11 @@ def Cv_vib(vibfreqs, T, convert_unit=True, scale_factor=1.0, QRRHO=False):
     if not QRRHO:
         return np.sum(heat_capacity_rrho)
 
-    weights = _qrrho_weights_from_hz(v_pos)
+    weights = _qrrho_weights_from_hz(
+        v_pos,
+        reference_wavenumber_cm1=qrrho_reference_wavenumber_cm1,
+        interpolation_exponent=qrrho_interpolation_exponent,
+    )
     heat_capacity_free_rotor = R / 2.0
     return np.sum(
         weights * heat_capacity_rrho
@@ -587,7 +628,15 @@ def Cv_vib(vibfreqs, T, convert_unit=True, scale_factor=1.0, QRRHO=False):
     )
 
 
-def Cp_vib(vibfreqs, T, convert_unit=True, scale_factor=1.0, QRRHO=False):
+def Cp_vib(
+    vibfreqs,
+    T,
+    convert_unit=True,
+    scale_factor=1.0,
+    QRRHO=False,
+    qrrho_reference_wavenumber_cm1=100.0,
+    qrrho_interpolation_exponent=4.0,
+):
     """
     same as Cv_vib
     """
@@ -597,10 +646,20 @@ def Cp_vib(vibfreqs, T, convert_unit=True, scale_factor=1.0, QRRHO=False):
         convert_unit=convert_unit,
         scale_factor=scale_factor,
         QRRHO=QRRHO,
+        qrrho_reference_wavenumber_cm1=qrrho_reference_wavenumber_cm1,
+        qrrho_interpolation_exponent=qrrho_interpolation_exponent,
     )
 
 
-def S_vib(vibfreqs, T, convert_unit=True, QRRHO=True, scale_factor=1.0):
+def S_vib(
+    vibfreqs,
+    T,
+    convert_unit=True,
+    QRRHO=True,
+    scale_factor=1.0,
+    qrrho_reference_wavenumber_cm1=100.0,
+    qrrho_interpolation_exponent=4.0,
+):
     """
     Calculate the vibrational entropy of a molecule.
 
@@ -655,13 +714,21 @@ def S_vib(vibfreqs, T, convert_unit=True, QRRHO=True, scale_factor=1.0):
         return np.sum(S_vib_RRHO_vec(v_s_pos, T))
 
     # QRRHO处理
-    wei = _qrrho_weights_from_hz(v_pos)
+    wei = _qrrho_weights_from_hz(
+        v_pos,
+        reference_wavenumber_cm1=qrrho_reference_wavenumber_cm1,
+        interpolation_exponent=qrrho_interpolation_exponent,
+    )
     S_RRHO = S_vib_RRHO_vec(v_s_pos, T)
     S_FR = S_vib_FR_vec(v_s_pos, T)
     return np.sum(wei * S_RRHO + (1 - wei) * S_FR)
 
 
-def _qrrho_weights_from_hz(frequencies_hz, reference_wavenumber_cm1=100.0):
+def _qrrho_weights_from_hz(
+    frequencies_hz,
+    reference_wavenumber_cm1=100.0,
+    interpolation_exponent=4.0,
+):
     frequencies_hz = np.asarray(frequencies_hz, dtype=float)
     if (
         not np.all(np.isfinite(frequencies_hz))
@@ -671,10 +738,17 @@ def _qrrho_weights_from_hz(frequencies_hz, reference_wavenumber_cm1=100.0):
     reference_frequency_hz = float(reference_wavenumber_cm1) * wave2freq
     if not np.isfinite(reference_frequency_hz) or reference_frequency_hz <= 0.0:
         raise ValueError("QRRHO reference wavenumber must be finite and positive")
-    return 1.0 / (1.0 + (reference_frequency_hz / frequencies_hz) ** 4)
+    exponent = float(interpolation_exponent)
+    if not np.isfinite(exponent) or exponent <= 0.0:
+        raise ValueError("QRRHO interpolation exponent must be finite and positive")
+    with np.errstate(over="ignore"):
+        log_odds = exponent * (
+            np.log(reference_frequency_hz) - np.log(frequencies_hz)
+        )
+    return np.exp(-np.logaddexp(0.0, log_odds))
 
 
-def w_vec(v, v0=100, convert_unit=True):
+def w_vec(v, v0=100, convert_unit=True, interpolation_exponent=4.0):
     """Return Grimme QRRHO weights for frequencies in Hz or cm^-1.
 
     ``v0`` is always expressed in cm^-1. For backward compatibility, the
@@ -690,6 +764,7 @@ def w_vec(v, v0=100, convert_unit=True):
     return _qrrho_weights_from_hz(
         frequencies_hz,
         reference_wavenumber_cm1=v0,
+        interpolation_exponent=interpolation_exponent,
     )
 
 

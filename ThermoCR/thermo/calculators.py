@@ -61,7 +61,9 @@ def qm_thermo(atom_coord_path=None, atom_numbers=None, coords=None,
               c=None,
               point_group=None,
               rotational_symmetry_number=None,
-              stationary_point_type="minimum"):
+              stationary_point_type="minimum",
+              qrrho_reference_wavenumber_cm1=100.0,
+              qrrho_interpolation_exponent=4.0):
     """
     Calculates thermodynamic properties based on quantum mechanical data.
 
@@ -122,6 +124,10 @@ def qm_thermo(atom_coord_path=None, atom_numbers=None, coords=None,
             ``"minimum"`` requires every vibrational mode to be finite and
             positive. ``"transition_state"`` requires exactly one imaginary
             mode and excludes only that mode from thermochemistry.
+    - qrrho_reference_wavenumber_cm1 (float):
+            Reference wavenumber in cm^-1 used by the QRRHO interpolation.
+    - qrrho_interpolation_exponent (float):
+            Positive exponent used by the QRRHO interpolation weight.
 
     Returns:
         (dict)
@@ -197,6 +203,8 @@ def qm_thermo(atom_coord_path=None, atom_numbers=None, coords=None,
         U_Minenkov=U_Minenkov,
         S_Grimme=S_Grimme,
         stationary_point_type=stationary_point_type,
+        qrrho_reference_wavenumber_cm1=qrrho_reference_wavenumber_cm1,
+        qrrho_interpolation_exponent=qrrho_interpolation_exponent,
     )
     if verbose:
         print('======== Vibration ========')
@@ -332,6 +340,10 @@ def calculate_thermo(molecule, options=None):
         point_group=options.point_group,
         rotational_symmetry_number=options.rotational_symmetry_number,
         stationary_point_type=options.stationary_point_type,
+        qrrho_reference_wavenumber_cm1=(
+            options.qrrho_reference_wavenumber_cm1
+        ),
+        qrrho_interpolation_exponent=options.qrrho_interpolation_exponent,
     )
     return ThermoResult.from_qm_thermo_dict(result)
 
@@ -380,7 +392,9 @@ def qm_thermo_scan(
         point_group=None,
         rotational_symmetry_number=None,
         out_path='QMthermoScan.xlsx',
-        stationary_point_type="minimum"
+        stationary_point_type="minimum",
+        qrrho_reference_wavenumber_cm1=100.0,
+        qrrho_interpolation_exponent=4.0,
         ):
     """
     Perform a thermodynamic scan over a range of temperatures and pressures for quantum mechanical calculations.
@@ -466,9 +480,11 @@ def qm_thermo_scan(
                                 read_ee_index=read_ee_index, E_list=E_list, g_list=g_list,
                                 verbose=False, c=c,
                                 point_group=point_group,
-                                rotational_symmetry_number=rotational_symmetry_number,
-                                stationary_point_type=stationary_point_type,
-                                )
+                                 rotational_symmetry_number=rotational_symmetry_number,
+                                 stationary_point_type=stationary_point_type,
+                                 qrrho_reference_wavenumber_cm1=qrrho_reference_wavenumber_cm1,
+                                 qrrho_interpolation_exponent=qrrho_interpolation_exponent,
+                                 )
             results.append(result)
     df = pd.DataFrame(results)
     if out_path is not None:
@@ -730,6 +746,8 @@ def contribution_vib(
     U_Minenkov=False,
     S_Grimme=True,
     stationary_point_type="minimum",
+    qrrho_reference_wavenumber_cm1=100.0,
+    qrrho_interpolation_exponent=4.0,
 ):
     """
     Calculates the vibrational contributions to thermodynamic properties for a given set of vibrational frequencies and
@@ -781,14 +799,34 @@ def contribution_vib(
     zpe = ZPE(vibfreqs=vibfreqs, convert_unit=convert_unit, scale_factor=sclZPE)
     U_v_0_T = U_vib_0_T(vibfreqs=vibfreqs, T=T, convert_unit=convert_unit, scale_factor=sclU)
     H_v_0_T = H_vib_0_T(vibfreqs=vibfreqs, T=T, convert_unit=convert_unit, scale_factor=sclU)
-    U_v = U_vib_T(vibfreqs=vibfreqs, T=T, QRRHO=U_Minenkov, convert_unit=convert_unit, scale_factor_U_0_T=sclU, scale_factor_zpe=sclZPE)
-    H_v = H_vib_T(vibfreqs=vibfreqs, T=T, QRRHO=U_Minenkov, convert_unit=convert_unit, scale_factor_U_0_T=sclU, scale_factor_zpe=sclZPE)
+    U_v = U_vib_T(
+        vibfreqs=vibfreqs,
+        T=T,
+        QRRHO=U_Minenkov,
+        convert_unit=convert_unit,
+        scale_factor_U_0_T=sclU,
+        scale_factor_zpe=sclZPE,
+        qrrho_reference_wavenumber_cm1=qrrho_reference_wavenumber_cm1,
+        qrrho_interpolation_exponent=qrrho_interpolation_exponent,
+    )
+    H_v = H_vib_T(
+        vibfreqs=vibfreqs,
+        T=T,
+        QRRHO=U_Minenkov,
+        convert_unit=convert_unit,
+        scale_factor_U_0_T=sclU,
+        scale_factor_zpe=sclZPE,
+        qrrho_reference_wavenumber_cm1=qrrho_reference_wavenumber_cm1,
+        qrrho_interpolation_exponent=qrrho_interpolation_exponent,
+    )
     Cv_v = Cv_vib(
         vibfreqs=vibfreqs,
         T=T,
         convert_unit=convert_unit,
         scale_factor=sclCv,
         QRRHO=U_Minenkov,
+        qrrho_reference_wavenumber_cm1=qrrho_reference_wavenumber_cm1,
+        qrrho_interpolation_exponent=qrrho_interpolation_exponent,
     )
     Cp_v = Cp_vib(
         vibfreqs=vibfreqs,
@@ -796,8 +834,18 @@ def contribution_vib(
         convert_unit=convert_unit,
         scale_factor=sclCv,
         QRRHO=U_Minenkov,
+        qrrho_reference_wavenumber_cm1=qrrho_reference_wavenumber_cm1,
+        qrrho_interpolation_exponent=qrrho_interpolation_exponent,
     )
-    S_v = S_vib(vibfreqs=vibfreqs, T=T, convert_unit=convert_unit, QRRHO=S_Grimme, scale_factor=sclS)
+    S_v = S_vib(
+        vibfreqs=vibfreqs,
+        T=T,
+        convert_unit=convert_unit,
+        QRRHO=S_Grimme,
+        scale_factor=sclS,
+        qrrho_reference_wavenumber_cm1=qrrho_reference_wavenumber_cm1,
+        qrrho_interpolation_exponent=qrrho_interpolation_exponent,
+    )
     return q_v_0, q_v_bot, U_v_0_T, H_v_0_T, U_v, H_v, Cv_v, Cp_v, S_v, zpe
 
 
